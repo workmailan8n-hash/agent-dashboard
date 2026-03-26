@@ -2497,7 +2497,7 @@ function generateLayout(n) {
   // Enclosed kitchen room (right side, 6 columns wide)
   KITCHEN_WALL_COL = COLS - 11;  // partition wall at col 17 — wider kitchen
   KITCHEN_START_ROW = Math.floor(ROWS * 0.38);
-  KITCHEN_DOOR_ROW  = KITCHEN_START_ROW + 1;  // door opening (3 rows wide)
+  KITCHEN_DOOR_ROW  = KITCHEN_START_ROW + 1;  // door opening (5 rows wide for traffic)
   const kitX = KITCHEN_WALL_COL + 1; // first interior column
   const kitY = KITCHEN_START_ROW;
   // 9 unique spots spread across the wider kitchen
@@ -2644,7 +2644,7 @@ function buildObstacleGrid() {
   // Kitchen partition wall — door is 3 rows tall for traffic flow
   if (KITCHEN_WALL_COL > 0) {
     for (let r = KITCHEN_START_ROW; r < ROWS - 1; r++) {
-      const inDoor = r >= KITCHEN_DOOR_ROW && r <= KITCHEN_DOOR_ROW + 2;
+      const inDoor = r >= KITCHEN_DOOR_ROW && r <= KITCHEN_DOOR_ROW + 4;
       if (!inDoor) obstacleGrid[r][KITCHEN_WALL_COL] = 1;
     }
   }
@@ -2728,11 +2728,20 @@ function buildObstacleGrid() {
     markRect(vmTx, vmTy, 2, 3);
   }
 
+  // ── Zone divider wall (lounge→activity) with door gap ─────
+  if (ACT_ZONE_Y > 0) {
+    const doorL = Math.floor((COLS-2)*0.35)+1, doorR = Math.floor((COLS-2)*0.65)+1;
+    for (let c = 1; c < COLS-1; c++) {
+      if (c >= doorL && c <= doorR) continue; // door gap
+      mark(c, ACT_ZONE_Y);
+    }
+  }
+
   // ── Kitchen dining table ─────
   if (KITCHEN_WALL_COL > 0) {
     const kitIntXobs = KITCHEN_WALL_COL + 1;
     const [ktTx,ktTy] = getAdminPos('kitchen_table', kitIntXobs+2, KITCHEN_START_ROW+1);
-    markRect(ktTx, ktTy, 7, 1);
+    markRect(ktTx, ktTy, 4, 3);
   }
 
 }
@@ -3050,7 +3059,7 @@ function buildBackground() {
       const x=OX+col*T, y=OY+row*T;
       const wall=col===0||col===COLS-1||row===0||row===ROWS-1;
       const inKitchen = KITCHEN_WALL_COL>0 && col>KITCHEN_WALL_COL && col<COLS-1 && row>=KITCHEN_START_ROW && row<ROWS-1;
-      const isKitPartWall = KITCHEN_WALL_COL>0 && col===KITCHEN_WALL_COL && row>=KITCHEN_START_ROW && row<ROWS-1 && row!==KITCHEN_DOOR_ROW;
+      const isKitPartWall = KITCHEN_WALL_COL>0 && col===KITCHEN_WALL_COL && row>=KITCHEN_START_ROW && row<ROWS-1 && !(row>=KITCHEN_DOOR_ROW && row<=KITCHEN_DOOR_ROW+4);
       if (wall) {
         if (row===0) {
           fillR(ctx,x,y,T,T,'#16152e');
@@ -3084,9 +3093,9 @@ function buildBackground() {
   // Kitchen partition door frame highlight
   if (KITCHEN_WALL_COL>0) {
     const dx=OX+KITCHEN_WALL_COL*T, dy=OY+KITCHEN_DOOR_ROW*T;
-    fillR(ctx,dx,dy,T,T*3,'#2e2c50');     // door opening — 3 tiles tall
-    fillR(ctx,dx,dy,4,T*3,'#4a4880');     // door frame left
-    fillR(ctx,dx+T-4,dy,4,T*3,'#4a4880'); // door frame right
+    fillR(ctx,dx,dy,T,T*5,'#2e2c50');     // door opening — 5 tiles tall
+    fillR(ctx,dx,dy,4,T*5,'#4a4880');     // door frame left
+    fillR(ctx,dx+T-4,dy,4,T*5,'#4a4880'); // door frame right
   }
 
   // Windows
@@ -3603,10 +3612,23 @@ function buildBackground() {
 
   // ════ Activity zone ═══════════════════════════════════════════
   if (ACT_ZONE_Y > 0) {
-    // Zone divider strip
+    // Zone divider wall (lounge → activity) with door opening in center
     const [zx, zy] = ts(1, ACT_ZONE_Y);
-    fillR(ctx, zx, zy, (COLS-2)*T, 3, '#3a3860');
-    fillR(ctx, zx, zy+3, (COLS-2)*T, 2, '#22204a');
+    const zoneW = (COLS-2)*T;
+    const doorStart = Math.floor(zoneW * 0.35), doorEnd = Math.floor(zoneW * 0.65);
+    // Left wall segment
+    fillR(ctx, zx, zy, doorStart, T, '#252344');
+    fillR(ctx, zx, zy, doorStart, 4, '#3a3860');
+    fillR(ctx, zx, zy+T-2, doorStart, 2, '#1e1c38');
+    // Right wall segment
+    fillR(ctx, zx+doorEnd, zy, zoneW-doorEnd, T, '#252344');
+    fillR(ctx, zx+doorEnd, zy, zoneW-doorEnd, 4, '#3a3860');
+    fillR(ctx, zx+doorEnd, zy+T-2, zoneW-doorEnd, 2, '#1e1c38');
+    // Door frame
+    fillR(ctx, zx+doorStart-2, zy, 4, T, '#4a4880');
+    fillR(ctx, zx+doorEnd-2, zy, 4, T, '#4a4880');
+    // Floor under door
+    fillR(ctx, zx+doorStart, zy, doorEnd-doorStart, T, '#d0caba');
 
     // ── GYM (left side) ──────────────────────────────────────────
     const [_gymTx,_gymTy] = getAdminPos('gym', 1, ACT_ZONE_Y+0.5);
