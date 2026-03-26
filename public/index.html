@@ -2394,10 +2394,10 @@ function drawKanban(ctx) {
 function drawWallClock(ctx) {
   const now = new Date();
   const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
-  // Position: right side of top wall, away from header text
-  const [cx, cy] = ts(KITCHEN_WALL_COL - 2, 0.2);
-  const px2 = cx + T/2, py2 = cy + T*0.55;
-  const R = 11;
+  // Position: on the kitchen partition wall, above the door
+  const [cx, cy] = ts(KITCHEN_WALL_COL, Math.max(2, KITCHEN_START_ROW - 3));
+  const px2 = cx + T/2, py2 = cy + T*0.5;
+  const R = 18;
   // Frame
   ctx.fillStyle = '#1a1824';
   ctx.beginPath(); ctx.arc(px2, py2, R+3, 0, Math.PI*2); ctx.fill();
