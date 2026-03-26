@@ -3677,7 +3677,7 @@ class AgentState {
       } else if (!working) {
         // Timeout: give up on this slot after 5s and pick another
         this.walkTimer += dt;
-        if (this.walkTimer > 7) {
+        if (this.walkTimer > 10) {
           if (this.slotIdx >= 0 && idleOccupied[this.slotIdx] === this.id)
             delete idleOccupied[this.slotIdx];
           this.slotIdx = -1; this.activityDur = 0; this.walkTimer = 0;
