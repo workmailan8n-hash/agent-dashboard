@@ -1722,7 +1722,8 @@ const aquariumFish = [
 ];
 function drawAquariumFish(ctx, tick) {
   const rX = PER_ROW * STEP_X + 2;
-  const aqx = OX + (rX+0.3)*T, aqy = OY + 8*T;
+  const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
+  const aqx = OX + _aqTx*T, aqy = OY + _aqTy*T;
   const aqW = T*2.5, aqH = T*1.8;
   // Clip to inside of tank glass
   const cx = aqx+4, cy = aqy+4, cw = aqW-8, ch = aqH-8;
@@ -1778,8 +1779,9 @@ function drawDartAnimation(ctx, tick) {
     if (dartAnims.length > 5) dartAnims.shift(); // max 5 darts
   }
 
-  const boardX = OX + (rX + 1.5) * T;
-  const boardY = OY + 4;
+  const [_dBx, _dBy] = getAdminPos('darts', rX+1.5, 0);
+  const boardX = OX + _dBx * T;
+  const boardY = OY + _dBy * T + 4;
   // Agent throw position
   const throwX = OX + dartPlayer.sx ? dartPlayer.sx - OX : (rX + 1.5) * T;
   const throwY = dartPlayer.sy ? dartPlayer.sy - 16 : OY + 7 * T;
@@ -2551,8 +2553,9 @@ function drawWallClock(ctx) {
   const now = new Date();
   const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
   // Position: on right wall, mid-height (between desk rows)
-  const clockRow = Math.max(4, Math.floor(ROWS * 0.2));
-  const [cx, cy] = ts(COLS - 1.5, clockRow);
+  const clockRowDef = Math.max(4, Math.floor(ROWS * 0.2));
+  const [_clkTx, _clkTy] = getAdminPos('clock', COLS-1.5, clockRowDef);
+  const [cx, cy] = ts(_clkTx, _clkTy);
   const px2 = cx + T/2, py2 = cy + T*0.5;
   const R = 15;
   // Frame
@@ -2935,8 +2938,8 @@ function buildBackground() {
 
   // ── Bookshelf (right wall, social zone — below conference table) ──
   if (ACT_ZONE_Y > 0) {
-    const shelfY = ACT_ZONE_Y + 14;
-    const [bsx, bsy] = ts(COLS - 5.5, shelfY - 0.8);
+    const [_shTx, _shTy] = getAdminPos('bookshelf', COLS-5.5, ACT_ZONE_Y+13.2);
+    const [bsx, bsy] = ts(_shTx, _shTy);
     const bW = T * 4.5, bH = T * 3.5;
     // Shadow
     ctx.save(); ctx.shadowColor='#00000090'; ctx.shadowBlur=12; ctx.shadowOffsetY=4;
@@ -2997,7 +3000,8 @@ function buildBackground() {
 
   // ── Printer (right side, before kitchen wall) ─────────────────────
   if (KITCHEN_WALL_COL > 0 && KITCHEN_START_ROW > 0) {
-    const [prx, pry] = ts(KITCHEN_WALL_COL - 3, KITCHEN_START_ROW - 2);
+    const [_prTx, _prTy] = getAdminPos('printer', KITCHEN_WALL_COL-3, KITCHEN_START_ROW-2);
+    const [prx, pry] = ts(_prTx, _prTy);
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=6;
     fillR(ctx, prx + 2, pry + 4, T*1.6, T*0.9, '#c0c0cc'); ctx.restore();
     fillR(ctx, prx + 4, pry + 6, T*1.6-4, T*0.9-4, '#d0d0dc');
@@ -3042,7 +3046,8 @@ function buildBackground() {
 
   // ── Conference Table (social zone below gym) ─────────────────────
   if (ACT_ZONE_Y > 0) {
-    const [cfx, cfy] = ts(4, ACT_ZONE_Y + 10);
+    const [_cfTx, _cfTy] = getAdminPos('conf_table', 4, ACT_ZONE_Y+10);
+    const [cfx, cfy] = ts(_cfTx, _cfTy);
     const ctW = T*6, ctH = T*2;
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=10; ctx.shadowOffsetY=4;
     // Oval table
@@ -3076,7 +3081,8 @@ function buildBackground() {
 
   // ── Trash Can (static body drawn on background) ───────────────────
   {
-    const [tcx, tcy] = ts(KITCHEN_WALL_COL - 2, 3);
+    const [_trTx, _trTy] = getAdminPos('trashcan', KITCHEN_WALL_COL-2, 3);
+    const [tcx, tcy] = ts(_trTx, _trTy);
     const cx2 = tcx + T/2, cy2 = tcy + T*0.5;
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=4;
     ctx.fillStyle='#404050';
@@ -3099,7 +3105,8 @@ function buildBackground() {
     const rX = PER_ROW * STEP_X + 2;
 
     // ── 1. Water Cooler (compact) ───────────────────────────────
-    const [wcx, wcy] = ts(rX + 2.5, 2);
+    const [_coolerTx, _coolerTy] = getAdminPos('cooler', rX+2.5, 2);
+    const [wcx, wcy] = ts(_coolerTx, _coolerTy);
     const wcW = T*0.9, wcH = T*1.2;
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
     fillR(ctx, wcx, wcy, wcW, wcH, '#d0d8e0'); ctx.restore();
@@ -3115,7 +3122,8 @@ function buildBackground() {
     ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-1, 9, 11, 0, Math.PI, 0); ctx.stroke();
 
     // ── 3. Aquarium (right zone, row 8) ─────────────────────────
-    const [aqx, aqy] = ts(rX + 0.3, 8);
+    const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
+    const [aqx, aqy] = ts(_aqTx, _aqTy);
     const aqW = T*2.5, aqH = T*1.8;
     // Stand/legs
     fillR(ctx, aqx+4, aqy+aqH, 6, 8, '#404050');
@@ -3150,9 +3158,9 @@ function buildBackground() {
     fillR(ctx, aqx-1, aqy-2, aqW+2, 4, '#606070');
 
     // ── 2. Dartboard (ON the top wall — row 0) ──────────────────
-    // Mounted on the purple top wall, between rX+1 and rX+2
-    const dartWallX = OX + (rX + 1.5) * T;
-    const dartWallY = OY + 4; // near top of wall tile
+    const [_dartTx, _dartTy] = getAdminPos('darts', rX+1.5, 0);
+    const dartWallX = OX + _dartTx * T;
+    const dartWallY = OY + _dartTy * T + 4;
     const DR = 13;
     // Wooden backing
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=4;
@@ -4803,10 +4811,13 @@ function buildAdminObjects() {
 // Apply custom positions to actual game objects
 function applyCustomPositions() {
   const saved = JSON.parse(localStorage.getItem('admin_positions') || '{}');
-  if (Object.keys(saved).length === 0) return;
-  // We store positions but the actual drawing uses hardcoded coords
-  // So we save a global override map that draw functions check
   window._adminPos = saved;
+}
+
+// Get position for an object — returns saved admin position or default
+function getAdminPos(id, defTx, defTy) {
+  const p = window._adminPos?.[id];
+  return p ? [p.tx, p.ty] : [defTx, defTy];
 }
 
 // Save positions to localStorage
