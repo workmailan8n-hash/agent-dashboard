@@ -2976,53 +2976,67 @@ function buildBackground() {
     const rX = PER_ROW * STEP_X + 2;
 
     // ── 1. Water Cooler ─────────────────────────────────────────
-    const [wcx, wcy] = ts(rX + 1, 2);
+    const [wcx, wcy] = ts(rX + 0.5, 1.5);
+    const wcW = T*1.5, wcH = T*2;
     // Cooler body
-    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
-    fillR(ctx, wcx, wcy, T*0.8, T*1.4, '#d0d8e0'); ctx.restore();
-    fillR(ctx, wcx+2, wcy+2, T*0.8-4, T*0.5, '#a0c8e8'); // water tank (blue)
-    fillR(ctx, wcx+2, wcy+T*0.5+2, T*0.8-4, T*0.8, '#e0e4e8'); // lower body
-    // Tap
-    fillR(ctx, wcx+T*0.4-3, wcy+T*0.55, 6, 4, '#808890');
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
+    fillR(ctx, wcx, wcy, wcW, wcH, '#d0d8e0'); ctx.restore();
+    fillR(ctx, wcx+3, wcy+3, wcW-6, T*0.7, '#80c0e8'); // water tank (blue)
+    fillR(ctx, wcx+3, wcy+T*0.7+3, wcW-6, wcH-T*0.7-6, '#e8ecf0'); // lower body
+    // Tap area
+    fillR(ctx, wcx+wcW/2-5, wcy+T*0.8, 10, 6, '#707880');
     // Blue/red buttons
-    ctx.fillStyle='#4488cc'; ctx.fillRect(wcx+4, wcy+T*0.6+4, 5, 3);
-    ctx.fillStyle='#cc4444'; ctx.fillRect(wcx+12, wcy+T*0.6+4, 5, 3);
-    // Water jug on top
-    ctx.fillStyle='#88c8ee60';
-    ctx.beginPath(); ctx.ellipse(wcx+T*0.4, wcy-2, 8, 10, 0, Math.PI, 0); ctx.fill();
-    ctx.strokeStyle='#6090b0'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.ellipse(wcx+T*0.4, wcy-2, 8, 10, 0, Math.PI, 0); ctx.stroke();
+    ctx.fillStyle='#4488dd'; ctx.fillRect(wcx+6, wcy+T*0.9+6, 8, 5);
+    ctx.fillStyle='#dd4444'; ctx.fillRect(wcx+wcW-14, wcy+T*0.9+6, 8, 5);
+    // Water jug on top (big)
+    ctx.fillStyle='#70b8e880';
+    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-4, 14, 16, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle='#5090b8'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-4, 14, 16, 0, Math.PI, 0); ctx.stroke();
+    // Drip tray
+    fillR(ctx, wcx+4, wcy+wcH-4, wcW-8, 4, '#a0a8b0');
     // Label
-    ctx.fillStyle='#5a5070'; ctx.font="4px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('WATER', wcx+T*0.4, wcy+T*1.4+10); ctx.textAlign='left';
+    ctx.fillStyle='#6a6090'; ctx.font="5px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('WATER COOLER', wcx+wcW/2, wcy+wcH+12); ctx.textAlign='left';
 
     // ── 2. Dartboard ─────────────────────────────────────────────
-    const [dx, dy] = ts(rX + 1.5, 5);
-    const dcx = dx + T*0.5, dcy = dy + T*0.5;
-    // Board backing (dark circle on wall)
-    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=6;
-    ctx.fillStyle='#1a1a20';
-    ctx.beginPath(); ctx.arc(dcx, dcy, 16, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
+    const [dx, dy] = ts(rX + 0.5, 5);
+    const dcx = dx + T, dcy = dy + T*0.6;
+    const DR = 22; // bigger radius
+    // Wall mount board (square wooden backing)
+    ctx.save(); ctx.shadowColor='#00000080'; ctx.shadowBlur=8;
+    fillR(ctx, dcx-DR-4, dcy-DR-4, DR*2+8, DR*2+8, '#3a2818'); ctx.restore();
+    fillR(ctx, dcx-DR-2, dcy-DR-2, DR*2+4, DR*2+4, '#5a3c20');
+    // Board (dark circle)
+    ctx.fillStyle='#101010';
+    ctx.beginPath(); ctx.arc(dcx, dcy, DR, 0, Math.PI*2); ctx.fill();
     // Rings (from outside in)
     const rings = [
-      [15, '#1a6030'], [12, '#cc2020'], [9, '#1a6030'],
-      [6, '#cc2020'], [3, '#e8d870'], [1.5, '#cc2020']
+      [DR-1, '#1a6830'], [DR-4, '#cc2020'], [DR-7, '#e8d870'],
+      [DR-10, '#1a6830'], [DR-13, '#cc2020'], [6, '#e8d870'],
+      [3, '#cc2020']
     ];
     for (const [r, c] of rings) {
       ctx.fillStyle = c;
       ctx.beginPath(); ctx.arc(dcx, dcy, r, 0, Math.PI*2); ctx.fill();
     }
     // Cross wires
-    ctx.strokeStyle='#c0c0c040'; ctx.lineWidth=0.5;
-    ctx.beginPath(); ctx.moveTo(dcx-15, dcy); ctx.lineTo(dcx+15, dcy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(dcx, dcy-15); ctx.lineTo(dcx, dcy+15); ctx.stroke();
+    ctx.strokeStyle='#c0c0c050'; ctx.lineWidth=0.7;
+    ctx.beginPath(); ctx.moveTo(dcx-DR, dcy); ctx.lineTo(dcx+DR, dcy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dcx, dcy-DR); ctx.lineTo(dcx, dcy+DR); ctx.stroke();
     // Bullseye
     ctx.fillStyle='#e8e0d0';
-    ctx.beginPath(); ctx.arc(dcx, dcy, 1.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(dcx, dcy, 2, 0, Math.PI*2); ctx.fill();
+    // Number markers around edge
+    ctx.fillStyle='#e0e0e060'; ctx.font="3px monospace"; ctx.textAlign='center';
+    [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5].forEach((n,i) => {
+      const a = (i/20)*Math.PI*2 - Math.PI/2;
+      ctx.fillText(n, dcx+Math.cos(a)*(DR+6), dcy+Math.sin(a)*(DR+6)+2);
+    });
+    ctx.textAlign='left';
     // Label
-    ctx.fillStyle='#5a5070'; ctx.font="4px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('DARTS', dcx, dcy+22); ctx.textAlign='left';
+    ctx.fillStyle='#6a6090'; ctx.font="5px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('DARTS', dcx, dcy+DR+14); ctx.textAlign='left';
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
