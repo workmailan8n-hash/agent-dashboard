@@ -2747,8 +2747,10 @@ function buildBackground() {
   }
 
   // Desks
-  for (const {tx,ty} of DESK_DEFS) {
-    const [x,y]=ts(tx,ty); const W=T*2, H=T;
+  for (let _di=0; _di<DESK_DEFS.length; _di++) {
+    const {tx:_dtx,ty:_dty} = DESK_DEFS[_di];
+    const [_dATx,_dATy] = getAdminPos('desk_'+_di, _dtx, _dty);
+    const [x,y]=ts(_dATx,_dATy); const W=T*2, H=T;
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=7; ctx.shadowOffsetY=5;
     fillR(ctx,x,y,W,H,DESK_TOP);
     ctx.restore();
@@ -2772,8 +2774,10 @@ function buildBackground() {
   }
 
   // Couches
-  for (const {tx,ty,w} of COUCH_DEFS) {
-    const [x,y]=ts(tx,ty); const W=w*T, H=T*0.85;
+  for (let _ci=0; _ci<COUCH_DEFS.length; _ci++) {
+    const {tx:_ctx2,ty:_cty2,w} = COUCH_DEFS[_ci];
+    const [_cATx,_cATy] = getAdminPos('couch_'+_ci, _ctx2, _cty2);
+    const [x,y]=ts(_cATx,_cATy); const W=w*T, H=T*0.85;
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=9; ctx.shadowOffsetY=5;
     fillR(ctx,x,y,W,H+10,COUCH_C);
     ctx.restore();
@@ -3021,7 +3025,8 @@ function buildBackground() {
 
   // ── Vending Machine (inside kitchen area) ────────────────────────
   if (KITCHEN_WALL_COL > 0 && ACT_ZONE_Y > 0) {
-    const [vmx, vmy] = ts(KITCHEN_WALL_COL + 1, ACT_ZONE_Y - 2);
+    const [_vmTx,_vmTy] = getAdminPos('vending', KITCHEN_WALL_COL+1, ACT_ZONE_Y-2);
+    const [vmx, vmy] = ts(_vmTx, _vmTy);
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
     fillR(ctx, vmx, vmy, T*1.5, T*2.2, '#282840'); ctx.restore();
     fillR(ctx, vmx + 2, vmy + 2, T*1.5-4, T*2.2-4, '#30304a');
@@ -3234,7 +3239,8 @@ function buildBackground() {
     for(let m=0;m<4;m++) fillR(ctx,mx+4+m*9,my+3,1,T*0.35-8,'#22502e');
 
     // ── GAMING/TV ZONE (center) ──────────────────────────────────
-    const [tvx,tvy] = ts(9, ACT_ZONE_Y+0.3);
+    const [_tvATx,_tvATy] = getAdminPos('tv', 9, ACT_ZONE_Y+0.3);
+    const [tvx,tvy] = ts(_tvATx, _tvATy);
 
     // TV label
     ctx.fillStyle='#5a5070'; ctx.font="5px 'Press Start 2P',monospace";
@@ -3284,7 +3290,8 @@ function buildBackground() {
 
     // ── PING PONG TABLE (right-center) ──────────────────────────
     const ppX2 = Math.min(19, COLS-8);
-    const [ppx,ppy] = ts(ppX2-2, ACT_ZONE_Y+1.5);
+    const [_ppATx,_ppATy] = getAdminPos('pingpong', ppX2-2, ACT_ZONE_Y+1.5);
+    const [ppx,ppy] = ts(_ppATx, _ppATy);
 
     // Table surface (no floating text)
     const ppW = T*6, ppH = T*1.5;
@@ -4480,7 +4487,8 @@ function loop(now) {
   // TV game animation — active when any agent is gaming
   if (ACT_ZONE_Y > 0) {
     const anyGaming = Object.values(agentStates).some(s => s.activityAnim === 'gaming' && s.arrived);
-    const [tvx, tvy] = ts(9, ACT_ZONE_Y + 0.3);
+    const [_tvATx2,_tvATy2] = getAdminPos('tv', 9, ACT_ZONE_Y+0.3);
+    const [tvx, tvy] = ts(_tvATx2, _tvATy2);
     const sx = tvx + 6, sy = tvy + 6, sw = T*4 - 14, sh = T*2.5 - 12;
     if (anyGaming) {
       // Clip to TV screen bounds
@@ -4800,6 +4808,37 @@ function buildAdminObjects() {
   }
   // Bookshelf
   adminObjects.push({id:'bookshelf', label:'📚 Bookshelf', tx:COLS-5.5, ty:ACT_ZONE_Y+13, w:4.5, h:3.5});
+
+  // Desks
+  DESK_DEFS.forEach((d,i) => {
+    adminObjects.push({id:'desk_'+i, label:'🖥 Desk '+(i+1), tx:d.tx, ty:d.ty, w:3.5, h:3});
+  });
+
+  // Couches
+  COUCH_DEFS.forEach((d,i) => {
+    adminObjects.push({id:'couch_'+i, label:'🛋 Couch '+(i+1), tx:d.tx, ty:d.ty, w:d.w||3, h:2});
+  });
+
+  // Ping pong table
+  if (ACT_ZONE_Y > 0) {
+    const ppX = Math.min(19, COLS-8);
+    adminObjects.push({id:'pingpong', label:'🏓 Ping Pong', tx:ppX-2, ty:ACT_ZONE_Y+1, w:6, h:3});
+  }
+
+  // TV / Gaming area
+  if (ACT_ZONE_Y > 0) {
+    adminObjects.push({id:'tv', label:'📺 TV', tx:10, ty:ACT_ZONE_Y+0.3, w:4, h:3});
+  }
+
+  // Gym / Treadmills
+  if (ACT_ZONE_Y > 0) {
+    adminObjects.push({id:'gym', label:'🏃 Gym', tx:1, ty:ACT_ZONE_Y+0.5, w:5, h:4});
+  }
+
+  // Vending machine
+  if (KITCHEN_WALL_COL > 0 && ACT_ZONE_Y > 0) {
+    adminObjects.push({id:'vending', label:'🥤 Vending', tx:KITCHEN_WALL_COL+1, ty:ACT_ZONE_Y-2, w:1.5, h:2.5});
+  }
 
   // Apply saved positions
   const saved = JSON.parse(localStorage.getItem('admin_positions') || '{}');
