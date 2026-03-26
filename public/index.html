@@ -2239,9 +2239,9 @@ function generateLayout(n) {
   // ── 1. Water Cooler (pair chat) ────────────────────────────────
   const wcY = 2;
   const wc1 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:rX+0.5,   ty:wcY+1, anim:'chatting_l', type:'group', groupId:20, role:'L', w:8 });
+  IDLE_SPOTS.push({ tx:rX+1.5,   ty:wcY+1, anim:'chatting_l', type:'group', groupId:20, role:'L', w:8 });
   const wc2 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:rX+2.5,   ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8 });
+  IDLE_SPOTS.push({ tx:rX+3.5,   ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8 });
   GROUP_PAIRS[20] = [wc1, wc2];
 
   // ── 2. Dartboard (solo — agent throws darts) ───────────────────
@@ -2338,7 +2338,7 @@ function buildObstacleGrid() {
 
   // ── Right entertainment zone obstacles ─────
   const rXobs = PER_ROW * STEP_X + 2;
-  mark(rXobs + 1, 2); // water cooler
+  mark(rXobs + 2, 2); mark(rXobs + 3, 2); // water cooler
   mark(rXobs + 1, 5); mark(rXobs + 2, 5); // dartboard area
   markRect(rXobs, 8, 3, 2); // aquarium
 
@@ -3099,7 +3099,7 @@ function buildBackground() {
     const rX = PER_ROW * STEP_X + 2;
 
     // ── 1. Water Cooler (compact) ───────────────────────────────
-    const [wcx, wcy] = ts(rX + 1, 2);
+    const [wcx, wcy] = ts(rX + 2.5, 2);
     const wcW = T*0.9, wcH = T*1.2;
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
     fillR(ctx, wcx, wcy, wcW, wcH, '#d0d8e0'); ctx.restore();
