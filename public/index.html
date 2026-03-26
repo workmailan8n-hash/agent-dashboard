@@ -3123,9 +3123,12 @@ function buildBackground() {
   }
 
   // Plants — draw at positions defined in IDLE_SPOTS (type:'plant')
+  let _plantIdx = 0;
   IDLE_SPOTS.filter(s=>s.type==='plant').forEach(({tx:ptx,ty:pty}) => {
-    if (ptx>=COLS-1||pty>=ROWS-1) return;
-    const [px,py]=ts(ptx,pty);
+    const [_plTx, _plTy] = getAdminPos('plant_'+_plantIdx, ptx, pty);
+    _plantIdx++;
+    if (_plTx>=COLS-1||_plTy>=ROWS-1) return;
+    const [px,py]=ts(_plTx, _plTy);
     const pcx = px + T/2;
     // Shadow
     ctx.fillStyle='rgba(0,0,0,0.18)';
@@ -3521,14 +3524,15 @@ function buildBackground() {
     fillR(ctx, zx, zy+3, (COLS-2)*T, 2, '#22204a');
 
     // ── GYM (left side) ──────────────────────────────────────────
-    const [gx,gy] = ts(1, ACT_ZONE_Y+0.5);
+    const [_gymTx,_gymTy] = getAdminPos('gym', 1, ACT_ZONE_Y+0.5);
+    const [gx,gy] = ts(_gymTx, _gymTy);
 
     // Gym label
     ctx.fillStyle='#5a5070'; ctx.font="5px 'Press Start 2P',monospace";
     ctx.fillText('GYM', gx, gy-4);
 
     // Treadmill 1
-    const [t1x,t1y] = ts(1, ACT_ZONE_Y+0.8);
+    const [t1x,t1y] = ts(_gymTx, _gymTy+0.3);
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=5;
     fillR(ctx,t1x+2,t1y+8,T*1.2,T*0.7,'#282840'); ctx.restore();
     fillR(ctx,t1x+4,t1y+10,T*1.2-4,T*0.35,'#1a1a2e');
@@ -3541,7 +3545,7 @@ function buildBackground() {
     fillR(ctx,t1x+T*1.2,t1y+T*0.7+10,4,8,'#1e1e30');
 
     // Treadmill 2
-    const [t2x,t2y] = ts(4, ACT_ZONE_Y+0.8);
+    const [t2x,t2y] = ts(_gymTx+3, _gymTy+0.3);
     fillR(ctx,t2x+2,t2y+8,T*1.2,T*0.7,'#282840');
     fillR(ctx,t2x+4,t2y+10,T*1.2-4,T*0.35,'#3a3060');
     fillR(ctx,t2x+2,t2y+6,8,4,'#404058');
@@ -3592,8 +3596,8 @@ function buildBackground() {
     fillR(ctx,tvx+T*2-4,tvy+T*2.5,8,6,'#181828');
     fillR(ctx,tvx+T*2-10,tvy+T*2.5+6,20,4,'#1e1e30');
 
-    // Console unit
-    const [cx2,cy2] = ts(10, ACT_ZONE_Y+3);
+    // Console unit (relative to TV position)
+    const [cx2,cy2] = ts(_tvATx+1, _tvATy+2.7);
     fillR(ctx,cx2,cy2,T*1.2,T*0.4,'#1a1a2e');
     fillR(ctx,cx2+2,cy2+2,T*1.2-4,T*0.4-4,'#22223a');
     fillR(ctx,cx2+4,cy2+4,8,4,'#0d0d1a'); // disk slot
@@ -3601,8 +3605,8 @@ function buildBackground() {
     fillR(ctx,cx2+T*1.2-10,cy2+5,4,4,'#404060');
     ctx.fillStyle='#9ece6a80'; ctx.beginPath(); ctx.arc(cx2+T*1.2-8,cy2+7,2,0,Math.PI*2); ctx.fill();
 
-    // Gaming sofa (3-seat)
-    const [sfx,sfy] = ts(10, ACT_ZONE_Y+4);
+    // Gaming sofa (3-seat, relative to TV)
+    const [sfx,sfy] = ts(_tvATx+1, _tvATy+3.7);
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
     fillR(ctx,sfx,sfy,T*4,T*0.7+10,COUCH_C); ctx.restore();
     fillR(ctx,sfx,sfy,T*4,10,COUCH_C);
