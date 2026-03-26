@@ -3712,22 +3712,25 @@ function buildBackground() {
     fillR(ctx,cx2+T*1.2-10,cy2+5,4,4,'#404060');
     ctx.fillStyle='#9ece6a80'; ctx.beginPath(); ctx.arc(cx2+T*1.2-8,cy2+7,2,0,Math.PI*2); ctx.fill();
 
-    // Gaming sofa (3-seat, independent from TV)
+    // Gaming sofa (3-seat, independent from TV) — flipped: back at bottom
     const [_gsATx,_gsATy] = getAdminPos('gaming_sofa', 11, ACT_ZONE_Y+3.7);
     const [sfx,sfy] = ts(_gsATx, _gsATy);
+    const sfH = T*0.7+10;
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
-    fillR(ctx,sfx,sfy,T*4,T*0.7+10,COUCH_C); ctx.restore();
-    fillR(ctx,sfx,sfy,T*4,10,COUCH_C);
-    fillR(ctx,sfx+2,sfy+1,T*4-4,8,'#4a3880');
-    fillR(ctx,sfx,sfy+10,T*4,T*0.7,COUCH_SEAT);
-    fillR(ctx,sfx+3,sfy+13,T*4-6,T*0.7-6,COUCH_HI);
-    // armrests
-    fillR(ctx,sfx,sfy,9,T*0.7+10,COUCH_C);
-    fillR(ctx,sfx+T*4-9,sfy,9,T*0.7+10,COUCH_C);
-    // section dividers
-    fillR(ctx,sfx+T-1,sfy+10,2,T*0.7,'#382860');
-    fillR(ctx,sfx+T*2-1,sfy+10,2,T*0.7,'#382860');
-    fillR(ctx,sfx+T*3-1,sfy+10,2,T*0.7,'#382860');
+    fillR(ctx,sfx,sfy,T*4,sfH,COUCH_C); ctx.restore();
+    // Seat cushions (top part)
+    fillR(ctx,sfx,sfy,T*4,T*0.7,COUCH_SEAT);
+    fillR(ctx,sfx+3,sfy+3,T*4-6,T*0.7-6,COUCH_HI);
+    // Back rest (bottom part)
+    fillR(ctx,sfx,sfy+T*0.7,T*4,10,COUCH_C);
+    fillR(ctx,sfx+2,sfy+T*0.7+1,T*4-4,8,'#4a3880');
+    // Armrests
+    fillR(ctx,sfx,sfy,9,sfH,COUCH_C);
+    fillR(ctx,sfx+T*4-9,sfy,9,sfH,COUCH_C);
+    // Section dividers
+    fillR(ctx,sfx+T-1,sfy,2,T*0.7,'#382860');
+    fillR(ctx,sfx+T*2-1,sfy,2,T*0.7,'#382860');
+    fillR(ctx,sfx+T*3-1,sfy,2,T*0.7,'#382860');
 
     // ── PING PONG TABLE (right-center) ──────────────────────────
     const ppX2 = Math.min(19, COLS-8);
