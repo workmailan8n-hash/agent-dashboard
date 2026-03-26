@@ -2103,6 +2103,28 @@ function generateLayout(n) {
   // ── Printer spot ─────────────────────────────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL - 3, ty: KITCHEN_START_ROW - 2, anim:'reading', type:'printer', w:5 });
 
+  // ══════════════════════════════════════════════════════════════════
+  //  RIGHT ENTERTAINMENT ZONE (cols PER_ROW*STEP_X+2 to COLS-2)
+  //  Layout plan for all 13 items:
+  //  Right zone (rX = PER_ROW*STEP_X+2, cols rX..COLS-2):
+  //    row 2:  Water cooler (pair)       row 5:  Dartboard
+  //    row 8:  Aquarium                  row 11: Massage chair
+  //  Social zone (below ACT_ZONE):
+  //    +10: Conference (exists)  +13: Arcade + Espresso bar
+  //    +14: Bookshelf (exists)   +15: Server rack + 3D printer
+  //    +17: Hammock + Basketball + Foosball
+  //    +19: Telescope + DJ + Piano
+  // ══════════════════════════════════════════════════════════════════
+  const rX = PER_ROW * STEP_X + 2; // right zone start col (~23)
+
+  // ── 1. Water Cooler (pair chat) ────────────────────────────────
+  const wcY = 2;
+  const wc1 = IDLE_SPOTS.length;
+  IDLE_SPOTS.push({ tx:rX+0.5,   ty:wcY+1, anim:'chatting_l', type:'group', groupId:20, role:'L', w:8 });
+  const wc2 = IDLE_SPOTS.length;
+  IDLE_SPOTS.push({ tx:rX+2.5,   ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8 });
+  GROUP_PAIRS[20] = [wc1, wc2];
+
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
 
@@ -2188,6 +2210,10 @@ function buildObstacleGrid() {
   if (ACT_ZONE_Y > 0) {
     markRect(3, ACT_ZONE_Y + 9, 6, 3);
   }
+
+  // ── Water cooler (right zone) ─────
+  const rXobs = PER_ROW * STEP_X + 2;
+  mark(rXobs + 1, 2);
 
   // ── Couches (lounge area) — agents should walk around, not through ─────
   COUCH_DEFS.forEach(cd => {
@@ -2939,6 +2965,32 @@ function buildBackground() {
     ctx.fillStyle='#606070';
     ctx.fillRect((cx2-6)|0, (cy2-10)|0, 3, 22);
     ctx.fillRect((cx2+3)|0, (cy2-10)|0, 3, 22);
+  }
+
+  // ════ RIGHT ENTERTAINMENT ZONE ══════════════════════════════════
+  {
+    const rX = PER_ROW * STEP_X + 2;
+
+    // ── 1. Water Cooler ─────────────────────────────────────────
+    const [wcx, wcy] = ts(rX + 1, 2);
+    // Cooler body
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
+    fillR(ctx, wcx, wcy, T*0.8, T*1.4, '#d0d8e0'); ctx.restore();
+    fillR(ctx, wcx+2, wcy+2, T*0.8-4, T*0.5, '#a0c8e8'); // water tank (blue)
+    fillR(ctx, wcx+2, wcy+T*0.5+2, T*0.8-4, T*0.8, '#e0e4e8'); // lower body
+    // Tap
+    fillR(ctx, wcx+T*0.4-3, wcy+T*0.55, 6, 4, '#808890');
+    // Blue/red buttons
+    ctx.fillStyle='#4488cc'; ctx.fillRect(wcx+4, wcy+T*0.6+4, 5, 3);
+    ctx.fillStyle='#cc4444'; ctx.fillRect(wcx+12, wcy+T*0.6+4, 5, 3);
+    // Water jug on top
+    ctx.fillStyle='#88c8ee60';
+    ctx.beginPath(); ctx.ellipse(wcx+T*0.4, wcy-2, 8, 10, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle='#6090b0'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(wcx+T*0.4, wcy-2, 8, 10, 0, Math.PI, 0); ctx.stroke();
+    // Label
+    ctx.fillStyle='#5a5070'; ctx.font="4px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('WATER', wcx+T*0.4, wcy+T*1.4+10); ctx.textAlign='left';
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
