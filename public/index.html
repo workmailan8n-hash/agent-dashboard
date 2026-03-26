@@ -4727,8 +4727,8 @@ function loop(now) {
   // ── Agent separation (soft collision) ──────────────────────────
   {
     const list = Object.values(agentStates);
-    const MIN = 1.4; // min distance in tiles (bigger = less overlap)
-    const STRENGTH = 0.7; // push strength multiplier
+    const MIN = 0.7; // min distance in tiles — small enough to not block paths
+    const STRENGTH = 0.5; // gentle push
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         const a = list[i], b = list[j];
