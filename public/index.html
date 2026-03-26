@@ -1964,6 +1964,7 @@ let DESK_DEFS=[], DESK_SLOTS=[], COUCH_DEFS=[], COUCH_SLOTS=[], layoutN=0;
 let IDLE_SPOTS=[];   // all activity spots for idle agents
 let GROUP_PAIRS={};  // groupId -> [slotIndexA, slotIndexB]
 let KITCHEN_WALL_COL=0, KITCHEN_START_ROW=0, KITCHEN_DOOR_ROW=0; // enclosed kitchen
+let PER_ROW=3, STEP_X=7, STEP_Y=4, START_ROW=1; // desk layout constants (global for obstacle grid / kanban)
 let ACT_ZONE_Y = 0;  // Y row where gym/gaming/ping-pong zone starts
 // Ping pong ball — shared between both players
 let PP_L = {tx:0,ty:0}, PP_R = {tx:0,ty:0}; // player tile positions
@@ -1980,17 +1981,17 @@ function generateLayout(n) {
   layoutN = count;
   DESK_DEFS=[]; DESK_SLOTS=[]; COUCH_DEFS=[]; COUCH_SLOTS=[];
 
-  // 4 стола в ряд — у каждого агента своё место
-  const PER_ROW=3, STEP_X=7, STEP_Y=4, START=1;
+  // 3 стола в ряд — у каждого агента своё место
+  PER_ROW=3; STEP_X=7; STEP_Y=4; START_ROW=1;
   for (let i=0; i<count; i++) {
     const col=i%PER_ROW, row=Math.floor(i/PER_ROW);
-    const dtx=1+col*STEP_X, dty=START+row*STEP_Y;
+    const dtx=1+col*STEP_X, dty=START_ROW+row*STEP_Y;
     DESK_DEFS.push({tx:dtx, ty:dty});
     DESK_SLOTS.push({tx:dtx+0.8, ty:dty+1.9});
   }
 
   // 5 диванов в ряд, у каждого агента свой диван
-  const deskRows=Math.ceil(count/PER_ROW), LOUNGE_Y=START+deskRows*STEP_Y+1;
+  const deskRows=Math.ceil(count/PER_ROW), LOUNGE_Y=START_ROW+deskRows*STEP_Y+1;
   const COUCH_PER_ROW=5;
   for (let i=0; i<count; i++) {
     const col=i%COUCH_PER_ROW, row=Math.floor(i/COUCH_PER_ROW);
