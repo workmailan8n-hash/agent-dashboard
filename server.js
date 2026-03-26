@@ -6,7 +6,7 @@ const { WebSocketServer } = require("ws");
 const chokidar = require("chokidar");
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), ".claude", "projects");
-const PORT = 3737;
+const PORT = process.env.PORT || 3737;
 
 // Agent state: sessionId -> agent info
 const agents = {};
@@ -376,6 +376,7 @@ wss.on("connection", (ws) => {
 scanExistingFiles();
 
 const watchPattern = path.join(CLAUDE_PROJECTS_DIR, "**", "*.jsonl");
+if (fs.existsSync(CLAUDE_PROJECTS_DIR)) {
 chokidar
   .watch(watchPattern, { ignoreInitial: true, usePolling: true, interval: 500, awaitWriteFinish: { stabilityThreshold: 100 } })
   .on("change", parseNewLines)
@@ -387,6 +388,9 @@ chokidar
     // Fix: clean up filePositions to prevent memory leak
     delete filePositions[filePath];
   });
+} else {
+  console.log("⚠️  Claude projects dir not found, running in demo mode (no file watcher)");
+}
 
 // Mark agents as idle after 30s of inactivity
 // Remove agents that have been idle for more than 24h AND are subagents (cleanup)
