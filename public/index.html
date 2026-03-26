@@ -1713,6 +1713,82 @@ function drawPingPongBall(ctx) {
   ctx.beginPath(); ctx.arc(bx - speed*3, by, 1.2, 0, Math.PI*2); ctx.fill();
 }
 
+// ── Dart animation — darts fly toward board when agent is at darts spot ──
+let dartAnims = []; // {startTime, angle, progress}
+function drawDartAnimation(ctx, tick) {
+  const rX = PER_ROW * STEP_X + 2;
+  // Check if any agent is at the darts spot
+  const dartPlayer = Object.values(agentStates).find(s =>
+    s.arrived && s.activityAnim === 'stretching' &&
+    IDLE_SPOTS[s.slotIdx]?.type === 'darts'
+  );
+  if (!dartPlayer) { dartAnims = []; return; }
+
+  // Spawn a new dart every ~60 ticks
+  if (tick % 60 < 1 || dartAnims.length === 0) {
+    dartAnims.push({
+      angle: -0.3 + Math.random() * 0.6, // spread
+      t: 0,
+      stuck: false,
+      stuckX: 0, stuckY: 0
+    });
+    if (dartAnims.length > 5) dartAnims.shift(); // max 5 darts
+  }
+
+  const boardX = OX + (rX + 1.5) * T;
+  const boardY = OY + 4;
+  // Agent throw position
+  const throwX = OX + dartPlayer.sx ? dartPlayer.sx - OX : (rX + 1.5) * T;
+  const throwY = dartPlayer.sy ? dartPlayer.sy - 16 : OY + 7 * T;
+
+  for (const d of dartAnims) {
+    if (!d.stuck) {
+      d.t += 0.04;
+      if (d.t >= 1) {
+        d.stuck = true;
+        d.stuckX = boardX + (Math.random() - 0.5) * 16;
+        d.stuckY = boardY + (Math.random() - 0.5) * 16;
+      }
+    }
+
+    if (d.stuck) {
+      // Dart stuck in board
+      const dx2 = d.stuckX, dy2 = d.stuckY;
+      ctx.save();
+      ctx.translate(dx2, dy2);
+      ctx.rotate(-Math.PI/2 + d.angle);
+      // Dart body
+      ctx.fillStyle='#c0c0d0'; ctx.fillRect(-1, -8, 2, 8);
+      // Flights (feathers)
+      ctx.fillStyle='#cc2020'; ctx.beginPath();
+      ctx.moveTo(0, -8); ctx.lineTo(-4, -12); ctx.lineTo(0, -10); ctx.fill();
+      ctx.beginPath();
+      ctx.moveTo(0, -8); ctx.lineTo(4, -12); ctx.lineTo(0, -10); ctx.fill();
+      // Tip
+      ctx.fillStyle='#808080'; ctx.fillRect(-0.5, 0, 1, 3);
+      ctx.restore();
+    } else {
+      // Flying dart
+      const px = throwX + (boardX - throwX) * d.t + d.angle * 20 * (1-d.t);
+      const py = throwY + (boardY - throwY) * d.t - Math.sin(d.t * Math.PI) * 15;
+      ctx.save();
+      const flyAngle = Math.atan2(boardY - throwY, boardX - throwX) + d.angle * 0.5;
+      ctx.translate(px, py);
+      ctx.rotate(flyAngle);
+      // Dart body
+      ctx.fillStyle='#c0c0d0'; ctx.fillRect(-1, -6, 2, 6);
+      ctx.fillStyle='#cc2020';
+      ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(-3,-9); ctx.lineTo(0,-7); ctx.fill();
+      ctx.beginPath(); ctx.moveTo(0,-6); ctx.lineTo(3,-9); ctx.lineTo(0,-7); ctx.fill();
+      ctx.fillStyle='#808080'; ctx.fillRect(-0.5, 0, 1, 2);
+      ctx.restore();
+      // Motion trail
+      ctx.fillStyle='rgba(200,200,220,0.3)';
+      ctx.beginPath(); ctx.arc(px - 4, py + 2, 1.5, 0, Math.PI*2); ctx.fill();
+    }
+  }
+}
+
 // ── smoking_beer (couch) — beer in one hand, cigarette in other ──
 function drawSmokingBeer(ctx, cx, cy, pal, t) {
   const ph   = t * Math.PI * 2;
@@ -2975,68 +3051,42 @@ function buildBackground() {
   {
     const rX = PER_ROW * STEP_X + 2;
 
-    // ── 1. Water Cooler ─────────────────────────────────────────
-    const [wcx, wcy] = ts(rX + 0.5, 1.5);
-    const wcW = T*1.5, wcH = T*2;
-    // Cooler body
-    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
+    // ── 1. Water Cooler (compact) ───────────────────────────────
+    const [wcx, wcy] = ts(rX + 1, 2);
+    const wcW = T*0.9, wcH = T*1.2;
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
     fillR(ctx, wcx, wcy, wcW, wcH, '#d0d8e0'); ctx.restore();
-    fillR(ctx, wcx+3, wcy+3, wcW-6, T*0.7, '#80c0e8'); // water tank (blue)
-    fillR(ctx, wcx+3, wcy+T*0.7+3, wcW-6, wcH-T*0.7-6, '#e8ecf0'); // lower body
-    // Tap area
-    fillR(ctx, wcx+wcW/2-5, wcy+T*0.8, 10, 6, '#707880');
-    // Blue/red buttons
-    ctx.fillStyle='#4488dd'; ctx.fillRect(wcx+6, wcy+T*0.9+6, 8, 5);
-    ctx.fillStyle='#dd4444'; ctx.fillRect(wcx+wcW-14, wcy+T*0.9+6, 8, 5);
-    // Water jug on top (big)
-    ctx.fillStyle='#70b8e880';
-    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-4, 14, 16, 0, Math.PI, 0); ctx.fill();
-    ctx.strokeStyle='#5090b8'; ctx.lineWidth=1.5;
-    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-4, 14, 16, 0, Math.PI, 0); ctx.stroke();
-    // Drip tray
-    fillR(ctx, wcx+4, wcy+wcH-4, wcW-8, 4, '#a0a8b0');
-    // Label
-    ctx.fillStyle='#6a6090'; ctx.font="5px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('WATER COOLER', wcx+wcW/2, wcy+wcH+12); ctx.textAlign='left';
+    fillR(ctx, wcx+2, wcy+2, wcW-4, wcH*0.35, '#80c0e8'); // water tank
+    fillR(ctx, wcx+2, wcy+wcH*0.35+2, wcW-4, wcH*0.6, '#e8ecf0'); // body
+    fillR(ctx, wcx+wcW/2-3, wcy+wcH*0.45, 6, 4, '#707880'); // tap
+    ctx.fillStyle='#4488dd'; ctx.fillRect(wcx+3, wcy+wcH*0.55, 5, 3);
+    ctx.fillStyle='#dd4444'; ctx.fillRect(wcx+wcW-8, wcy+wcH*0.55, 5, 3);
+    // Jug on top
+    ctx.fillStyle='#70b8e870';
+    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-1, 9, 11, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle='#5090b8'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-1, 9, 11, 0, Math.PI, 0); ctx.stroke();
 
-    // ── 2. Dartboard ─────────────────────────────────────────────
-    const [dx, dy] = ts(rX + 0.5, 5);
-    const dcx = dx + T, dcy = dy + T*0.6;
-    const DR = 22; // bigger radius
-    // Wall mount board (square wooden backing)
-    ctx.save(); ctx.shadowColor='#00000080'; ctx.shadowBlur=8;
-    fillR(ctx, dcx-DR-4, dcy-DR-4, DR*2+8, DR*2+8, '#3a2818'); ctx.restore();
-    fillR(ctx, dcx-DR-2, dcy-DR-2, DR*2+4, DR*2+4, '#5a3c20');
-    // Board (dark circle)
+    // ── 2. Dartboard (ON the top wall — row 0) ──────────────────
+    // Mounted on the purple top wall, between rX+1 and rX+2
+    const dartWallX = OX + (rX + 1.5) * T;
+    const dartWallY = OY + 4; // near top of wall tile
+    const DR = 13;
+    // Wooden backing
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=4;
+    fillR(ctx, dartWallX-DR-3, dartWallY-DR-3, DR*2+6, DR*2+6, '#4a3018'); ctx.restore();
+    // Board circle
     ctx.fillStyle='#101010';
-    ctx.beginPath(); ctx.arc(dcx, dcy, DR, 0, Math.PI*2); ctx.fill();
-    // Rings (from outside in)
-    const rings = [
-      [DR-1, '#1a6830'], [DR-4, '#cc2020'], [DR-7, '#e8d870'],
-      [DR-10, '#1a6830'], [DR-13, '#cc2020'], [6, '#e8d870'],
-      [3, '#cc2020']
-    ];
-    for (const [r, c] of rings) {
-      ctx.fillStyle = c;
-      ctx.beginPath(); ctx.arc(dcx, dcy, r, 0, Math.PI*2); ctx.fill();
-    }
-    // Cross wires
-    ctx.strokeStyle='#c0c0c050'; ctx.lineWidth=0.7;
-    ctx.beginPath(); ctx.moveTo(dcx-DR, dcy); ctx.lineTo(dcx+DR, dcy); ctx.stroke();
-    ctx.beginPath(); ctx.moveTo(dcx, dcy-DR); ctx.lineTo(dcx, dcy+DR); ctx.stroke();
+    ctx.beginPath(); ctx.arc(dartWallX, dartWallY, DR, 0, Math.PI*2); ctx.fill();
+    // Rings
+    const rings = [[DR-1,'#1a6030'],[DR-3,'#cc2020'],[DR-5,'#e8d870'],[DR-7,'#1a6030'],[DR-9,'#cc2020'],[4,'#e8d870'],[2,'#cc2020']];
+    for (const [r,c] of rings) { ctx.fillStyle=c; ctx.beginPath(); ctx.arc(dartWallX,dartWallY,r,0,Math.PI*2); ctx.fill(); }
+    // Wires
+    ctx.strokeStyle='#c0c0c040'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(dartWallX-DR,dartWallY); ctx.lineTo(dartWallX+DR,dartWallY); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dartWallX,dartWallY-DR); ctx.lineTo(dartWallX,dartWallY+DR); ctx.stroke();
     // Bullseye
-    ctx.fillStyle='#e8e0d0';
-    ctx.beginPath(); ctx.arc(dcx, dcy, 2, 0, Math.PI*2); ctx.fill();
-    // Number markers around edge
-    ctx.fillStyle='#e0e0e060'; ctx.font="3px monospace"; ctx.textAlign='center';
-    [20,1,18,4,13,6,10,15,2,17,3,19,7,16,8,11,14,9,12,5].forEach((n,i) => {
-      const a = (i/20)*Math.PI*2 - Math.PI/2;
-      ctx.fillText(n, dcx+Math.cos(a)*(DR+6), dcy+Math.sin(a)*(DR+6)+2);
-    });
-    ctx.textAlign='left';
-    // Label
-    ctx.fillStyle='#6a6090'; ctx.font="5px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('DARTS', dcx, dcy+DR+14); ctx.textAlign='left';
+    ctx.fillStyle='#f0e8d0'; ctx.beginPath(); ctx.arc(dartWallX,dartWallY,1.5,0,Math.PI*2); ctx.fill();
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
@@ -4403,6 +4453,7 @@ function loop(now) {
   for (const sp of sorted) sp.draw(ctx);
   drawCatBowls(ctx, globalTick);
   drawPingPongBall(ctx);
+  drawDartAnimation(ctx, globalTick);
   cat.draw(ctx, globalTick);
   PS.draw(ctx);
 
