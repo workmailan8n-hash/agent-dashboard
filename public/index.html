@@ -803,29 +803,358 @@ function drawHeadBack(ctx, cx, cy, pal) {
   }
 }
 
-// ── walking ──────────────────────────────────────────────────────
-function drawWalking(ctx, cx, cy, pal, t) {
+// ── head side-view helper ─────────────────────────────────────────
+function drawHeadSide(ctx, cx, cy, pal, flipLeft) {
+  const d = flipLeft ? -1 : 1;
+  px(ctx,cx-2,cy+2,4,4,pal.skin);
+  const headW = pal.alien ? 8 : 7;
+  ctx.fillStyle=pal.skin;
+  ctx.beginPath(); ctx.ellipse(cx,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+  if (pal.elf) {
+    ctx.fillStyle=pal.skin;
+    ctx.beginPath(); ctx.moveTo(cx-d*8,cy-9); ctx.lineTo(cx-d*12,cy-14); ctx.lineTo(cx-d*6,cy-7); ctx.fill();
+  } else if (!pal.alien) {
+    px(ctx,cx-d*7,cy-9,3,5,pal.skin);
+  }
+  if (pal.cat) {
+    ctx.fillStyle=pal.hair;
+    ctx.beginPath(); ctx.moveTo(cx-3*d,cy-14); ctx.lineTo(cx-6*d,cy-22); ctx.lineTo(cx,cy-14); ctx.fill();
+    ctx.fillStyle=pal.skin+'cc';
+    ctx.beginPath(); ctx.moveTo(cx-3*d,cy-15); ctx.lineTo(cx-5*d,cy-21); ctx.lineTo(cx-1*d,cy-15); ctx.fill();
+  }
+  if (pal.demon) {
+    ctx.fillStyle='#601010';
+    ctx.beginPath(); ctx.moveTo(cx+d*2,cy-16); ctx.lineTo(cx+d*5,cy-24); ctx.lineTo(cx-d*1,cy-16); ctx.fill();
+  }
+  if (pal.bun) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx-d*3,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx-d*2,cy-17,5,5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx+d*2,cy-8,5,7,0,0,Math.PI*2); ctx.fill();
+  } else if (pal.hat) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-13,6,5,0,-Math.PI,0); ctx.fill();
+    px(ctx,cx-9,cy-18,18,4,pal.accent+'cc');
+    px(ctx,cx-7,cy-22,14,6,pal.accent);
+  } else if (!pal.robot && !pal.alien) {
+    ctx.fillStyle=pal.hair;
+    ctx.beginPath(); ctx.ellipse(cx-d*2,cy-10,headW-1,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.skin;
+    ctx.beginPath(); ctx.ellipse(cx+d*2,cy-7,5,7,0,0,Math.PI*2); ctx.fill();
+  } else if (pal.robot) {
+    ctx.fillStyle='#304050'; ctx.beginPath(); ctx.ellipse(cx,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx+d*2,cy-8,4,7,0,0,Math.PI*2); ctx.fill();
+  }
+  if (pal.alien) {
+    ctx.fillStyle='#0a1020';
+    ctx.beginPath(); ctx.ellipse(cx+d*2,cy-10,4,3,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.accent+'bb';
+    ctx.beginPath(); ctx.ellipse(cx+d*2,cy-10,2,2,0,0,Math.PI*2); ctx.fill();
+  } else if (pal.robot) {
+    ctx.fillStyle='#001828'; ctx.fillRect(cx,cy-12,d*6,5);
+    ctx.fillStyle=pal.accent; ctx.fillRect(cx,cy-11,d*5,3);
+  } else if (pal.demon) {
+    ctx.fillStyle='#ff2000';
+    ctx.beginPath(); ctx.ellipse(cx+d*2,cy-10,3,2.5,0,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#1a1b26'; ctx.fillRect(cx+d*1,cy-11,3,3);
+    ctx.fillStyle='#ffffff80'; ctx.fillRect(cx+d*1,cy-11,2,2);
+    if (pal.glasses) {
+      ctx.strokeStyle='#808090'; ctx.lineWidth=1;
+      ctx.strokeRect(cx+d*0.5,cy-12,4,4);
+    }
+  }
+  if (!pal.robot && !pal.cat) {
+    px(ctx,cx+d*6,cy-7,2,3,pal.skin);
+  }
+  if (!pal.robot) {
+    if (pal.cat) {
+      ctx.fillStyle='#e070a0'; ctx.fillRect(cx+d*3,cy-5,2,2);
+    } else {
+      ctx.fillStyle='#c8906090'; ctx.fillRect(cx+d*2,cy-5,4,2);
+    }
+  }
+  if (pal.beard && !pal.robot && !pal.alien && !pal.demon && !pal.cat) {
+    px(ctx,cx+d*1,cy-4,5,3,pal.hair+'bb');
+  }
+  if (pal.scarf) { px(ctx,cx-4,cy+1,8,3,pal.accent+'cc'); }
+}
+
+// ── 3/4 front head (diagonal toward camera) ─────────────────────
+function drawHeadFront34(ctx, cx, cy, pal, flipLeft) {
+  const d = flipLeft ? -1 : 1;
+  px(ctx,cx-2,cy+2,4,4,pal.skin);
+  const headW = pal.alien ? 8 : 7;
+  ctx.fillStyle=pal.skin;
+  ctx.beginPath(); ctx.ellipse(cx+d*1,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+  if (pal.elf) {
+    ctx.fillStyle=pal.skin;
+    ctx.beginPath(); ctx.moveTo(cx-d*7,cy-9); ctx.lineTo(cx-d*11,cy-14); ctx.lineTo(cx-d*5,cy-7); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+d*8,cy-9); ctx.lineTo(cx+d*11,cy-14); ctx.lineTo(cx+d*6,cy-7); ctx.fill();
+  } else if (!pal.alien) {
+    px(ctx,cx-d*7,cy-9,2,4,pal.skin);
+    px(ctx,cx+d*6,cy-9,3,5,pal.skin);
+  }
+  if (pal.cat) {
+    ctx.fillStyle=pal.hair;
+    ctx.beginPath(); ctx.moveTo(cx-5,cy-14); ctx.lineTo(cx-9,cy-22); ctx.lineTo(cx-1,cy-14); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-14); ctx.lineTo(cx+9,cy-22); ctx.lineTo(cx+1,cy-14); ctx.fill();
+  }
+  if (pal.demon) {
+    ctx.fillStyle='#601010';
+    ctx.beginPath(); ctx.moveTo(cx-5,cy-16); ctx.lineTo(cx-8,cy-24); ctx.lineTo(cx-2,cy-16); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-16); ctx.lineTo(cx+8,cy-24); ctx.lineTo(cx+2,cy-16); ctx.fill();
+  }
+  if (pal.bun) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-17,5,5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-14,7,5,0,-Math.PI,0); ctx.fill();
+    px(ctx,cx-7,cy-15,14,5,pal.hair);
+  } else if (pal.hat) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-14,7,5,0,-Math.PI,0); ctx.fill();
+    px(ctx,cx-9,cy-18,18,4,pal.accent+'cc');
+    px(ctx,cx-7,cy-22,14,6,pal.accent);
+  } else if (!pal.robot && !pal.alien) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-13,headW,6,0,-Math.PI,0); ctx.fill();
+    px(ctx,cx-7,cy-14,4,5,pal.hair); px(ctx,cx+3,cy-14,4,5,pal.hair);
+  } else if (pal.robot) {
+    ctx.fillStyle='#304050'; ctx.beginPath(); ctx.ellipse(cx,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx+d*1,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+  }
+  if (pal.alien) {
+    ctx.fillStyle='#0a1020';
+    ctx.beginPath(); ctx.ellipse(cx+d*3,cy-10,4,3,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx-d*3,cy-10,3,2.5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.accent+'bb';
+    ctx.beginPath(); ctx.ellipse(cx+d*3,cy-10,2,2,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx-d*3,cy-10,2,1.5,0,0,Math.PI*2); ctx.fill();
+  } else if (pal.robot) {
+    ctx.fillStyle='#001828'; ctx.fillRect(cx-5,cy-12,10,5);
+    ctx.fillStyle=pal.accent; ctx.fillRect(cx-4,cy-11,8,3);
+  } else if (pal.demon) {
+    ctx.fillStyle='#ff2000';
+    ctx.beginPath(); ctx.ellipse(cx+d*2,cy-10,3,2.5,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx-d*3,cy-10,2,2,0,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#1a1b26';
+    ctx.fillRect(cx+d*1,cy-11,4,3); ctx.fillRect(cx-d*4,cy-11,3,3);
+    ctx.fillStyle='#ffffff80';
+    ctx.fillRect(cx+d*1,cy-11,2,2); ctx.fillRect(cx-d*4,cy-11,1,2);
+    if (pal.glasses) {
+      ctx.strokeStyle='#808090'; ctx.lineWidth=1;
+      ctx.strokeRect(cx+d*0,cy-12,5,4); ctx.strokeRect(cx-d*5,cy-12,4,4);
+    }
+  }
+  if (!pal.robot) {
+    if (pal.cat) {
+      ctx.fillStyle='#e070a0'; ctx.fillRect(cx+d*0,cy-5,2,2);
+    } else {
+      ctx.fillStyle='#c8906090'; ctx.fillRect(cx-2,cy-5,5,2);
+    }
+  }
+  if (pal.beard && !pal.robot && !pal.alien && !pal.demon && !pal.cat) {
+    px(ctx,cx-3,cy-4,7,3,pal.hair+'bb');
+  }
+  if (pal.scarf) { px(ctx,cx-5,cy+1,10,3,pal.accent+'cc'); }
+}
+
+// ── 3/4 back head (diagonal away from camera) ───────────────────
+function drawHeadBack34(ctx, cx, cy, pal, flipLeft) {
+  const d = flipLeft ? -1 : 1;
+  px(ctx,cx-2,cy+2,4,4,pal.skin);
+  const headW = pal.alien ? 8 : 7;
+  ctx.fillStyle=pal.skin;
+  ctx.beginPath(); ctx.ellipse(cx,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+  if (pal.elf) {
+    ctx.fillStyle=pal.skin;
+    ctx.beginPath(); ctx.moveTo(cx+d*8,cy-9); ctx.lineTo(cx+d*12,cy-14); ctx.lineTo(cx+d*6,cy-7); ctx.fill();
+  } else if (!pal.alien) {
+    px(ctx,cx+d*6,cy-9,3,5,pal.skin);
+  }
+  if (pal.cat) {
+    ctx.fillStyle=pal.hair;
+    ctx.beginPath(); ctx.moveTo(cx-5,cy-14); ctx.lineTo(cx-9,cy-22); ctx.lineTo(cx-1,cy-14); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-14); ctx.lineTo(cx+9,cy-22); ctx.lineTo(cx+1,cy-14); ctx.fill();
+  }
+  if (pal.demon) {
+    ctx.fillStyle='#601010';
+    ctx.beginPath(); ctx.moveTo(cx-5,cy-16); ctx.lineTo(cx-8,cy-24); ctx.lineTo(cx-2,cy-16); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-16); ctx.lineTo(cx+8,cy-24); ctx.lineTo(cx+2,cy-16); ctx.fill();
+  }
+  if (pal.bun) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-8,headW+1,9,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx-d*1,cy-17,5,5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx+d*4,cy-6,3,5,0,0,Math.PI*2); ctx.fill();
+  } else if (pal.hat) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-8,7,8,0,0,Math.PI*2); ctx.fill();
+    px(ctx,cx-7,cy-21,14,6,pal.accent);
+    px(ctx,cx-9,cy-17,18,4,pal.accent+'cc');
+  } else if (!pal.robot && !pal.alien) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx-d*1,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx+d*4,cy-6,3,6,0,0,Math.PI*2); ctx.fill();
+    px(ctx,cx-6,cy-2,12,5,pal.hair);
+  } else if (pal.robot) {
+    ctx.fillStyle='#304050'; ctx.beginPath(); ctx.ellipse(cx,cy-8,headW,9,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx+d*3,cy-8,3,6,0,0,Math.PI*2); ctx.fill();
+  }
+  if (pal.scarf) { px(ctx,cx-5,cy+1,10,3,pal.accent+'cc'); }
+}
+
+// ── walking (SOUTH — toward camera, original) ───────────────────
+function drawWalkS(ctx, cx, cy, pal, t) {
   const ph = t * Math.PI * 2;
   const lL = Math.sin(ph) * 5, lR = -lL;
   const bob = Math.abs(Math.sin(ph)) * 2.5;
-  const aL = Math.sin(ph + Math.PI) * 4;  // opposite to left leg
-  const aR = Math.sin(ph) * 4;             // opposite to right leg
+  const aL = Math.sin(ph + Math.PI) * 4;
+  const aR = Math.sin(ph) * 4;
   shd(ctx, cx, cy+16);
-  // ноги
   px(ctx,cx-5,cy+4+lL, 5,9,pal.pants); px(ctx,cx+1,cy+4+lR, 5,9,pal.pants);
-  // ботинки
   px(ctx,cx-6,cy+12+lL,6,4,'#1a1a2a'); px(ctx,cx-6,cy+14+lL,3,2,'#2a2a3a');
   px(ctx,cx+1,cy+12+lR,6,4,'#1a1a2a'); px(ctx,cx+1,cy+14+lR,3,2,'#2a2a3a');
-  // тело
   px(ctx,cx-6,cy-2-bob,12,9,pal.shirt);
-  px(ctx,cx-1,cy-1-bob,2,3,pal.skin); // воротник
-  px(ctx,cx+2,cy+1-bob,3,4,'#ffffff1a'); // нагрудный карман
-  // руки с кистями (anti-phase)
+  px(ctx,cx-1,cy-1-bob,2,3,pal.skin);
+  px(ctx,cx+2,cy+1-bob,3,4,'#ffffff1a');
   px(ctx,cx-10,cy+aL-bob, 4,7,pal.skin); px(ctx,cx-10,cy+6+aL-bob,4,3,pal.skin);
   px(ctx,cx+6, cy+aR-bob, 4,7,pal.skin); px(ctx,cx+6, cy+6+aR-bob,4,3,pal.skin);
-  // голова
   drawHeadFront(ctx, cx, cy-12-bob, pal, false);
 }
+function drawWalking(ctx, cx, cy, pal, t) { drawWalkS(ctx, cx, cy, pal, t); }
+
+// ── walking NORTH (away from camera) ─────────────────────────────
+function drawWalkN(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const lL = Math.sin(ph) * 5, lR = -lL;
+  const bob = Math.abs(Math.sin(ph)) * 2.5;
+  const aL = Math.sin(ph + Math.PI) * 4;
+  const aR = Math.sin(ph) * 4;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-5,cy+4+lL, 5,9,pal.pants); px(ctx,cx+1,cy+4+lR, 5,9,pal.pants);
+  px(ctx,cx-6,cy+12+lL,6,4,'#1a1a2a'); px(ctx,cx+1,cy+12+lR,6,4,'#1a1a2a');
+  px(ctx,cx-6,cy-2-bob,12,9,pal.shirt);
+  px(ctx,cx-10,cy+aL-bob, 4,7,pal.shirt); px(ctx,cx-10,cy+6+aL-bob,4,3,pal.skin);
+  px(ctx,cx+6, cy+aR-bob, 4,7,pal.shirt); px(ctx,cx+6, cy+6+aR-bob,4,3,pal.skin);
+  drawHeadBack(ctx, cx, cy-12-bob, pal);
+}
+
+// ── walking EAST (right side profile) ────────────────────────────
+function drawWalkE(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const legF = Math.sin(ph) * 5, legB = -legF;
+  const bob = Math.abs(Math.sin(ph)) * 2.5;
+  const armF = Math.sin(ph) * 4, armB = -armF;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-2,cy+4+legB, 5,9,pal.pants);
+  px(ctx,cx-2,cy+12+legB,5,4,'#1a1a2a');
+  px(ctx,cx-4,cy-2-bob,9,9,pal.shirt);
+  px(ctx,cx-3,cy+armB-bob, 4,7,pal.shirt); px(ctx,cx-3,cy+6+armB-bob,3,3,pal.skin);
+  px(ctx,cx-1,cy+4+legF, 5,9,pal.pants);
+  px(ctx,cx-1,cy+12+legF,6,4,'#1a1a2a'); px(ctx,cx-1,cy+14+legF,3,2,'#2a2a3a');
+  px(ctx,cx+2,cy+armF-bob, 4,7,pal.skin); px(ctx,cx+2,cy+6+armF-bob,3,3,pal.skin);
+  drawHeadSide(ctx, cx, cy-12-bob, pal, false);
+}
+
+// ── walking WEST (left side profile) ─────────────────────────────
+function drawWalkW(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const legF = Math.sin(ph) * 5, legB = -legF;
+  const bob = Math.abs(Math.sin(ph)) * 2.5;
+  const armF = Math.sin(ph) * 4, armB = -armF;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-3,cy+4+legB, 5,9,pal.pants);
+  px(ctx,cx-3,cy+12+legB,5,4,'#1a1a2a');
+  px(ctx,cx-5,cy-2-bob,9,9,pal.shirt);
+  px(ctx,cx-1,cy+armB-bob, 4,7,pal.shirt); px(ctx,cx-1,cy+6+armB-bob,3,3,pal.skin);
+  px(ctx,cx-4,cy+4+legF, 5,9,pal.pants);
+  px(ctx,cx-5,cy+12+legF,6,4,'#1a1a2a'); px(ctx,cx-5,cy+14+legF,3,2,'#2a2a3a');
+  px(ctx,cx-6,cy+armF-bob, 4,7,pal.skin); px(ctx,cx-6,cy+6+armF-bob,3,3,pal.skin);
+  drawHeadSide(ctx, cx, cy-12-bob, pal, true);
+}
+
+// ── walking SOUTHEAST (3/4 front-right) ──────────────────────────
+function drawWalkSE(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const lL = Math.sin(ph) * 5, lR = -lL;
+  const bob = Math.abs(Math.sin(ph)) * 2.5;
+  const aL = Math.sin(ph + Math.PI) * 4;
+  const aR = Math.sin(ph) * 4;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-4,cy+4+lL, 5,9,pal.pants); px(ctx,cx+2,cy+4+lR, 5,9,pal.pants);
+  px(ctx,cx-5,cy+12+lL,6,4,'#1a1a2a'); px(ctx,cx+2,cy+12+lR,6,4,'#1a1a2a');
+  px(ctx,cx-5,cy-2-bob,11,9,pal.shirt);
+  px(ctx,cx+1,cy+1-bob,3,4,'#ffffff1a');
+  px(ctx,cx-9,cy+aL-bob, 4,7,pal.skin); px(ctx,cx-9,cy+6+aL-bob,3,3,pal.skin);
+  px(ctx,cx+5,cy+aR-bob, 4,7,pal.skin); px(ctx,cx+5,cy+6+aR-bob,3,3,pal.skin);
+  drawHeadFront34(ctx, cx, cy-12-bob, pal, false);
+}
+
+// ── walking SOUTHWEST (3/4 front-left) ───────────────────────────
+function drawWalkSW(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const lL = Math.sin(ph) * 5, lR = -lL;
+  const bob = Math.abs(Math.sin(ph)) * 2.5;
+  const aL = Math.sin(ph + Math.PI) * 4;
+  const aR = Math.sin(ph) * 4;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-3,cy+4+lL, 5,9,pal.pants); px(ctx,cx+1,cy+4+lR, 5,9,pal.pants);
+  px(ctx,cx-4,cy+12+lL,6,4,'#1a1a2a'); px(ctx,cx+1,cy+12+lR,6,4,'#1a1a2a');
+  px(ctx,cx-6,cy-2-bob,11,9,pal.shirt);
+  px(ctx,cx-3,cy+1-bob,3,4,'#ffffff1a');
+  px(ctx,cx-9,cy+aL-bob, 4,7,pal.skin); px(ctx,cx-9,cy+6+aL-bob,3,3,pal.skin);
+  px(ctx,cx+5,cy+aR-bob, 4,7,pal.skin); px(ctx,cx+5,cy+6+aR-bob,3,3,pal.skin);
+  drawHeadFront34(ctx, cx, cy-12-bob, pal, true);
+}
+
+// ── walking NORTHEAST (3/4 back-right) ───────────────────────────
+function drawWalkNE(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const lL = Math.sin(ph) * 5, lR = -lL;
+  const bob = Math.abs(Math.sin(ph)) * 2.5;
+  const aL = Math.sin(ph + Math.PI) * 4;
+  const aR = Math.sin(ph) * 4;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-4,cy+4+lL, 5,9,pal.pants); px(ctx,cx+2,cy+4+lR, 5,9,pal.pants);
+  px(ctx,cx-5,cy+12+lL,6,4,'#1a1a2a'); px(ctx,cx+2,cy+12+lR,6,4,'#1a1a2a');
+  px(ctx,cx-5,cy-2-bob,11,9,pal.shirt);
+  px(ctx,cx-9,cy+aL-bob, 4,7,pal.shirt); px(ctx,cx-9,cy+6+aL-bob,3,3,pal.skin);
+  px(ctx,cx+5,cy+aR-bob, 4,7,pal.shirt); px(ctx,cx+5,cy+6+aR-bob,3,3,pal.skin);
+  drawHeadBack34(ctx, cx, cy-12-bob, pal, false);
+}
+
+// ── walking NORTHWEST (3/4 back-left) ────────────────────────────
+function drawWalkNW(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const lL = Math.sin(ph) * 5, lR = -lL;
+  const bob = Math.abs(Math.sin(ph)) * 2.5;
+  const aL = Math.sin(ph + Math.PI) * 4;
+  const aR = Math.sin(ph) * 4;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-3,cy+4+lL, 5,9,pal.pants); px(ctx,cx+1,cy+4+lR, 5,9,pal.pants);
+  px(ctx,cx-4,cy+12+lL,6,4,'#1a1a2a'); px(ctx,cx+1,cy+12+lR,6,4,'#1a1a2a');
+  px(ctx,cx-6,cy-2-bob,11,9,pal.shirt);
+  px(ctx,cx-9,cy+aL-bob, 4,7,pal.shirt); px(ctx,cx-9,cy+6+aL-bob,3,3,pal.skin);
+  px(ctx,cx+5,cy+aR-bob, 4,7,pal.shirt); px(ctx,cx+5,cy+6+aR-bob,3,3,pal.skin);
+  drawHeadBack34(ctx, cx, cy-12-bob, pal, true);
+}
+
+// ── IDLE standing (no movement) ──────────────────────────────────
+function drawWalkIdle(ctx, cx, cy, pal, t) {
+  const ph = t * Math.PI * 2;
+  const breathe = Math.sin(ph * 0.5) * 0.8;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-5,cy+4, 5,9,pal.pants); px(ctx,cx+1,cy+4, 5,9,pal.pants);
+  px(ctx,cx-6,cy+12,6,4,'#1a1a2a'); px(ctx,cx-6,cy+14,3,2,'#2a2a3a');
+  px(ctx,cx+1,cy+12,6,4,'#1a1a2a'); px(ctx,cx+1,cy+14,3,2,'#2a2a3a');
+  px(ctx,cx-6,cy-2-breathe,12,9,pal.shirt);
+  px(ctx,cx-1,cy-1-breathe,2,3,pal.skin);
+  px(ctx,cx+2,cy+1-breathe,3,4,'#ffffff1a');
+  px(ctx,cx-10,cy-breathe, 4,7,pal.skin); px(ctx,cx-10,cy+6-breathe,4,3,pal.skin);
+  px(ctx,cx+6, cy-breathe, 4,7,pal.skin); px(ctx,cx+6, cy+6-breathe,4,3,pal.skin);
+  drawHeadFront(ctx, cx, cy-12-breathe, pal, false);
+}
+
+// ── directional walk dispatch ────────────────────────────────────
+const WALK_DIR_FN = {
+  'S': drawWalkS, 'N': drawWalkN, 'E': drawWalkE, 'W': drawWalkW,
+  'SE': drawWalkSE, 'SW': drawWalkSW, 'NE': drawWalkNE, 'NW': drawWalkNW,
+  'IDLE': drawWalkIdle,
+};
 
 // ── sitting_down / sitting_couch (transition) ────────────────────
 function drawSittingDown(ctx, cx, cy, pal, t) {
@@ -3514,6 +3843,7 @@ class AgentState {
     this.flip        = Math.abs(h)%3===1; // зеркалит позу на диване
     this.prevStatus  = '';
     this.waypoints   = [];  // A* path waypoints
+    this.facing      = 'S'; // direction: N,NE,E,SE,S,SW,W,NW,IDLE
   }
 
   get depth() { return this.ty + this.tx * 0.001; }
@@ -3533,6 +3863,16 @@ class AgentState {
     this.waypoints = astar(this.tx, this.ty, tx, ty) || [];
   }
 
+  _updateFacing(dtx, dty) {
+    const ax = Math.abs(dtx), ay = Math.abs(dty);
+    if (ax < 0.01 && ay < 0.01) { this.facing = 'IDLE'; return; }
+    const angle = Math.atan2(dty, dtx); // radians, 0=E, PI/2=S
+    // 8 sectors of 45 degrees each
+    const sector = Math.round(angle / (Math.PI / 4));
+    const DIR8 = ['E','SE','S','SW','W','NW','N','NE'];
+    this.facing = DIR8[((sector % 8) + 8) % 8];
+  }
+
   moveToward(dt, speed=3.5) {
     // Follow A* waypoints first
     while (this.waypoints.length > 0) {
@@ -3542,14 +3882,16 @@ class AgentState {
       if (dist < 0.18) { this.waypoints.shift(); continue; }
       const step = Math.min(speed * dt, dist);
       this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+      this._updateFacing(dtx, dty);
       return false;
     }
     // Direct movement to final target
     const dtx=this.targetTx-this.tx, dty=this.targetTy-this.ty;
     const dist=Math.sqrt(dtx*dtx+dty*dty);
-    if (dist < 0.04) { this.tx=this.targetTx; this.ty=this.targetTy; return true; }
+    if (dist < 0.04) { this.tx=this.targetTx; this.ty=this.targetTy; this.facing='IDLE'; return true; }
     const step=Math.min(speed*dt, dist);
     this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+    this._updateFacing(dtx, dty);
     return false;
   }
 
@@ -3757,7 +4099,9 @@ class AgentState {
     ctx.translate(this.sx, this.sy);
     ctx.scale(AGENT_SCALE, AGENT_SCALE);
     ctx.translate(-this.sx, -this.sy);
-    const fn = CHAR_DRAW[this.state] ?? drawWalking;
+    const fn = this.state === 'walking'
+      ? (WALK_DIR_FN[this.facing] ?? drawWalkS)
+      : (CHAR_DRAW[this.state] ?? drawWalking);
     fn(ctx, this.sx, this.sy, this.palette, this.animT);
     ctx.restore();
   }
