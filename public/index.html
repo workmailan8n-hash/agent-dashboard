@@ -4548,6 +4548,9 @@ function loop(now) {
   ctx.font = "6px 'Press Start 2P', monospace";
   for (const sp of sorted) sp.drawOverlay(ctx, globalTick);
 
+  // Admin editor overlay (on top of everything)
+  drawAdminOverlay(ctx);
+
   requestAnimationFrame(loop);
 }
 
@@ -4747,9 +4750,254 @@ setInterval(updateUI, 5000);
 
 document.fonts.ready.then(() => {
   generateLayout(1);
+  applyCustomPositions();
   buildBackground();
   buildObstacleGrid();
   requestAnimationFrame(t => { lastTime=t; loop(t); });
+});
+
+// ════════════════════════════════════════════════════════════════
+//  ADMIN EDITOR — drag objects to reposition them
+//  Press 'E' to toggle, or click the ✏️ button
+// ════════════════════════════════════════════════════════════════
+
+let adminMode = false;
+let adminObjects = []; // {id, label, tx, ty, w, h} — tile coords
+let adminSelected = null;
+let adminDragging = false;
+let adminDragOff = {x:0, y:0};
+let adminHover = null;
+
+// Build the list of draggable objects from current state
+function buildAdminObjects() {
+  adminObjects = [];
+  const rX = PER_ROW * STEP_X + 2;
+
+  // Static furniture
+  adminObjects.push({id:'clock', label:'🕐 Clock', tx: COLS-1.5, ty: Math.max(4,Math.floor(ROWS*0.2)), w:1.5, h:1.5});
+  adminObjects.push({id:'cooler', label:'💧 Cooler', tx: rX+2.5, ty:2, w:1.5, h:1.5});
+  adminObjects.push({id:'darts', label:'🎯 Darts', tx: rX+1.5, ty:0, w:2, h:1});
+  adminObjects.push({id:'aquarium', label:'🐠 Aquarium', tx: rX+0.3, ty:8, w:2.5, h:2});
+  adminObjects.push({id:'printer', label:'🖨 Printer', tx: KITCHEN_WALL_COL-3, ty:KITCHEN_START_ROW-2, w:2, h:1});
+  adminObjects.push({id:'trashcan', label:'🗑 Trash', tx: KITCHEN_WALL_COL-2, ty:3, w:1, h:1});
+
+  // Plants
+  IDLE_SPOTS.filter(s=>s.type==='plant').forEach((s,i) => {
+    adminObjects.push({id:'plant_'+i, label:'🌿 Plant', tx:s.tx-0.5, ty:s.ty-0.5, w:1, h:1.5});
+  });
+
+  // Conference table
+  if (ACT_ZONE_Y > 0) {
+    adminObjects.push({id:'conf_table', label:'🤝 Conference', tx:4, ty:ACT_ZONE_Y+10, w:6, h:3});
+  }
+  // Bookshelf
+  adminObjects.push({id:'bookshelf', label:'📚 Bookshelf', tx:COLS-5.5, ty:ACT_ZONE_Y+13, w:4.5, h:3.5});
+
+  // Apply saved positions
+  const saved = JSON.parse(localStorage.getItem('admin_positions') || '{}');
+  for (const obj of adminObjects) {
+    if (saved[obj.id]) { obj.tx = saved[obj.id].tx; obj.ty = saved[obj.id].ty; }
+  }
+}
+
+// Apply custom positions to actual game objects
+function applyCustomPositions() {
+  const saved = JSON.parse(localStorage.getItem('admin_positions') || '{}');
+  if (Object.keys(saved).length === 0) return;
+  // We store positions but the actual drawing uses hardcoded coords
+  // So we save a global override map that draw functions check
+  window._adminPos = saved;
+}
+
+// Save positions to localStorage
+function saveAdminPositions() {
+  const pos = {};
+  for (const obj of adminObjects) { pos[obj.id] = {tx: obj.tx, ty: obj.ty}; }
+  localStorage.setItem('admin_positions', JSON.stringify(pos));
+  window._adminPos = pos;
+}
+
+function toggleAdmin() {
+  adminMode = !adminMode;
+  if (adminMode) {
+    buildAdminObjects();
+    canvas.style.cursor = 'crosshair';
+    adminBtn.textContent = '✏️ EDITING';
+    adminBtn.style.background = '#f7768e';
+    adminPanel.style.display = 'flex';
+  } else {
+    canvas.style.cursor = 'default';
+    adminBtn.textContent = '✏️ EDIT';
+    adminBtn.style.background = '#2a2848';
+    adminPanel.style.display = 'none';
+    adminSelected = null;
+  }
+}
+
+// Mouse → tile coords
+function mouseToTile(e) {
+  const rect = canvas.getBoundingClientRect();
+  const scaleX = canvas.width / rect.width;
+  const scaleY = canvas.height / rect.height;
+  const px = (e.clientX - rect.left) * scaleX;
+  const py = (e.clientY - rect.top) * scaleY;
+  return { px, py, tx: (px - OX) / T, ty: (py - OY) / T };
+}
+
+function findObjectAt(tx, ty) {
+  for (let i = adminObjects.length-1; i >= 0; i--) {
+    const o = adminObjects[i];
+    if (tx >= o.tx && tx <= o.tx+o.w && ty >= o.ty && ty <= o.ty+o.h) return o;
+  }
+  return null;
+}
+
+// Canvas mouse events for admin mode
+canvas.addEventListener('mousedown', e => {
+  if (!adminMode) return;
+  const {tx, ty} = mouseToTile(e);
+  const obj = findObjectAt(tx, ty);
+  if (obj) {
+    adminSelected = obj;
+    adminDragging = true;
+    adminDragOff = { x: tx - obj.tx, y: ty - obj.ty };
+    canvas.style.cursor = 'grabbing';
+  } else {
+    adminSelected = null;
+  }
+});
+
+canvas.addEventListener('mousemove', e => {
+  if (!adminMode) return;
+  const {tx, ty} = mouseToTile(e);
+  if (adminDragging && adminSelected) {
+    adminSelected.tx = Math.round((tx - adminDragOff.x) * 2) / 2; // snap to half-tiles
+    adminSelected.ty = Math.round((ty - adminDragOff.y) * 2) / 2;
+    // Clamp inside office
+    adminSelected.tx = Math.max(0, Math.min(COLS - adminSelected.w, adminSelected.tx));
+    adminSelected.ty = Math.max(0, Math.min(ROWS - adminSelected.h, adminSelected.ty));
+  } else {
+    const obj = findObjectAt(tx, ty);
+    adminHover = obj;
+    canvas.style.cursor = obj ? 'grab' : 'crosshair';
+  }
+});
+
+canvas.addEventListener('mouseup', e => {
+  if (!adminMode) return;
+  if (adminDragging) {
+    adminDragging = false;
+    canvas.style.cursor = 'grab';
+    saveAdminPositions();
+    // Rebuild background with new positions
+    buildBackground();
+    buildObstacleGrid();
+  }
+});
+
+// Draw admin overlay (called from main loop when adminMode=true)
+function drawAdminOverlay(ctx) {
+  if (!adminMode) return;
+
+  // Grid
+  ctx.strokeStyle = '#ffffff10';
+  ctx.lineWidth = 0.5;
+  for (let c = 0; c <= COLS; c++) {
+    ctx.beginPath(); ctx.moveTo(OX+c*T, OY); ctx.lineTo(OX+c*T, OY+ROWS*T); ctx.stroke();
+  }
+  for (let r = 0; r <= ROWS; r++) {
+    ctx.beginPath(); ctx.moveTo(OX, OY+r*T); ctx.lineTo(OX+COLS*T, OY+r*T); ctx.stroke();
+  }
+
+  // Objects
+  for (const obj of adminObjects) {
+    const x = OX + obj.tx * T, y = OY + obj.ty * T;
+    const w = obj.w * T, h = obj.h * T;
+    const isSelected = obj === adminSelected;
+    const isHover = obj === adminHover;
+
+    // Bounding box
+    ctx.strokeStyle = isSelected ? '#f7768e' : isHover ? '#7aa2f7' : '#ffffff40';
+    ctx.lineWidth = isSelected ? 2 : 1;
+    ctx.setLineDash(isSelected ? [] : [4, 4]);
+    ctx.strokeRect(x, y, w, h);
+    ctx.setLineDash([]);
+
+    // Label background
+    ctx.fillStyle = isSelected ? '#f7768e' : '#1a1a3080';
+    const labelW = ctx.measureText(obj.label).width + 8;
+    ctx.fillRect(x, y - 14, labelW, 13);
+    // Label text
+    ctx.fillStyle = '#fff';
+    ctx.font = "7px 'Press Start 2P',monospace";
+    ctx.fillText(obj.label, x + 4, y - 4);
+
+    // Coordinates
+    if (isSelected || isHover) {
+      ctx.fillStyle = '#ffffff80';
+      ctx.font = "6px monospace";
+      ctx.fillText(`(${obj.tx.toFixed(1)}, ${obj.ty.toFixed(1)})`, x, y + h + 10);
+    }
+
+    // Drag handles (corners)
+    if (isSelected) {
+      ctx.fillStyle = '#f7768e';
+      [[x,y],[x+w,y],[x,y+h],[x+w,y+h]].forEach(([cx,cy]) => {
+        ctx.fillRect(cx-3, cy-3, 6, 6);
+      });
+    }
+  }
+
+  // Coord display at cursor
+  if (adminHover || adminDragging) {
+    // info bar at bottom of canvas
+    ctx.fillStyle='#000000a0'; ctx.fillRect(OX, OY+ROWS*T-20, COLS*T, 20);
+    ctx.fillStyle='#fff'; ctx.font="7px 'Press Start 2P',monospace";
+    const info = adminSelected && adminDragging
+      ? `Moving: ${adminSelected.label} → (${adminSelected.tx.toFixed(1)}, ${adminSelected.ty.toFixed(1)})`
+      : adminHover ? `${adminHover.label} at (${adminHover.tx.toFixed(1)}, ${adminHover.ty.toFixed(1)}) — click & drag to move` : '';
+    ctx.fillText(info, OX+8, OY+ROWS*T-6);
+  }
+}
+
+// Add admin button to header
+const adminBtn = document.createElement('button');
+adminBtn.textContent = '✏️ EDIT';
+adminBtn.style.cssText = 'background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:4px 10px;font-family:inherit;font-size:7px;cursor:pointer;margin-left:8px;border-radius:4px;';
+adminBtn.onclick = toggleAdmin;
+document.querySelector('header .tabs').appendChild(adminBtn);
+
+// Admin info panel
+const adminPanel = document.createElement('div');
+adminPanel.id = 'admin-panel';
+adminPanel.style.cssText = 'display:none;position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#1a1a30e0;border:1px solid #3a3860;border-radius:8px;padding:8px 16px;gap:8px;align-items:center;z-index:100;font-size:7px;color:#c8d3f5;';
+adminPanel.innerHTML = `
+  <span>🖱 Drag objects to move</span>
+  <button id="admin-reset" style="background:#3a2020;color:#f7768e;border:1px solid #f7768e40;padding:3px 8px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:3px;">Reset All</button>
+  <button id="admin-export" style="background:#203a20;color:#9ece6a;border:1px solid #9ece6a40;padding:3px 8px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:3px;">Export JSON</button>
+`;
+document.body.appendChild(adminPanel);
+
+document.getElementById('admin-reset').onclick = () => {
+  localStorage.removeItem('admin_positions');
+  window._adminPos = {};
+  buildAdminObjects();
+  buildBackground();
+  buildObstacleGrid();
+};
+
+document.getElementById('admin-export').onclick = () => {
+  const pos = {};
+  for (const obj of adminObjects) pos[obj.id] = {tx:obj.tx, ty:obj.ty};
+  const json = JSON.stringify(pos, null, 2);
+  navigator.clipboard.writeText(json).then(() => alert('Copied to clipboard!')).catch(() => {
+    prompt('Copy this JSON:', json);
+  });
+};
+
+// Keyboard shortcut: E to toggle
+document.addEventListener('keydown', e => {
+  if (e.key === 'e' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') toggleAdmin();
 });
 </script>
 </body>
