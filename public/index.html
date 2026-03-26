@@ -2467,7 +2467,9 @@ function generateLayout(n) {
   // Couch slots become idle spots with varied animations
   const COUCH_ANIMS = ['sleeping','smoking_beer','phone','stretching','reading','drinking_beer'];
   COUCH_SLOTS.forEach((s,i) => {
-    IDLE_SPOTS.push({ tx:s.tx, ty:s.ty, anim: COUCH_ANIMS[i%COUCH_ANIMS.length], type:'couch', w:8 });
+    IDLE_SPOTS.push({ tx:s.tx, ty:s.ty, anim: COUCH_ANIMS[i%COUCH_ANIMS.length], type:'couch', w:8,
+      _objId:'couch_'+i, _defObjTx:COUCH_DEFS[i].tx, _defObjTy:COUCH_DEFS[i].ty,
+      _offsetX: s.tx - COUCH_DEFS[i].tx, _offsetY: s.ty - COUCH_DEFS[i].ty });
   });
 
   // Window spots — along top wall between windows
@@ -2527,27 +2529,30 @@ function generateLayout(n) {
 
   // ── Gym zone (left side of activity area) ────────────────────────
   const gymX = 1, gymY = ACT_ZONE_Y + 1;
-  IDLE_SPOTS.push({ tx:gymX+0.5, ty:gymY,     anim:'treadmill',  type:'gym', w:8 });
-  IDLE_SPOTS.push({ tx:gymX+3.5, ty:gymY,     anim:'treadmill',  type:'gym', w:8 });
-  IDLE_SPOTS.push({ tx:gymX+0.8, ty:gymY+3,   anim:'yoga',       type:'gym', w:6 });
-  IDLE_SPOTS.push({ tx:gymX+3,   ty:gymY+3,   anim:'stretching', type:'gym', w:5 });
-  IDLE_SPOTS.push({ tx:gymX+5.5, ty:gymY+1.5, anim:'headphones', type:'gym', w:4 });
+  const _gymDefTx = 1, _gymDefTy = ACT_ZONE_Y + 0.5;
+  IDLE_SPOTS.push({ tx:gymX+0.5, ty:gymY,     anim:'treadmill',  type:'gym', w:8, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+0.5-_gymDefTx, _offsetY:gymY-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+3.5, ty:gymY,     anim:'treadmill',  type:'gym', w:8, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+3.5-_gymDefTx, _offsetY:gymY-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+0.8, ty:gymY+3,   anim:'yoga',       type:'gym', w:6, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+0.8-_gymDefTx, _offsetY:gymY+3-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+3,   ty:gymY+3,   anim:'stretching', type:'gym', w:5, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+3-_gymDefTx, _offsetY:gymY+3-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+5.5, ty:gymY+1.5, anim:'headphones', type:'gym', w:4, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+5.5-_gymDefTx, _offsetY:gymY+1.5-_gymDefTy });
 
   // ── Gaming/TV zone (center of activity area) ─────────────────────
   const tvX = 10, tvY = ACT_ZONE_Y + 1;
-  IDLE_SPOTS.push({ tx:tvX+1,   ty:tvY+1,   anim:'gaming',   type:'gaming', w:10 });
-  IDLE_SPOTS.push({ tx:tvX+3,   ty:tvY+1,   anim:'gaming',   type:'gaming', w:9  });
-  IDLE_SPOTS.push({ tx:tvX+5,   ty:tvY+1,   anim:'gaming',   type:'gaming', w:8  });
-  IDLE_SPOTS.push({ tx:tvX+2.5, ty:tvY+3.5, anim:'reading',  type:'gaming', w:4  });
+  const _tvDefTx = 10, _tvDefTy = ACT_ZONE_Y + 0.3;
+  IDLE_SPOTS.push({ tx:tvX+1,   ty:tvY+1,   anim:'gaming',   type:'gaming', w:10, _objId:'tv', _defObjTx:_tvDefTx, _defObjTy:_tvDefTy, _offsetX:tvX+1-_tvDefTx, _offsetY:tvY+1-_tvDefTy });
+  IDLE_SPOTS.push({ tx:tvX+3,   ty:tvY+1,   anim:'gaming',   type:'gaming', w:9,  _objId:'tv', _defObjTx:_tvDefTx, _defObjTy:_tvDefTy, _offsetX:tvX+3-_tvDefTx, _offsetY:tvY+1-_tvDefTy });
+  IDLE_SPOTS.push({ tx:tvX+5,   ty:tvY+1,   anim:'gaming',   type:'gaming', w:8,  _objId:'tv', _defObjTx:_tvDefTx, _defObjTy:_tvDefTy, _offsetX:tvX+5-_tvDefTx, _offsetY:tvY+1-_tvDefTy });
+  IDLE_SPOTS.push({ tx:tvX+2.5, ty:tvY+3.5, anim:'reading',  type:'gaming', w:4,  _objId:'tv', _defObjTx:_tvDefTx, _defObjTy:_tvDefTy, _offsetX:tvX+2.5-_tvDefTx, _offsetY:tvY+3.5-_tvDefTy });
 
   // ── Ping pong zone (right-center of activity area) ────────────────
   const ppX = Math.min(19, COLS-8), ppY = ACT_ZONE_Y + 2;
+  const _ppDefTx = ppX-2, _ppDefTy = ACT_ZONE_Y+1;
   PP_L = {tx: ppX-1.5, ty: ppY};
   PP_R = {tx: ppX+4,   ty: ppY};
   const ppIA = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:PP_L.tx, ty:PP_L.ty, anim:'ping_pong_l', type:'group', groupId:10, role:'L', w:9 });
+  IDLE_SPOTS.push({ tx:PP_L.tx, ty:PP_L.ty, anim:'ping_pong_l', type:'group', groupId:10, role:'L', w:9, _objId:'pingpong', _defObjTx:_ppDefTx, _defObjTy:_ppDefTy, _offsetX:0.5, _offsetY:1 });
   const ppIB = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:PP_R.tx, ty:PP_R.ty, anim:'ping_pong_r', type:'group', groupId:10, role:'R', w:9 });
+  IDLE_SPOTS.push({ tx:PP_R.tx, ty:PP_R.ty, anim:'ping_pong_r', type:'group', groupId:10, role:'R', w:9, _objId:'pingpong', _defObjTx:_ppDefTx, _defObjTy:_ppDefTy, _offsetX:6, _offsetY:1 });
   GROUP_PAIRS[10] = [ppIA, ppIB];
 
   // ── Printer spot ─────────────────────────────────────────────────
@@ -2569,17 +2574,18 @@ function generateLayout(n) {
 
   // ── 1. Water Cooler (pair chat) ────────────────────────────────
   const wcY = 2;
+  const _coolerDefTx = rX+2.5, _coolerDefTy = 2;
   const wc1 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:rX+1.5,   ty:wcY+1, anim:'chatting_l', type:'group', groupId:20, role:'L', w:8 });
+  IDLE_SPOTS.push({ tx:rX+1.5,   ty:wcY+1, anim:'chatting_l', type:'group', groupId:20, role:'L', w:8, _objId:'cooler', _defObjTx:_coolerDefTx, _defObjTy:_coolerDefTy, _offsetX:-1, _offsetY:1 });
   const wc2 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:rX+3.5,   ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8 });
+  IDLE_SPOTS.push({ tx:rX+3.5,   ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8, _objId:'cooler', _defObjTx:_coolerDefTx, _defObjTy:_coolerDefTy, _offsetX:1, _offsetY:1 });
   GROUP_PAIRS[20] = [wc1, wc2];
 
   // ── 2. Dartboard (solo — agent throws darts) ───────────────────
-  IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7 });
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7, _objId:'darts', _defObjTx:rX+1.5, _defObjTy:0, _offsetX:0, _offsetY:6 });
 
   // ── 3. Aquarium (solo — agent watches fish) ────────────────────
-  IDLE_SPOTS.push({ tx:rX+1.5, ty:9, anim:'window_gaze', type:'aquarium', w:8 });
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:9, anim:'window_gaze', type:'aquarium', w:8, _objId:'aquarium', _defObjTx:rX+0.3, _defObjTy:8, _offsetX:1.2, _offsetY:1 });
 
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
@@ -2590,17 +2596,18 @@ function generateLayout(n) {
   // ── Conference table — 2 GROUP_PAIRS, in social zone below gym ───
   const confY = ACT_ZONE_Y + 10; // below gym/gaming/pp zone
   const confX = 4;
+  const _confDefTx = 4, _confDefTy = ACT_ZONE_Y + 10;
   // Pair 11: north side facing each other
   const ci11A = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:confX+0.5, ty:confY+0.5, anim:'chatting_l', type:'group', groupId:11, role:'L', w:7 });
+  IDLE_SPOTS.push({ tx:confX+0.5, ty:confY+0.5, anim:'chatting_l', type:'group', groupId:11, role:'L', w:7, _objId:'conf_table', _defObjTx:_confDefTx, _defObjTy:_confDefTy, _offsetX:0.5, _offsetY:0.5 });
   const ci11B = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:confX+4.5, ty:confY+0.5, anim:'chatting_r', type:'group', groupId:11, role:'R', w:7 });
+  IDLE_SPOTS.push({ tx:confX+4.5, ty:confY+0.5, anim:'chatting_r', type:'group', groupId:11, role:'R', w:7, _objId:'conf_table', _defObjTx:_confDefTx, _defObjTy:_confDefTy, _offsetX:4.5, _offsetY:0.5 });
   GROUP_PAIRS[11] = [ci11A, ci11B];
   // Pair 12: south side
   const ci12A = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:confX+1.5, ty:confY+2,   anim:'arguing_l',  type:'group', groupId:12, role:'L', w:6 });
+  IDLE_SPOTS.push({ tx:confX+1.5, ty:confY+2,   anim:'arguing_l',  type:'group', groupId:12, role:'L', w:6, _objId:'conf_table', _defObjTx:_confDefTx, _defObjTy:_confDefTy, _offsetX:1.5, _offsetY:2 });
   const ci12B = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:confX+3.5, ty:confY+2,   anim:'arguing_r',  type:'group', groupId:12, role:'R', w:6 });
+  IDLE_SPOTS.push({ tx:confX+3.5, ty:confY+2,   anim:'arguing_r',  type:'group', groupId:12, role:'R', w:6, _objId:'conf_table', _defObjTx:_confDefTx, _defObjTy:_confDefTy, _offsetX:3.5, _offsetY:2 });
   GROUP_PAIRS[12] = [ci12A, ci12B];
 
   // Cat bowl positions (preserve state across layout changes)
@@ -2719,6 +2726,13 @@ function buildObstacleGrid() {
   if (KITCHEN_WALL_COL > 0 && ACT_ZONE_Y > 0) {
     const [vmTx,vmTy] = getAdminPos('vending', KITCHEN_WALL_COL+1, ACT_ZONE_Y-2);
     markRect(vmTx, vmTy, 2, 3);
+  }
+
+  // ── Kitchen dining table ─────
+  if (KITCHEN_WALL_COL > 0) {
+    const kitIntXobs = KITCHEN_WALL_COL + 1;
+    const [ktTx,ktTy] = getAdminPos('kitchen_table', kitIntXobs+1, KITCHEN_START_ROW+1.6);
+    markRect(ktTx, ktTy, 7, 1);
   }
 
 }
@@ -3265,18 +3279,46 @@ function buildBackground() {
     fillR(ctx,frx+4,fry+8,7,2,'#80b8e0');
 
     // Dining table in middle of kitchen
-    const [tbx,tby] = ts(kitIntX+1, KITCHEN_START_ROW+1.6);
+    const [tbx,tby] = ts(...getAdminPos('kitchen_table', kitIntX+1, KITCHEN_START_ROW+1.6));
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
-    fillR(ctx,tbx,tby,T*5,T*0.5,'#a09060'); ctx.restore();
-    fillR(ctx,tbx,tby,T*5,3,'#c4b488');  // table top highlight
+    fillR(ctx,tbx,tby,T*7,T*0.5,'#a09060'); ctx.restore();
+    fillR(ctx,tbx,tby,T*7,3,'#c4b488');  // table top highlight
     fillR(ctx,tbx+4,tby+T*0.5,6,T*0.4,'#7a6030'); // left leg
-    fillR(ctx,tbx+T*5-10,tby+T*0.5,6,T*0.4,'#7a6030'); // right leg
+    fillR(ctx,tbx+T*7-10,tby+T*0.5,6,T*0.4,'#7a6030'); // right leg
     // Plates on table
     for(let p=0;p<3;p++){
       const px=tbx+T*0.5+p*T, py=tby+4;
       ctx.fillStyle='#e8e0d0'; ctx.beginPath(); ctx.ellipse(px,py,8,4,0,0,Math.PI*2); ctx.fill();
       ctx.fillStyle='#c8b090'; ctx.beginPath(); ctx.ellipse(px,py,5,2.5,0,0,Math.PI*2); ctx.fill();
     }
+    // Fruit vase in center of table
+    const vx = tbx + T*3.5, vy = tby + 2;
+    // Bowl/vase body (rounded trapezoid)
+    ctx.fillStyle='#8B4513';
+    ctx.beginPath();
+    ctx.moveTo(vx-7, vy+2); ctx.lineTo(vx-9, vy-6); ctx.quadraticCurveTo(vx, vy-10, vx+9, vy-6);
+    ctx.lineTo(vx+7, vy+2); ctx.quadraticCurveTo(vx, vy+4, vx-7, vy+2);
+    ctx.fill();
+    // Bowl rim highlight
+    ctx.fillStyle='#A0522D';
+    ctx.beginPath(); ctx.ellipse(vx, vy-6, 9, 2.5, 0, 0, Math.PI*2); ctx.fill();
+    // Apples (red)
+    ctx.fillStyle='#cc2233';
+    ctx.beginPath(); ctx.arc(vx-4, vy-8, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(vx+3, vy-9, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(vx-1, vy-10, 3, 0, Math.PI*2); ctx.fill();
+    // Oranges
+    ctx.fillStyle='#e8922e';
+    ctx.beginPath(); ctx.arc(vx+5, vy-7, 2.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(vx-6, vy-7, 2.5, 0, Math.PI*2); ctx.fill();
+    // Grapes (small cluster)
+    ctx.fillStyle='#6a2d8e';
+    for (const gp of [[vx+1,vy-13],[vx-1,vy-12],[vx+2,vy-12],[vx,vy-11]]) {
+      ctx.beginPath(); ctx.arc(gp[0], gp[1], 1.5, 0, Math.PI*2); ctx.fill();
+    }
+    // Green leaf on top
+    ctx.fillStyle='#3a9040';
+    ctx.beginPath(); ctx.ellipse(vx+1, vy-14, 3, 1.5, -0.4, 0, Math.PI*2); ctx.fill();
 
     // Kitchen label (above doorway)
     const [klx,kly] = ts(kitIntX+1, KITCHEN_START_ROW-0.3);
@@ -4644,6 +4686,7 @@ function loop(now) {
     // Clear all slot bookings — layout changed, spots shifted
     for (const k of Object.keys(idleOccupied)) delete idleOccupied[k];
     for (const sp of Object.values(agentStates)) { sp.slotIdx=-1; sp.arrived=false; sp.activityDur=0; }
+    syncIdleSpotsToAdmin();
     buildBackground();
     buildObstacleGrid();
   }
@@ -5159,6 +5202,7 @@ setInterval(updateUI, 5000);
 document.fonts.ready.then(() => {
   generateLayout(1);
   applyCustomPositions();
+  syncIdleSpotsToAdmin();
   buildBackground();
   buildObstacleGrid();
   requestAnimationFrame(t => { lastTime=t; loop(t); });
@@ -5232,6 +5276,20 @@ function buildAdminObjects() {
     adminObjects.push({id:'vending', label:'🥤 Vending', tx:KITCHEN_WALL_COL+1, ty:ACT_ZONE_Y-2, w:1.5, h:2.5});
   }
 
+  // Kitchen dining table
+  if (KITCHEN_WALL_COL > 0) {
+    const kitIntX = KITCHEN_WALL_COL + 1;
+    adminObjects.push({id:'kitchen_table', label:'🍽 Kitchen Table', tx:kitIntX+1, ty:KITCHEN_START_ROW+1.6, w:7, h:1.5});
+  }
+
+  // Snapshot default positions (before applying saved overrides)
+  if (!window._defaultPositions) {
+    window._defaultPositions = {};
+    for (const obj of adminObjects) {
+      window._defaultPositions[obj.id] = {tx: obj.tx, ty: obj.ty};
+    }
+  }
+
   // Apply saved positions
   const saved = JSON.parse(localStorage.getItem('admin_positions') || '{}');
   for (const obj of adminObjects) {
@@ -5251,12 +5309,50 @@ function getAdminPos(id, defTx, defTy) {
   return p ? [p.tx, p.ty] : [defTx, defTy];
 }
 
+// Sync IDLE_SPOTS / DESK_SLOTS / PP positions to admin-edited object positions
+function syncIdleSpotsToAdmin() {
+  for (const spot of IDLE_SPOTS) {
+    if (!spot._objId) continue;
+    const [newTx, newTy] = getAdminPos(spot._objId, spot._defObjTx, spot._defObjTy);
+    spot.tx = newTx + spot._offsetX;
+    spot.ty = newTy + spot._offsetY;
+  }
+  for (let i = 0; i < DESK_SLOTS.length; i++) {
+    const [newTx, newTy] = getAdminPos('desk_'+i, DESK_DEFS[i].tx, DESK_DEFS[i].ty);
+    DESK_SLOTS[i].tx = newTx + 0.8;
+    DESK_SLOTS[i].ty = newTy + 1.9;
+  }
+  for (let i = 0; i < COUCH_SLOTS.length; i++) {
+    const [newTx, newTy] = getAdminPos('couch_'+i, COUCH_DEFS[i].tx, COUCH_DEFS[i].ty);
+    COUCH_SLOTS[i].tx = newTx + 1.3;
+    COUCH_SLOTS[i].ty = newTy + 0.4;
+  }
+  const ppX = Math.min(19, COLS-8);
+  const [ppNewTx, ppNewTy] = getAdminPos('pingpong', ppX-2, ACT_ZONE_Y+1);
+  PP_L.tx = ppNewTx + 0.5; PP_L.ty = ppNewTy + 1;
+  PP_R.tx = ppNewTx + 6;   PP_R.ty = ppNewTy + 1;
+}
+
 // Save positions to localStorage
 function saveAdminPositions() {
   const pos = {};
   for (const obj of adminObjects) { pos[obj.id] = {tx: obj.tx, ty: obj.ty}; }
   localStorage.setItem('admin_positions', JSON.stringify(pos));
   window._adminPos = pos;
+  syncIdleSpotsToAdmin();
+  for (const [id, sp] of Object.entries(agentStates)) {
+    if (sp.isWorking && sp.slotIdx >= 0 && sp.slotIdx < DESK_SLOTS.length) {
+      const ds = DESK_SLOTS[sp.slotIdx];
+      sp.arrived = false;
+      sp.setTarget(ds.tx, ds.ty);
+    } else if (!sp.isWorking && sp.slotIdx >= 0 && sp.slotIdx < IDLE_SPOTS.length) {
+      const spot = IDLE_SPOTS[sp.slotIdx];
+      if (spot._objId) {
+        sp.arrived = false;
+        sp.setTarget(spot.tx, spot.ty);
+      }
+    }
+  }
 }
 
 let adminAuthed = false;
@@ -5470,15 +5566,52 @@ adminPanel.id = 'admin-panel';
 adminPanel.style.cssText = 'display:none;position:fixed;bottom:10px;left:50%;transform:translateX(-50%);background:#1a1a30e0;border:1px solid #3a3860;border-radius:8px;padding:8px 16px;gap:8px;align-items:center;z-index:100;font-size:7px;color:#c8d3f5;';
 adminPanel.innerHTML = `
   <span>🖱 Drag objects to move</span>
+  <button id="admin-start-pos" style="background:#283040;color:#7aa2f7;border:1px solid #7aa2f740;padding:3px 8px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:3px;">🏠 Start Position</button>
   <button id="admin-reset" style="background:#3a2020;color:#f7768e;border:1px solid #f7768e40;padding:3px 8px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:3px;">Reset All</button>
   <button id="admin-export" style="background:#203a20;color:#9ece6a;border:1px solid #9ece6a40;padding:3px 8px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:3px;">Export JSON</button>
 `;
 document.body.appendChild(adminPanel);
 
+document.getElementById('admin-start-pos').onclick = () => {
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(5,5,15,0.85);display:flex;align-items:center;justify-content:center;z-index:1000;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#12121e;border:2px solid #3a3860;border-radius:10px;padding:24px 32px;display:flex;flex-direction:column;gap:14px;align-items:center;box-shadow:0 0 40px #0008;min-width:280px;';
+  box.innerHTML = `
+    <div style="color:#7aa2f7;font-family:'Press Start 2P',monospace;font-size:10px;">🏠 START POSITION</div>
+    <div style="color:#5a5888;font-family:'Press Start 2P',monospace;font-size:6px;text-align:center;line-height:1.8;">Reset all objects to their<br>default starting positions?</div>
+    <div style="display:flex;gap:10px;">
+      <button id="sp-yes" style="background:#7aa2f7;color:#0a0a18;border:none;padding:6px 16px;font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;border-radius:4px;">YES</button>
+      <button id="sp-no" style="background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:6px 16px;font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;border-radius:4px;">NO</button>
+    </div>
+  `;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  box.querySelector('#sp-no').onclick = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+
+  box.querySelector('#sp-yes').onclick = () => {
+    overlay.remove();
+    if (!window._defaultPositions) return;
+    const pos = {};
+    for (const [id, p] of Object.entries(window._defaultPositions)) {
+      pos[id] = {tx: p.tx, ty: p.ty};
+    }
+    localStorage.setItem('admin_positions', JSON.stringify(pos));
+    window._adminPos = pos;
+    buildAdminObjects();
+    buildBackground();
+    buildObstacleGrid();
+    if (typeof syncIdleSpotsToAdmin === 'function') syncIdleSpotsToAdmin();
+  };
+};
+
 document.getElementById('admin-reset').onclick = () => {
   localStorage.removeItem('admin_positions');
   window._adminPos = {};
   buildAdminObjects();
+  syncIdleSpotsToAdmin();
   buildBackground();
   buildObstacleGrid();
 };
