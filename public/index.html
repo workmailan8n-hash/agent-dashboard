@@ -1713,6 +1713,47 @@ function drawPingPongBall(ctx) {
   ctx.beginPath(); ctx.arc(bx - speed*3, by, 1.2, 0, Math.PI*2); ctx.fill();
 }
 
+// ── Aquarium fish animation ───────────────────────────────────────
+const aquariumFish = [
+  { x:0.3, y:0.4, speed:0.012, color:'#ff6040', size:4, phase:0 },
+  { x:0.7, y:0.6, speed:-0.008, color:'#40a0ff', size:3.5, phase:1.5 },
+  { x:0.5, y:0.3, speed:0.015, color:'#ffcc20', size:3, phase:3 },
+  { x:0.2, y:0.7, speed:-0.01, color:'#60ff80', size:3, phase:4.5 },
+];
+function drawAquariumFish(ctx, tick) {
+  const rX = PER_ROW * STEP_X + 2;
+  const [aqx, aqy] = [OX + (rX+0.3)*T, OY + 8*T];
+  const aqW = T*2.5-6, aqH = T*1.8-14;
+  const wx = aqx+3, wy = aqy+8;
+
+  for (const f of aquariumFish) {
+    f.x += f.speed * 0.016;
+    if (f.x > 1.05) f.x = -0.05;
+    if (f.x < -0.05) f.x = 1.05;
+    const fx = wx + f.x * aqW;
+    const fy = wy + f.y * aqH + Math.sin(tick*0.05 + f.phase) * 4;
+    const flip = f.speed > 0 ? 1 : -1;
+    ctx.save(); ctx.translate(fx, fy); ctx.scale(flip, 1);
+    // Body
+    ctx.fillStyle = f.color;
+    ctx.beginPath(); ctx.ellipse(0, 0, f.size, f.size*0.6, 0, 0, Math.PI*2); ctx.fill();
+    // Tail
+    ctx.beginPath(); ctx.moveTo(-f.size, 0);
+    ctx.lineTo(-f.size-4, -3); ctx.lineTo(-f.size-4, 3); ctx.closePath(); ctx.fill();
+    // Eye
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(f.size*0.4, -1, 1.2, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(f.size*0.5, -1, 0.6, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  // Bubbles
+  ctx.fillStyle='#80c0ff30';
+  for (let i=0; i<3; i++) {
+    const bx = wx + ((tick*0.7+i*30)%aqW);
+    const by = wy + aqH - ((tick*0.4+i*20)%aqH);
+    ctx.beginPath(); ctx.arc(bx, by, 1.5+i*0.5, 0, Math.PI*2); ctx.fill();
+  }
+}
+
 // ── Dart animation — darts fly toward board when agent is at darts spot ──
 let dartAnims = []; // {startTime, angle, progress}
 function drawDartAnimation(ctx, tick) {
@@ -2204,6 +2245,9 @@ function generateLayout(n) {
   // ── 2. Dartboard (solo — agent throws darts) ───────────────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7 });
 
+  // ── 3. Aquarium (solo — agent watches fish) ────────────────────
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:9, anim:'window_gaze', type:'aquarium', w:8 });
+
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
 
@@ -2290,10 +2334,11 @@ function buildObstacleGrid() {
     markRect(3, ACT_ZONE_Y + 9, 6, 3);
   }
 
-  // ── Water cooler + dartboard (right zone) ─────
+  // ── Right entertainment zone obstacles ─────
   const rXobs = PER_ROW * STEP_X + 2;
-  mark(rXobs + 1, 2);
-  mark(rXobs + 1, 5); mark(rXobs + 2, 5); // dartboard wall area
+  mark(rXobs + 1, 2); // water cooler
+  mark(rXobs + 1, 5); mark(rXobs + 2, 5); // dartboard area
+  markRect(rXobs, 8, 3, 2); // aquarium
 
   // ── Couches (lounge area) — agents should walk around, not through ─────
   COUCH_DEFS.forEach(cd => {
@@ -3066,6 +3111,41 @@ function buildBackground() {
     ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-1, 9, 11, 0, Math.PI, 0); ctx.fill();
     ctx.strokeStyle='#5090b8'; ctx.lineWidth=1;
     ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-1, 9, 11, 0, Math.PI, 0); ctx.stroke();
+
+    // ── 3. Aquarium (right zone, row 8) ─────────────────────────
+    const [aqx, aqy] = ts(rX + 0.3, 8);
+    const aqW = T*2.5, aqH = T*1.8;
+    // Stand/legs
+    fillR(ctx, aqx+4, aqy+aqH, 6, 8, '#404050');
+    fillR(ctx, aqx+aqW-10, aqy+aqH, 6, 8, '#404050');
+    fillR(ctx, aqx, aqy+aqH, aqW, 3, '#505060'); // base
+    // Tank frame
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=6;
+    fillR(ctx, aqx, aqy, aqW, aqH, '#1a3a50'); ctx.restore();
+    // Glass
+    fillR(ctx, aqx+3, aqy+3, aqW-6, aqH-6, '#1a4a6880');
+    // Water
+    fillR(ctx, aqx+3, aqy+8, aqW-6, aqH-11, '#1860a040');
+    // Sand at bottom
+    fillR(ctx, aqx+3, aqy+aqH-10, aqW-6, 7, '#c8b07030');
+    // Pebbles
+    ctx.fillStyle='#908060';
+    [6,14,22,30,38,48,56].forEach(px => {
+      ctx.beginPath(); ctx.ellipse(aqx+px%aqW+4, aqy+aqH-6, 2+px%3, 1.5, 0, 0, Math.PI*2); ctx.fill();
+    });
+    // Seaweed
+    ctx.strokeStyle='#2a8040'; ctx.lineWidth=2;
+    [8, 20, 50].forEach(sx => {
+      ctx.beginPath();
+      ctx.moveTo(aqx+sx, aqy+aqH-8);
+      ctx.quadraticCurveTo(aqx+sx-4, aqy+aqH-22, aqx+sx+2, aqy+aqH-30);
+      ctx.stroke();
+    });
+    // Glass reflection
+    ctx.fillStyle='#ffffff18';
+    fillR(ctx, aqx+5, aqy+5, 4, aqH-14);
+    // Frame top rim
+    fillR(ctx, aqx-1, aqy-2, aqW+2, 4, '#606070');
 
     // ── 2. Dartboard (ON the top wall — row 0) ──────────────────
     // Mounted on the purple top wall, between rX+1 and rX+2
@@ -4454,6 +4534,7 @@ function loop(now) {
   drawCatBowls(ctx, globalTick);
   drawPingPongBall(ctx);
   drawDartAnimation(ctx, globalTick);
+  drawAquariumFish(ctx, globalTick);
   cat.draw(ctx, globalTick);
   PS.draw(ctx);
 
