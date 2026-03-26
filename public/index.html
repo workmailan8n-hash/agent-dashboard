@@ -2003,7 +2003,7 @@ function generateLayout(n) {
   const couchRows=Math.ceil(count/COUCH_PER_ROW);
   const baseRows=LOUNGE_Y+couchRows*3+2;
   ACT_ZONE_Y = baseRows;
-  ROWS = baseRows + 16;  // 9 gym/gaming/pp + 7 for conference/bookshelf zone
+  ROWS = baseRows + 20;  // 9 gym/gaming/pp + 11 for conference/bookshelf zone (shelf at +14)
   CH=OY+ROWS*T+OY;
   const cv=document.getElementById('office');
   if (cv) cv.height=CH;
@@ -2104,8 +2104,8 @@ function generateLayout(n) {
   // ── Printer spot ─────────────────────────────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL - 3, ty: KITCHEN_START_ROW - 2, anim:'reading', type:'printer', w:5 });
 
-  // ── Bookshelf spot (left wall, social zone below gym) ─────────────
-  IDLE_SPOTS.push({ tx:1.5, ty:ACT_ZONE_Y + 11, anim:'reading', type:'shelf', w:5 });
+  // ── Bookshelf spot (left wall, social zone — well below conference table) ──
+  IDLE_SPOTS.push({ tx:1.5, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
 
   // ── Vending machine spot (inside kitchen) ────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL+1.5, ty: ACT_ZONE_Y-1.5, anim:'eating', type:'kitchen', w:3 });
@@ -2169,6 +2169,25 @@ function buildObstacleGrid() {
   if (ACT_ZONE_Y > 0) {
     const ppX2 = Math.min(19, COLS - 8);
     markRect(ppX2 - 1, ACT_ZONE_Y + 1, 5, 2); // middle of table
+  }
+
+  // ── Kanban board (right side of main office, above kitchen) ─────
+  if (KITCHEN_WALL_COL > 0) {
+    const kanbanCol = Math.max(PER_ROW * STEP_X + 2, KITCHEN_WALL_COL - 9);
+    const kanbanW = KITCHEN_WALL_COL - kanbanCol;
+    if (kanbanW >= 3) {
+      markRect(kanbanCol, 1, kanbanW, 7);
+    }
+  }
+
+  // ── Bookshelf (social zone, left wall) ─────
+  if (ACT_ZONE_Y > 0) {
+    markRect(0, ACT_ZONE_Y + 13, 5, 4);
+  }
+
+  // ── Conference table (social zone) ─────
+  if (ACT_ZONE_Y > 0) {
+    markRect(3, ACT_ZONE_Y + 9, 6, 3);
   }
 
 }
@@ -2265,82 +2284,97 @@ function astar(fromTx, fromTy, toTx, toTy) {
 // ════════════════════════════════════════════════════════════════
 
 // ── Kanban board — shows myTasks on the office wall ──────────────
+// Positioned on the right wall of the main office, ABOVE the kitchen partition
 function drawKanban(ctx) {
-  if (!myTasks || !COUCH_DEFS.length || KITCHEN_WALL_COL === 0) return;
-  // Position: upper-right empty floor space (above kitchen partition, right of main desks)
-  const bx = OX + (KITCHEN_WALL_COL + 1) * T;
+  if (!myTasks || KITCHEN_WALL_COL === 0) return;
+  // Position: right side of the main office, between desks and kitchen wall
+  // Tiles: col (KITCHEN_WALL_COL - 9) to (KITCHEN_WALL_COL - 1), rows 1..6
+  const kanbanCol = Math.max(PER_ROW * STEP_X + 2, KITCHEN_WALL_COL - 9);
+  const bx = OX + kanbanCol * T;
   const by = OY + T * 1;
-  const bw = T * 8.5, bh = T * 5;
+  const bw = (KITCHEN_WALL_COL - kanbanCol - 0.5) * T;
+  const bh = T * 7;
+
+  if (bw < T * 3) return; // not enough space
 
   // Board background (corkboard feel)
   ctx.save();
-  ctx.shadowColor = '#00000060'; ctx.shadowBlur = 8; ctx.shadowOffsetY = 3;
+  ctx.shadowColor = '#00000060'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
   ctx.fillStyle = '#6b4c28';
   ctx.fillRect(bx, by, bw, bh);
   ctx.restore();
   ctx.fillStyle = '#c8a870';
-  ctx.fillRect(bx + 2, by + 2, bw - 4, bh - 4);
+  ctx.fillRect(bx + 3, by + 3, bw - 6, bh - 6);
+  // Cork texture dots
+  ctx.fillStyle = '#b89860';
+  for (let i = 0; i < 20; i++) {
+    const dx = 8 + ((i * 37) % (bw - 16));
+    const dy = 20 + ((i * 53) % (bh - 30));
+    ctx.beginPath(); ctx.arc(bx + dx, by + dy, 1, 0, Math.PI*2); ctx.fill();
+  }
 
   // Header
   ctx.fillStyle = '#3d2a0a';
-  ctx.font = "bold 7px monospace";
+  ctx.font = "bold 11px monospace";
   ctx.textAlign = 'center';
-  ctx.fillText('KANBAN', bx + bw/2, by + 11);
+  ctx.fillText('KANBAN', bx + bw/2, by + 16);
 
   // Divider line
   ctx.fillStyle = '#a08050';
-  ctx.fillRect(bx + 2, by + 14, bw - 4, 1);
+  ctx.fillRect(bx + 4, by + 20, bw - 8, 2);
 
   // Two columns
-  const colW = (bw - 6) / 2;
-  const col1x = bx + 3, col2x = bx + 3 + colW + 2;
-  const colY = by + 18;
+  const colW = (bw - 12) / 2;
+  const col1x = bx + 5, col2x = bx + 7 + colW;
+  const colY = by + 26;
 
   // Column headers
-  ctx.font = "bold 6px monospace";
+  ctx.font = "bold 9px monospace";
   ctx.textAlign = 'left';
-  ctx.fillStyle = '#e0af68'; ctx.fillText('TODO', col1x + 2, colY);
-  ctx.fillStyle = '#9ece6a'; ctx.fillText('DONE', col2x + 2, colY);
+  ctx.fillStyle = '#e0af68'; ctx.fillText('TODO', col1x + 2, colY + 2);
+  ctx.fillStyle = '#9ece6a'; ctx.fillText('DONE', col2x + 2, colY + 2);
   ctx.fillStyle = '#a08050';
-  ctx.fillRect(bx + colW + 5, by + 14, 1, bh - 14); // column divider
+  ctx.fillRect(bx + colW + 6, by + 20, 2, bh - 24); // column divider
 
   // Task cards
-  const todo = myTasks.filter(t => t.status === 'todo').slice(0, 5);
-  const done = myTasks.filter(t => t.status === 'done').slice(0, 5);
-  const cardH = 10, gap = 2;
+  const todo = myTasks.filter(t => t.status === 'todo').slice(0, 6);
+  const done = myTasks.filter(t => t.status === 'done').slice(0, 6);
+  const cardH = 16, gap = 3;
 
   todo.forEach((task, i) => {
-    const cy2 = colY + 4 + i * (cardH + gap);
-    if (cy2 + cardH > by + bh - 2) return;
+    const cy2 = colY + 8 + i * (cardH + gap);
+    if (cy2 + cardH > by + bh - 4) return;
     ctx.fillStyle = '#e0af6830';
-    ctx.fillRect(col1x, cy2, colW - 1, cardH);
+    ctx.fillRect(col1x, cy2, colW - 2, cardH);
     ctx.fillStyle = '#e0af68';
-    ctx.fillRect(col1x, cy2, 2, cardH); // priority bar
+    ctx.fillRect(col1x, cy2, 3, cardH); // priority bar
     ctx.fillStyle = '#3d2a0a';
-    ctx.font = '5px monospace';
-    const label = task.title.substring(0, 14);
-    ctx.fillText(label, col1x + 4, cy2 + 7);
+    ctx.font = '8px monospace';
+    const maxChars = Math.floor((colW - 14) / 5);
+    const label = task.title.substring(0, maxChars);
+    ctx.fillText(label, col1x + 6, cy2 + 11);
   });
 
   done.forEach((task, i) => {
-    const cy2 = colY + 4 + i * (cardH + gap);
-    if (cy2 + cardH > by + bh - 2) return;
+    const cy2 = colY + 8 + i * (cardH + gap);
+    if (cy2 + cardH > by + bh - 4) return;
     ctx.fillStyle = '#9ece6a20';
-    ctx.fillRect(col2x, cy2, colW - 1, cardH);
+    ctx.fillRect(col2x, cy2, colW - 2, cardH);
     ctx.fillStyle = '#9ece6a';
-    ctx.fillRect(col2x, cy2, 2, cardH);
+    ctx.fillRect(col2x, cy2, 3, cardH);
     ctx.fillStyle = '#3d2a0a80';
-    ctx.font = '5px monospace';
-    const label = task.title.substring(0, 14);
+    ctx.font = '8px monospace';
+    const maxChars = Math.floor((colW - 14) / 5);
+    const label = task.title.substring(0, maxChars);
+    ctx.fillText(label, col2x + 6, cy2 + 11);
     // Strikethrough line
-    ctx.fillText(label, col2x + 4, cy2 + 7);
     ctx.fillStyle = '#3d2a0a50';
-    ctx.fillRect(col2x + 4, cy2 + 5, Math.min(label.length * 3, colW - 8), 1);
+    ctx.fillRect(col2x + 6, cy2 + 8, Math.min(label.length * 5, colW - 14), 1);
   });
 
   if (myTasks.length === 0) {
     ctx.fillStyle = '#a08050';
-    ctx.font = '5px monospace';
+    ctx.font = '8px monospace';
     ctx.textAlign = 'center';
     ctx.fillText('no tasks yet', bx + bw/2, colY + 14);
   }
@@ -2750,9 +2784,9 @@ function buildBackground() {
     ctx.beginPath(); ctx.arc(cx2, cy2, 13, 0, Math.PI*2); ctx.fill();
   }
 
-  // ── Bookshelf (left wall, social zone) — wide floor-to-wall unit ──
+  // ── Bookshelf (left wall, social zone — below conference table) ──
   if (ACT_ZONE_Y > 0) {
-    const shelfY = ACT_ZONE_Y + 11;
+    const shelfY = ACT_ZONE_Y + 14;
     const [bsx, bsy] = ts(0.3, shelfY - 0.8);
     const bW = T * 4.5, bH = T * 3.5;
     // Shadow
