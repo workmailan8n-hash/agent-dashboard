@@ -300,6 +300,55 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── API: GET /api/state — full state snapshot for HTTP polling ──
+  if (req.url === '/api/state' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify({ agents: Object.values(agents), tasks: agentTasks, myTasks }));
+    return;
+  }
+
+  // ── API: POST /api/sync — receive full state push from local server ──
+  if (req.url === '/api/sync' && req.method === 'POST') {
+    let body = '';
+    req.on('data', d => body += d);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        const key = req.headers['x-sync-key'] || '';
+        if (process.env.SYNC_KEY && key !== process.env.SYNC_KEY) {
+          res.writeHead(403); res.end('forbidden'); return;
+        }
+        // Replace agents state
+        if (data.agents) {
+          const incomingIds = new Set();
+          for (const a of data.agents) {
+            incomingIds.add(a.id);
+            agents[a.id] = a;
+          }
+          // Remove agents not in sync payload
+          for (const id of Object.keys(agents)) {
+            if (!incomingIds.has(id)) delete agents[id];
+          }
+        }
+        if (data.tasks) Object.assign(agentTasks, data.tasks);
+        if (data.myTasks) myTasks = data.myTasks;
+        // Broadcast to all connected WS clients
+        broadcast({ type: 'init', agents: Object.values(agents) });
+        broadcast({ type: 'tasks_init', tasks: agentTasks });
+        broadcast({ type: 'mytasks_init', tasks: myTasks });
+        res.writeHead(200); res.end('ok');
+      } catch { res.writeHead(400); res.end('bad'); }
+    });
+    return;
+  }
+
+  // CORS preflight for sync
+  if (req.url === '/api/sync' && req.method === 'OPTIONS') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type, X-Sync-Key' });
+    res.end();
+    return;
+  }
+
   // Demo injection: POST /api/demo  {"id","slug","status","currentTool","currentToolLabel"}
   if (req.url === "/api/demo" && req.method === "POST") {
     let body = "";

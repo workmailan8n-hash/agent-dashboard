@@ -4472,14 +4472,41 @@ function connect() {
       else         { el.href='#'; el.textContent='🔒 local'; el.className='loading'; }
     }
   };
-  ws.onclose = () => { wsActive=false; led.className='led off'; lbl.textContent='offline'; setTimeout(connect,2000); };
+  ws.onclose = () => { wsActive=false; led.className='led off'; lbl.textContent='polling'; setTimeout(connect,2000); startPolling(); };
   ws.onerror = () => ws.close();
+}
+
+// ── HTTP polling fallback (when WS unavailable, e.g. on Railway) ──
+let pollInterval = null;
+function startPolling() {
+  if (pollInterval) return;
+  pollInterval = setInterval(async () => {
+    if (wsActive) { clearInterval(pollInterval); pollInterval = null; return; }
+    try {
+      const res = await fetch('/api/state');
+      if (!res.ok) return;
+      const data = await res.json();
+      if (data.agents) {
+        const newIds = new Set(data.agents.map(a => a.id));
+        // Remove agents that are gone
+        for (const id of Object.keys(agentsData)) {
+          if (!newIds.has(id)) { delete agentsData[id]; document.getElementById(`c-${id}`)?.remove(); }
+        }
+        for (const a of data.agents) { agentsData[a.id] = a; renderCard(a); }
+      }
+      if (data.myTasks) { myTasks = data.myTasks; renderTasks(); }
+      updateUI();
+      const led = document.getElementById('led'), lbl = document.getElementById('conn-label');
+      led.className = 'led'; lbl.textContent = 'polling';
+    } catch {}
+  }, 2000);
 }
 
 // ════════════════════════════════════════════════════════════════
 //  BOOT
 // ════════════════════════════════════════════════════════════════
 connect();
+startPolling(); // start polling immediately too, WS will take over if available
 setInterval(updateUI, 5000);
 
 document.fonts.ready.then(() => {
