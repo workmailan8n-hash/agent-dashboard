@@ -2029,8 +2029,6 @@ function generateLayout(n) {
   // Plants — away from kitchen (wall at COLS-11), no plant inside kitchen
   [
     [4.5,  0.5],                   // top wall, between desk col 0 and 1
-    [11.5, 0.5],                   // top wall, between desk col 1 and 2
-    [0.5,  LOUNGE_Y - 1.5],       // left wall, just above lounge
     [COLS - 13, LOUNGE_Y - 1.5],  // right of center, outside kitchen
   ].forEach(([px, py]) => {
     if (px > 0 && py > 0 && px < COLS-1 && py < ROWS-1)
@@ -2394,8 +2392,8 @@ function drawKanban(ctx) {
 function drawWallClock(ctx) {
   const now = new Date();
   const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
-  // Position: on the kitchen partition wall, above the door
-  const [cx, cy] = ts(KITCHEN_WALL_COL, Math.max(2, KITCHEN_START_ROW - 3));
+  // Position: right outer wall, upper area
+  const [cx, cy] = ts(COLS - 1.3, 3);
   const px2 = cx + T/2, py2 = cy + T*0.5;
   const R = 18;
   // Frame
