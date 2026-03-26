@@ -1722,36 +1722,38 @@ const aquariumFish = [
 ];
 function drawAquariumFish(ctx, tick) {
   const rX = PER_ROW * STEP_X + 2;
-  const [aqx, aqy] = [OX + (rX+0.3)*T, OY + 8*T];
-  const aqW = T*2.5-6, aqH = T*1.8-14;
-  const wx = aqx+3, wy = aqy+8;
+  const aqx = OX + (rX+0.3)*T, aqy = OY + 8*T;
+  const aqW = T*2.5, aqH = T*1.8;
+  // Clip to inside of tank glass
+  const cx = aqx+4, cy = aqy+4, cw = aqW-8, ch = aqH-8;
+  ctx.save();
+  ctx.beginPath(); ctx.rect(cx, cy, cw, ch); ctx.clip();
 
   for (const f of aquariumFish) {
     f.x += f.speed * 0.016;
-    if (f.x > 1.05) f.x = -0.05;
-    if (f.x < -0.05) f.x = 1.05;
-    const fx = wx + f.x * aqW;
-    const fy = wy + f.y * aqH + Math.sin(tick*0.05 + f.phase) * 4;
+    // Bounce off walls instead of wrapping
+    if (f.x > 0.92) { f.x = 0.92; f.speed = -Math.abs(f.speed); }
+    if (f.x < 0.08) { f.x = 0.08; f.speed = Math.abs(f.speed); }
+    const fx = cx + f.x * cw;
+    const fy = cy + f.y * ch + Math.sin(tick*0.05 + f.phase) * 3;
     const flip = f.speed > 0 ? 1 : -1;
     ctx.save(); ctx.translate(fx, fy); ctx.scale(flip, 1);
-    // Body
     ctx.fillStyle = f.color;
     ctx.beginPath(); ctx.ellipse(0, 0, f.size, f.size*0.6, 0, 0, Math.PI*2); ctx.fill();
-    // Tail
     ctx.beginPath(); ctx.moveTo(-f.size, 0);
-    ctx.lineTo(-f.size-4, -3); ctx.lineTo(-f.size-4, 3); ctx.closePath(); ctx.fill();
-    // Eye
-    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(f.size*0.4, -1, 1.2, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(f.size*0.5, -1, 0.6, 0, Math.PI*2); ctx.fill();
+    ctx.lineTo(-f.size-3, -2.5); ctx.lineTo(-f.size-3, 2.5); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#fff'; ctx.beginPath(); ctx.arc(f.size*0.4, -1, 1, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#000'; ctx.beginPath(); ctx.arc(f.size*0.5, -1, 0.5, 0, Math.PI*2); ctx.fill();
     ctx.restore();
   }
-  // Bubbles
+  // Bubbles (clipped inside tank)
   ctx.fillStyle='#80c0ff30';
   for (let i=0; i<3; i++) {
-    const bx = wx + ((tick*0.7+i*30)%aqW);
-    const by = wy + aqH - ((tick*0.4+i*20)%aqH);
+    const bx = cx + ((tick*0.7+i*30)%cw);
+    const by = cy + ch - ((tick*0.4+i*20)%ch);
     ctx.beginPath(); ctx.arc(bx, by, 1.5+i*0.5, 0, Math.PI*2); ctx.fill();
   }
+  ctx.restore(); // remove clip
 }
 
 // ── Dart animation — darts fly toward board when agent is at darts spot ──
@@ -3736,6 +3738,10 @@ class AgentState {
       ctx.scale(-1, 1);
       ctx.translate(-this.sx, -this.sy);
     }
+    const AGENT_SCALE = 1.15;
+    ctx.translate(this.sx, this.sy);
+    ctx.scale(AGENT_SCALE, AGENT_SCALE);
+    ctx.translate(-this.sx, -this.sy);
     const fn = CHAR_DRAW[this.state] ?? drawWalking;
     fn(ctx, this.sx, this.sy, this.palette, this.animT);
     ctx.restore();
@@ -4455,6 +4461,7 @@ function loop(now) {
   drawLeftPanel(ctx, globalTick);
   drawRightPanel(ctx, globalTick);
   drawDynamicEffects(ctx, globalTick);
+  drawAquariumFish(ctx, globalTick); // before agents so fish stay behind
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -4534,7 +4541,6 @@ function loop(now) {
   drawCatBowls(ctx, globalTick);
   drawPingPongBall(ctx);
   drawDartAnimation(ctx, globalTick);
-  drawAquariumFish(ctx, globalTick);
   cat.draw(ctx, globalTick);
   PS.draw(ctx);
 
