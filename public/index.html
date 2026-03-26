@@ -3237,7 +3237,8 @@ function buildBackground() {
   // Enclosed kitchen room — appliances (right side)
   if (ROWS > 6 && KITCHEN_WALL_COL > 0) {
     const kitIntX = KITCHEN_WALL_COL + 1; // first interior column
-    const [kx,ky] = ts(kitIntX, KITCHEN_START_ROW);
+    const [_kcTx,_kcTy] = getAdminPos('kitchen_counter', kitIntX, KITCHEN_START_ROW);
+    const [kx,ky] = ts(_kcTx, _kcTy);
 
     // Long counter along back wall (right wall side)
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=6; ctx.shadowOffsetY=4;
@@ -3268,7 +3269,8 @@ function buildBackground() {
     fillR(ctx,mcx+22,mcy+4,3,10,'#404058');
 
     // Fridge (tall, silver)
-    const [frx,fry] = ts(kitIntX+8, KITCHEN_START_ROW);
+    const [_frATx,_frATy] = getAdminPos('fridge', kitIntX+8, KITCHEN_START_ROW);
+    const [frx,fry] = ts(_frATx, _frATy);
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
     fillR(ctx,frx+2,fry,24,T*1.5,'#d0d8e8'); ctx.restore();
     fillR(ctx,frx+3,fry+1,22,T*0.55,'#e0e8f4');  // freezer
@@ -3688,8 +3690,9 @@ function buildBackground() {
     fillR(ctx,cx2+T*1.2-10,cy2+5,4,4,'#404060');
     ctx.fillStyle='#9ece6a80'; ctx.beginPath(); ctx.arc(cx2+T*1.2-8,cy2+7,2,0,Math.PI*2); ctx.fill();
 
-    // Gaming sofa (3-seat, relative to TV)
-    const [sfx,sfy] = ts(_tvATx+1, _tvATy+3.7);
+    // Gaming sofa (3-seat, independent from TV)
+    const [_gsATx,_gsATy] = getAdminPos('gaming_sofa', 11, ACT_ZONE_Y+3.7);
+    const [sfx,sfy] = ts(_gsATx, _gsATy);
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
     fillR(ctx,sfx,sfy,T*4,T*0.7+10,COUCH_C); ctx.restore();
     fillR(ctx,sfx,sfy,T*4,10,COUCH_C);
@@ -5274,10 +5277,17 @@ function buildAdminObjects() {
     adminObjects.push({id:'vending', label:'🥤 Vending', tx:KITCHEN_WALL_COL+1, ty:ACT_ZONE_Y-2, w:1.5, h:2.5});
   }
 
-  // Kitchen dining table
+  // Kitchen objects
   if (KITCHEN_WALL_COL > 0) {
     const kitIntX = KITCHEN_WALL_COL + 1;
     adminObjects.push({id:'kitchen_table', label:'🍽 Kitchen Table', tx:kitIntX+2, ty:KITCHEN_START_ROW+1, w:4, h:3});
+    adminObjects.push({id:'kitchen_counter', label:'🔪 Counter', tx:kitIntX, ty:KITCHEN_START_ROW, w:9, h:1});
+    adminObjects.push({id:'fridge', label:'🧊 Fridge', tx:kitIntX+8, ty:KITCHEN_START_ROW, w:1, h:1.5});
+  }
+
+  // Gaming sofa (separate from TV)
+  if (ACT_ZONE_Y > 0) {
+    adminObjects.push({id:'gaming_sofa', label:'🛋 Gaming Sofa', tx:11, ty:ACT_ZONE_Y+3.7, w:4, h:1.5});
   }
 
   // Snapshot default positions (before applying saved overrides)
