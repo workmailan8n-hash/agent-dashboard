@@ -4611,7 +4611,8 @@ function loop(now) {
   // ── Agent separation (soft collision) ──────────────────────────
   {
     const list = Object.values(agentStates);
-    const MIN = 0.9; // min distance in tiles
+    const MIN = 1.4; // min distance in tiles (bigger = less overlap)
+    const STRENGTH = 0.7; // push strength multiplier
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         const a = list[i], b = list[j];
@@ -4619,7 +4620,7 @@ function loop(now) {
         const d2 = dx*dx + dy*dy;
         if (d2 > MIN*MIN || d2 < 0.0001) continue;
         const d = Math.sqrt(d2);
-        const overlap = (MIN - d) / d; // fractional overlap
+        const overlap = (MIN - d) / d * STRENGTH;
         const nx = dx * overlap, ny = dy * overlap;
         if (!a.arrived && !b.arrived) {
           // both walking — push equally apart
