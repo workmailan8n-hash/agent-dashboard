@@ -5216,20 +5216,75 @@ function saveAdminPositions() {
   window._adminPos = pos;
 }
 
+let adminAuthed = false;
+
+function showAdminPasswordDialog() {
+  // Create overlay
+  const overlay = document.createElement('div');
+  overlay.style.cssText = 'position:fixed;inset:0;background:rgba(5,5,15,0.85);display:flex;align-items:center;justify-content:center;z-index:1000;';
+  const box = document.createElement('div');
+  box.style.cssText = 'background:#12121e;border:2px solid #3a3860;border-radius:10px;padding:24px 32px;display:flex;flex-direction:column;gap:14px;align-items:center;box-shadow:0 0 40px #0008;min-width:280px;';
+  box.innerHTML = `
+    <div style="color:#7aa2f7;font-family:'Press Start 2P',monospace;font-size:10px;">🔒 ADMIN ACCESS</div>
+    <div style="color:#5a5888;font-family:'Press Start 2P',monospace;font-size:6px;">Enter password to edit layout</div>
+    <input id="admin-pw" type="password" placeholder="Password..." style="background:#0a0a18;border:1px solid #3a3860;color:#c8d3f5;font-family:'Press Start 2P',monospace;font-size:8px;padding:8px 12px;border-radius:6px;width:100%;outline:none;text-align:center;" autocomplete="off" />
+    <div id="admin-pw-err" style="color:#f7768e;font-family:'Press Start 2P',monospace;font-size:6px;display:none;">Wrong password</div>
+    <div style="display:flex;gap:10px;">
+      <button id="admin-pw-ok" style="background:#7aa2f7;color:#0a0a18;border:none;padding:6px 16px;font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;border-radius:4px;">ENTER</button>
+      <button id="admin-pw-cancel" style="background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:6px 16px;font-family:'Press Start 2P',monospace;font-size:7px;cursor:pointer;border-radius:4px;">CANCEL</button>
+    </div>
+  `;
+  overlay.appendChild(box);
+  document.body.appendChild(overlay);
+
+  const inp = box.querySelector('#admin-pw');
+  const err = box.querySelector('#admin-pw-err');
+  inp.focus();
+
+  function tryLogin() {
+    if (inp.value === 'noadmin') {
+      adminAuthed = true;
+      overlay.remove();
+      enterAdminMode();
+    } else {
+      err.style.display = 'block';
+      inp.value = '';
+      inp.style.borderColor = '#f7768e';
+      setTimeout(() => { inp.style.borderColor = '#3a3860'; err.style.display = 'none'; }, 1500);
+    }
+  }
+
+  box.querySelector('#admin-pw-ok').onclick = tryLogin;
+  inp.addEventListener('keydown', e => { if (e.key === 'Enter') tryLogin(); });
+  box.querySelector('#admin-pw-cancel').onclick = () => overlay.remove();
+  overlay.addEventListener('click', e => { if (e.target === overlay) overlay.remove(); });
+}
+
+function enterAdminMode() {
+  adminMode = true;
+  buildAdminObjects();
+  canvas.style.cursor = 'crosshair';
+  adminBtn.textContent = '✏️ EDITING';
+  adminBtn.style.background = '#f7768e';
+  adminPanel.style.display = 'flex';
+}
+
 function toggleAdmin() {
-  adminMode = !adminMode;
   if (adminMode) {
-    buildAdminObjects();
-    canvas.style.cursor = 'crosshair';
-    adminBtn.textContent = '✏️ EDITING';
-    adminBtn.style.background = '#f7768e';
-    adminPanel.style.display = 'flex';
-  } else {
+    // Exit admin
+    adminMode = false;
     canvas.style.cursor = 'default';
     adminBtn.textContent = '✏️ EDIT';
     adminBtn.style.background = '#2a2848';
     adminPanel.style.display = 'none';
     adminSelected = null;
+  } else {
+    // Enter admin — check auth
+    if (adminAuthed) {
+      enterAdminMode();
+    } else {
+      showAdminPasswordDialog();
+    }
   }
 }
 
