@@ -2103,6 +2103,9 @@ function generateLayout(n) {
   // ── Printer spot ─────────────────────────────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL - 3, ty: KITCHEN_START_ROW - 2, anim:'reading', type:'printer', w:5 });
 
+  // ── 2. Dartboard (solo — agent throws darts) ───────────────────
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7 });
+
   // ══════════════════════════════════════════════════════════════════
   //  RIGHT ENTERTAINMENT ZONE (cols PER_ROW*STEP_X+2 to COLS-2)
   //  Layout plan for all 13 items:
@@ -2211,9 +2214,10 @@ function buildObstacleGrid() {
     markRect(3, ACT_ZONE_Y + 9, 6, 3);
   }
 
-  // ── Water cooler (right zone) ─────
+  // ── Water cooler + dartboard (right zone) ─────
   const rXobs = PER_ROW * STEP_X + 2;
   mark(rXobs + 1, 2);
+  mark(rXobs + 1, 5); mark(rXobs + 2, 5); // dartboard wall area
 
   // ── Couches (lounge area) — agents should walk around, not through ─────
   COUCH_DEFS.forEach(cd => {
@@ -2991,6 +2995,34 @@ function buildBackground() {
     // Label
     ctx.fillStyle='#5a5070'; ctx.font="4px 'Press Start 2P',monospace";
     ctx.textAlign='center'; ctx.fillText('WATER', wcx+T*0.4, wcy+T*1.4+10); ctx.textAlign='left';
+
+    // ── 2. Dartboard ─────────────────────────────────────────────
+    const [dx, dy] = ts(rX + 1.5, 5);
+    const dcx = dx + T*0.5, dcy = dy + T*0.5;
+    // Board backing (dark circle on wall)
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=6;
+    ctx.fillStyle='#1a1a20';
+    ctx.beginPath(); ctx.arc(dcx, dcy, 16, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+    // Rings (from outside in)
+    const rings = [
+      [15, '#1a6030'], [12, '#cc2020'], [9, '#1a6030'],
+      [6, '#cc2020'], [3, '#e8d870'], [1.5, '#cc2020']
+    ];
+    for (const [r, c] of rings) {
+      ctx.fillStyle = c;
+      ctx.beginPath(); ctx.arc(dcx, dcy, r, 0, Math.PI*2); ctx.fill();
+    }
+    // Cross wires
+    ctx.strokeStyle='#c0c0c040'; ctx.lineWidth=0.5;
+    ctx.beginPath(); ctx.moveTo(dcx-15, dcy); ctx.lineTo(dcx+15, dcy); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(dcx, dcy-15); ctx.lineTo(dcx, dcy+15); ctx.stroke();
+    // Bullseye
+    ctx.fillStyle='#e8e0d0';
+    ctx.beginPath(); ctx.arc(dcx, dcy, 1.5, 0, Math.PI*2); ctx.fill();
+    // Label
+    ctx.fillStyle='#5a5070'; ctx.font="4px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('DARTS', dcx, dcy+22); ctx.textAlign='left';
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
