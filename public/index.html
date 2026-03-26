@@ -2642,41 +2642,84 @@ function buildObstacleGrid() {
     }
   }
 
-  // ── Ping pong table (middle rows only — ends open for players) ─────
-  if (ACT_ZONE_Y > 0) {
-    const ppX2 = Math.min(19, COLS - 8);
-    markRect(ppX2 - 1, ACT_ZONE_Y + 1, 5, 2); // middle of table
+  const rXobs = PER_ROW * STEP_X + 2;
+
+  // All objects use getAdminPos so obstacles follow admin positions
+  // ── Desks ─────
+  for (let i = 0; i < DESK_DEFS.length; i++) {
+    const [dx,dy] = getAdminPos('desk_'+i, DESK_DEFS[i].tx, DESK_DEFS[i].ty);
+    markRect(dx, dy, 3, 2);
   }
 
-  // ── Kanban board (right side of main office, above kitchen) ─────
+  // ── Couches ─────
+  for (let i = 0; i < COUCH_DEFS.length; i++) {
+    const [cx,cy] = getAdminPos('couch_'+i, COUCH_DEFS[i].tx, COUCH_DEFS[i].ty);
+    markRect(cx, cy, COUCH_DEFS[i].w || 3, 2);
+  }
+
+  // ── Ping pong table ─────
+  if (ACT_ZONE_Y > 0) {
+    const ppX2 = Math.min(19, COLS - 8);
+    const [ppTx,ppTy] = getAdminPos('pingpong', ppX2-2, ACT_ZONE_Y+1);
+    markRect(ppTx, ppTy, 6, 2);
+  }
+
+  // ── TV + gaming sofa ─────
+  if (ACT_ZONE_Y > 0) {
+    const [tvTx,tvTy] = getAdminPos('tv', 9, ACT_ZONE_Y+0.3);
+    markRect(tvTx, tvTy, 4, 3);
+    markRect(tvTx+1, tvTy+3.5, 4, 1); // sofa
+  }
+
+  // ── Gym ─────
+  if (ACT_ZONE_Y > 0) {
+    const [gmTx,gmTy] = getAdminPos('gym', 1, ACT_ZONE_Y+0.5);
+    markRect(gmTx, gmTy, 5, 3);
+  }
+
+  // ── Kanban board ─────
   if (KITCHEN_WALL_COL > 0) {
     const kanbanCol = Math.max(PER_ROW * STEP_X + 2, KITCHEN_WALL_COL - 9);
     const kanbanW = KITCHEN_WALL_COL - kanbanCol;
-    if (kanbanW >= 3) {
-      markRect(kanbanCol, 1, kanbanW, 7);
-    }
+    if (kanbanW >= 3) markRect(kanbanCol, 1, kanbanW, 7);
   }
 
-  // ── Bookshelf (social zone, right wall) ─────
+  // ── Bookshelf ─────
   if (ACT_ZONE_Y > 0) {
-    markRect(COLS - 6, ACT_ZONE_Y + 13, 5, 4);
+    const [bsTx,bsTy] = getAdminPos('bookshelf', COLS-5.5, ACT_ZONE_Y+13.2);
+    markRect(bsTx, bsTy, 5, 4);
   }
 
-  // ── Conference table (social zone) ─────
+  // ── Conference table ─────
   if (ACT_ZONE_Y > 0) {
-    markRect(3, ACT_ZONE_Y + 9, 6, 3);
+    const [cfTx,cfTy] = getAdminPos('conf_table', 4, ACT_ZONE_Y+10);
+    markRect(cfTx, cfTy, 6, 3);
   }
 
-  // ── Right entertainment zone obstacles ─────
-  const rXobs = PER_ROW * STEP_X + 2;
-  mark(rXobs + 2, 2); mark(rXobs + 3, 2); // water cooler
-  mark(rXobs + 1, 5); mark(rXobs + 2, 5); // dartboard area
-  markRect(rXobs, 8, 3, 2); // aquarium
+  // ── Water cooler ─────
+  const [wcTx,wcTy] = getAdminPos('cooler', rXobs+2.5, 2);
+  mark(Math.floor(wcTx), Math.floor(wcTy));
+  mark(Math.floor(wcTx)+1, Math.floor(wcTy));
 
-  // ── Couches (lounge area) — agents should walk around, not through ─────
-  COUCH_DEFS.forEach(cd => {
-    markRect(Math.floor(cd.tx), Math.floor(cd.ty), 4, 2);
-  });
+  // ── Aquarium ─────
+  const [aqTx,aqTy] = getAdminPos('aquarium', rXobs+0.3, 8);
+  markRect(aqTx, aqTy, 3, 2);
+
+  // ── Printer ─────
+  if (KITCHEN_WALL_COL > 0) {
+    const [prTx,prTy] = getAdminPos('printer', KITCHEN_WALL_COL-3, KITCHEN_START_ROW-2);
+    markRect(prTx, prTy, 2, 1);
+  }
+
+  // ── Trash can ─────
+  const [trTx,trTy] = getAdminPos('trashcan', KITCHEN_WALL_COL-2, 3);
+  mark(Math.floor(trTx), Math.floor(trTy));
+
+  // ── Vending machine ─────
+  if (KITCHEN_WALL_COL > 0 && ACT_ZONE_Y > 0) {
+    const [vmTx,vmTy] = getAdminPos('vending', KITCHEN_WALL_COL+1, ACT_ZONE_Y-2);
+    markRect(vmTx, vmTy, 2, 3);
+  }
 
 }
 
