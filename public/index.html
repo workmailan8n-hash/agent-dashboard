@@ -2731,7 +2731,7 @@ function buildObstacleGrid() {
   // ── Kitchen dining table ─────
   if (KITCHEN_WALL_COL > 0) {
     const kitIntXobs = KITCHEN_WALL_COL + 1;
-    const [ktTx,ktTy] = getAdminPos('kitchen_table', kitIntXobs+1, KITCHEN_START_ROW+1.6);
+    const [ktTx,ktTy] = getAdminPos('kitchen_table', kitIntXobs+2, KITCHEN_START_ROW+1);
     markRect(ktTx, ktTy, 7, 1);
   }
 
@@ -3278,42 +3278,40 @@ function buildBackground() {
     fillR(ctx,frx+24,fry+T*0.6,2,10,'#a0a8b8'); // main handle
     fillR(ctx,frx+4,fry+8,7,2,'#80b8e0');
 
-    // Dining table in middle of kitchen
-    const [tbx,tby] = ts(...getAdminPos('kitchen_table', kitIntX+1, KITCHEN_START_ROW+1.6));
+    // Dining table in middle of kitchen (vertical orientation)
+    const [tbx,tby] = ts(...getAdminPos('kitchen_table', kitIntX+2, KITCHEN_START_ROW+1));
+    const tbW = T*4, tbH = T*3;
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=8; ctx.shadowOffsetY=3;
-    fillR(ctx,tbx,tby,T*7,T*0.5,'#a09060'); ctx.restore();
-    fillR(ctx,tbx,tby,T*7,3,'#c4b488');  // table top highlight
-    fillR(ctx,tbx+4,tby+T*0.5,6,T*0.4,'#7a6030'); // left leg
-    fillR(ctx,tbx+T*7-10,tby+T*0.5,6,T*0.4,'#7a6030'); // right leg
-    // Plates on table
-    for(let p=0;p<3;p++){
-      const px=tbx+T*0.5+p*T, py=tby+4;
-      ctx.fillStyle='#e8e0d0'; ctx.beginPath(); ctx.ellipse(px,py,8,4,0,0,Math.PI*2); ctx.fill();
-      ctx.fillStyle='#c8b090'; ctx.beginPath(); ctx.ellipse(px,py,5,2.5,0,0,Math.PI*2); ctx.fill();
+    fillR(ctx,tbx,tby,tbW,tbH,'#a09060'); ctx.restore();
+    fillR(ctx,tbx,tby,tbW,3,'#c4b488');  // table top highlight
+    fillR(ctx,tbx+2,tby+2,tbW-4,tbH-4,'#b8a470'); // table surface
+    // 4 legs
+    fillR(ctx,tbx+3,tby+tbH,5,T*0.3,'#7a6030');
+    fillR(ctx,tbx+tbW-8,tby+tbH,5,T*0.3,'#7a6030');
+    // Plates around table
+    const plates = [[tbx+T*0.6,tby+T*0.5],[tbx+tbW-T*0.6,tby+T*0.5],[tbx+T*0.6,tby+tbH-T*0.5],[tbx+tbW-T*0.6,tby+tbH-T*0.5]];
+    for (const [ppx,ppy] of plates) {
+      ctx.fillStyle='#e8e0d0'; ctx.beginPath(); ctx.ellipse(ppx,ppy,7,5,0,0,Math.PI*2); ctx.fill();
+      ctx.fillStyle='#d0c8b0'; ctx.beginPath(); ctx.ellipse(ppx,ppy,5,3.5,0,0,Math.PI*2); ctx.fill();
     }
-    // Fruit vase in center of table
-    const vx = tbx + T*3.5, vy = tby + 2;
-    // Bowl/vase body (rounded trapezoid)
+    // Fruit vase in center
+    const vx = tbx + tbW/2, vy = tby + tbH/2;
     ctx.fillStyle='#8B4513';
     ctx.beginPath();
-    ctx.moveTo(vx-7, vy+2); ctx.lineTo(vx-9, vy-6); ctx.quadraticCurveTo(vx, vy-10, vx+9, vy-6);
-    ctx.lineTo(vx+7, vy+2); ctx.quadraticCurveTo(vx, vy+4, vx-7, vy+2);
+    ctx.moveTo(vx-8, vy+4); ctx.lineTo(vx-10, vy-4); ctx.quadraticCurveTo(vx, vy-10, vx+10, vy-4);
+    ctx.lineTo(vx+8, vy+4); ctx.quadraticCurveTo(vx, vy+6, vx-8, vy+4);
     ctx.fill();
-    // Bowl rim highlight
     ctx.fillStyle='#A0522D';
-    ctx.beginPath(); ctx.ellipse(vx, vy-6, 9, 2.5, 0, 0, Math.PI*2); ctx.fill();
-    // Apples (red)
+    ctx.beginPath(); ctx.ellipse(vx, vy-4, 10, 3, 0, 0, Math.PI*2); ctx.fill();
+    // Fruits
     ctx.fillStyle='#cc2233';
-    ctx.beginPath(); ctx.arc(vx-4, vy-8, 3, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(vx+3, vy-9, 3, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(vx-1, vy-10, 3, 0, Math.PI*2); ctx.fill();
-    // Oranges
+    ctx.beginPath(); ctx.arc(vx-4, vy-7, 3, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(vx+3, vy-8, 3, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle='#e8922e';
-    ctx.beginPath(); ctx.arc(vx+5, vy-7, 2.5, 0, Math.PI*2); ctx.fill();
-    ctx.beginPath(); ctx.arc(vx-6, vy-7, 2.5, 0, Math.PI*2); ctx.fill();
-    // Grapes (small cluster)
+    ctx.beginPath(); ctx.arc(vx+5, vy-6, 2.5, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(vx-6, vy-6, 2.5, 0, Math.PI*2); ctx.fill();
     ctx.fillStyle='#6a2d8e';
-    for (const gp of [[vx+1,vy-13],[vx-1,vy-12],[vx+2,vy-12],[vx,vy-11]]) {
+    for (const gp of [[vx,vy-11],[vx-1.5,vy-10],[vx+1.5,vy-10],[vx,vy-9]]) {
       ctx.beginPath(); ctx.arc(gp[0], gp[1], 1.5, 0, Math.PI*2); ctx.fill();
     }
     // Green leaf on top
@@ -5279,7 +5277,7 @@ function buildAdminObjects() {
   // Kitchen dining table
   if (KITCHEN_WALL_COL > 0) {
     const kitIntX = KITCHEN_WALL_COL + 1;
-    adminObjects.push({id:'kitchen_table', label:'🍽 Kitchen Table', tx:kitIntX+1, ty:KITCHEN_START_ROW+1.6, w:7, h:1.5});
+    adminObjects.push({id:'kitchen_table', label:'🍽 Kitchen Table', tx:kitIntX+2, ty:KITCHEN_START_ROW+1, w:4, h:3});
   }
 
   // Snapshot default positions (before applying saved overrides)
