@@ -4,3 +4,4 @@ tasks.json
 .env
 demo.js
 seed_tasks.js
+.claude/settings.local.json
