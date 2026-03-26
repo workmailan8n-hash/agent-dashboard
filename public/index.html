@@ -2103,8 +2103,8 @@ function generateLayout(n) {
   // ── Printer spot ─────────────────────────────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL - 3, ty: KITCHEN_START_ROW - 2, anim:'reading', type:'printer', w:5 });
 
-  // ── Bookshelf spot (left wall, social zone — well below conference table) ──
-  IDLE_SPOTS.push({ tx:1.5, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
+  // ── Bookshelf spot (right wall, social zone — well below conference table) ──
+  IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
 
   // ── Vending machine spot (inside kitchen) ────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL+1.5, ty: ACT_ZONE_Y-1.5, anim:'eating', type:'kitchen', w:3 });
@@ -2179,15 +2179,20 @@ function buildObstacleGrid() {
     }
   }
 
-  // ── Bookshelf (social zone, left wall) ─────
+  // ── Bookshelf (social zone, right wall) ─────
   if (ACT_ZONE_Y > 0) {
-    markRect(0, ACT_ZONE_Y + 13, 5, 4);
+    markRect(COLS - 6, ACT_ZONE_Y + 13, 5, 4);
   }
 
   // ── Conference table (social zone) ─────
   if (ACT_ZONE_Y > 0) {
     markRect(3, ACT_ZONE_Y + 9, 6, 3);
   }
+
+  // ── Couches (lounge area) — agents should walk around, not through ─────
+  COUCH_DEFS.forEach(cd => {
+    markRect(Math.floor(cd.tx), Math.floor(cd.ty), 4, 2);
+  });
 
 }
 
@@ -2392,10 +2397,11 @@ function drawKanban(ctx) {
 function drawWallClock(ctx) {
   const now = new Date();
   const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
-  // Position: right outer wall, upper area
-  const [cx, cy] = ts(COLS - 1.3, 3);
+  // Position: on right wall, mid-height (between desk rows)
+  const clockRow = Math.max(4, Math.floor(ROWS * 0.2));
+  const [cx, cy] = ts(COLS - 1.5, clockRow);
   const px2 = cx + T/2, py2 = cy + T*0.5;
-  const R = 18;
+  const R = 15;
   // Frame
   ctx.fillStyle = '#1a1824';
   ctx.beginPath(); ctx.arc(px2, py2, R+3, 0, Math.PI*2); ctx.fill();
@@ -2772,22 +2778,12 @@ function buildBackground() {
   ctx.fillStyle='#7aa2f7'; ctx.font="bold 9px 'Press Start 2P',monospace";
   ctx.textAlign='center'; ctx.fillText('AGENT OFFICE',OX+COLS/2*T,npY+14); ctx.textAlign='left';
 
-  // ── Wall Clock (static frame drawn on background; hands drawn dynamically) ──
-  {
-    const [wcx, wcy] = ts(13, 0.2);
-    const cx2 = wcx + T/2, cy2 = wcy + T*0.55;
-    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
-    ctx.fillStyle='#1a1824';
-    ctx.beginPath(); ctx.arc(cx2, cy2, 14, 0, Math.PI*2); ctx.fill();
-    ctx.restore();
-    ctx.fillStyle='#3a3858';
-    ctx.beginPath(); ctx.arc(cx2, cy2, 13, 0, Math.PI*2); ctx.fill();
-  }
+  // Wall clock static frame removed — clock is fully dynamic now
 
-  // ── Bookshelf (left wall, social zone — below conference table) ──
+  // ── Bookshelf (right wall, social zone — below conference table) ──
   if (ACT_ZONE_Y > 0) {
     const shelfY = ACT_ZONE_Y + 14;
-    const [bsx, bsy] = ts(0.3, shelfY - 0.8);
+    const [bsx, bsy] = ts(COLS - 5.5, shelfY - 0.8);
     const bW = T * 4.5, bH = T * 3.5;
     // Shadow
     ctx.save(); ctx.shadowColor='#00000090'; ctx.shadowBlur=12; ctx.shadowOffsetY=4;
@@ -3375,16 +3371,32 @@ class AgentState {
         const avail=[];
         for(let i=0;i<IDLE_SPOTS.length;i++){
           const holder=idleOccupied[i];
-          if(holder !== undefined && holder !== this.id) continue; // taken by another
+          if(holder !== undefined && holder !== this.id && !String(holder).startsWith('__reserved_')) continue; // taken by another (reserved = claimable)
           const sp=IDLE_SPOTS[i];
           if(sp.type==='group'){
             const pair=GROUP_PAIRS[sp.groupId];
             const otherIdx=pair[0]===i?pair[1]:pair[0];
             const otherHolder=idleOccupied[otherIdx];
-            // Allow only if partner slot is free
-            if(otherHolder===undefined || otherHolder===this.id) avail.push({i,w:sp.w});
+            // Group: only join if partner already occupied by someone else
+            if(otherHolder !== undefined && otherHolder !== this.id) {
+              avail.push({i,w:sp.w});
+            }
+            // Skip if partner is free — we don't go alone
           } else {
             avail.push({i,w:sp.w});
+          }
+        }
+        // If no solo slots available, try to INITIATE a group pair
+        // by finding a group where BOTH slots are free, and reserve both
+        if (avail.length < 3) {
+          for (const [gid, pair] of Object.entries(GROUP_PAIRS)) {
+            const [a, b] = pair;
+            if (idleOccupied[a] === undefined && idleOccupied[b] === undefined) {
+              // Reserve the partner slot as 'waiting' so next agent picks it
+              idleOccupied[b] = '__reserved_' + gid;
+              avail.push({i: a, w: IDLE_SPOTS[a].w * 2}); // boost weight
+              break; // only one group initiation per tick
+            }
           }
         }
         if(avail.length>0){
