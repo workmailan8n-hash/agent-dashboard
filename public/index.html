@@ -2103,9 +2103,6 @@ function generateLayout(n) {
   // ── Printer spot ─────────────────────────────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL - 3, ty: KITCHEN_START_ROW - 2, anim:'reading', type:'printer', w:5 });
 
-  // ── 2. Dartboard (solo — agent throws darts) ───────────────────
-  IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7 });
-
   // ══════════════════════════════════════════════════════════════════
   //  RIGHT ENTERTAINMENT ZONE (cols PER_ROW*STEP_X+2 to COLS-2)
   //  Layout plan for all 13 items:
@@ -2127,6 +2124,9 @@ function generateLayout(n) {
   const wc2 = IDLE_SPOTS.length;
   IDLE_SPOTS.push({ tx:rX+2.5,   ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8 });
   GROUP_PAIRS[20] = [wc1, wc2];
+
+  // ── 2. Dartboard (solo — agent throws darts) ───────────────────
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7 });
 
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
