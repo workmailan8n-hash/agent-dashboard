@@ -57,6 +57,55 @@
       box-shadow: 0 0 40px #7aa2f710;
     }
 
+    /* ── Agent Cards Grid ───────────────────────────────────────── */
+    #grid {
+      display: grid;
+      grid-template-columns: repeat(auto-fill, minmax(240px, 1fr));
+      gap: 8px;
+      width: 100%;
+      max-width: 1200px;
+    }
+    .card {
+      background: linear-gradient(160deg, #0c0d1e 0%, #0a0b1a 100%);
+      border: 1px solid #1e2240;
+      border-top: 2px solid var(--ac, #1e2240);
+      border-radius: 4px;
+      padding: 12px 14px 12px 16px;
+      position: relative;
+      overflow: hidden;
+      transition: transform .15s ease, box-shadow .35s ease;
+      cursor: default;
+    }
+    .card:hover { transform: translateY(-2px); }
+    .card.working  { border-color: var(--ac, #7aa2f7); box-shadow: 0 2px 22px var(--ac-glow, #7aa2f740); }
+    .card.thinking { border-color: #bb9af7; box-shadow: 0 2px 22px #bb9af740; }
+    .card::before {
+      content: '';
+      position: absolute; top: 0; left: 0; width: 3px; height: 100%;
+      background: var(--ac, #1e2240);
+      transition: background .3s, box-shadow .3s;
+    }
+    .card.working::before  { box-shadow: 0 0 10px var(--ac-glow, #7aa2f780); }
+    .card.thinking::before { background: #bb9af7; box-shadow: 0 0 8px #bb9af7; }
+    .card-dot {
+      position: absolute; top: 12px; right: 12px;
+      width: 7px; height: 7px;
+      background: #1e2030; border-radius: 50%;
+      transition: background .3s, box-shadow .3s;
+    }
+    .card.working  .card-dot { background: var(--ac, #7aa2f7); box-shadow: 0 0 8px var(--ac, #7aa2f7); animation: pulse 1.8s ease-in-out infinite; }
+    .card.thinking .card-dot { background: #bb9af7; box-shadow: 0 0 6px #bb9af7; animation: blink .8s step-end infinite; }
+    @keyframes pulse { 0%,100%{transform:scale(1);opacity:1} 50%{transform:scale(1.5);opacity:.7} }
+    .card-name { font-size: 10px; color: #e4ecff; margin-bottom: 8px; text-transform: uppercase; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; padding-right: 20px; letter-spacing: .5px; }
+    .card-status { font-size: 8px; color: #4a5070; line-height: 2.2; }
+    .card-status .t  { color: var(--ac, #7aa2f7); background: var(--ac-badge, #7aa2f725); padding: 1px 5px; border-radius: 3px; }
+    .card-status .th { color: #bb9af7; }
+    .card-status .idle { color: #3a405a; }
+    .card-status .dim  { color: #3a405a; }
+    .scan { position: absolute; bottom: 0; left: 0; height: 2px; display: none; animation: scan 2s ease-in-out infinite; }
+    .working  .scan { display: block; background: linear-gradient(90deg, transparent, var(--ac, #7aa2f7) 50%, transparent); }
+    .thinking .scan { display: block; background: linear-gradient(90deg, transparent, #bb9af7cc, transparent); animation-duration: 3s; }
+    @keyframes scan { 0%{left:0;width:0} 50%{left:0;width:100%} 100%{left:100%;width:0} }
 
     /* ── Connection indicator ─────────────────────────────────── */
     .conn { position: fixed; bottom: 10px; right: 14px; font-size: 5px; color: #2a3050; display: flex; align-items: center; gap: 5px; }
@@ -196,6 +245,8 @@
 </header>
 
 <canvas id="office" width="1200" height="600"></canvas>
+
+<div id="grid"></div>
 
 <div id="task-view">
   <!-- Add task form -->
@@ -4267,6 +4318,7 @@ function switchTab(tab) {
   document.getElementById('tab-office').classList.toggle('active', isOffice);
   document.getElementById('tab-tasks').classList.toggle('active', !isOffice);
   document.getElementById('office').style.display = isOffice ? 'block' : 'none';
+  document.getElementById('grid').style.display = isOffice ? 'grid' : 'none';
   document.getElementById('task-view').classList.toggle('visible', !isOffice);
   if (!isOffice) renderTasks();
 }
