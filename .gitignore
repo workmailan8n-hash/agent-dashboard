@@ -2,3 +2,5 @@ node_modules/
 tasks.json
 *.log
 .env
+demo.js
+seed_tasks.js
