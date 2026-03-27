@@ -7714,6 +7714,19 @@ canvas.addEventListener('mousemove', e => {
     } else {
       w.pos = Math.max(w.min, Math.min(w.max, Math.round(ty)));
     }
+    // Live-resize canvas when dragging outer walls
+    if (w.id === 'wall_right') {
+      COLS = Math.round(w.pos);
+      CW = OX + COLS*T + OX;
+      canvas.width = CW; bgBuf.width = CW;
+      buildBackground();
+    }
+    if (w.id === 'wall_bottom') {
+      ROWS = Math.round(w.pos);
+      CH = OY + ROWS*T + OY;
+      canvas.height = CH; bgBuf.height = CH;
+      buildBackground();
+    }
     return;
   }
   if (adminDragging && adminSelected) {
