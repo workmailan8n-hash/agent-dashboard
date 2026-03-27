@@ -2848,14 +2848,7 @@ function generateLayout(n) {
   // ══════════════════════════════════════════════════════════════════
   const rX = PER_ROW * STEP_X + 2; // right zone start col (~23)
 
-  // ── 1. Water Cooler (pair chat) ────────────────────────────────
-  const wcY = 2;
-  const _coolerDefTx = rX+2.5, _coolerDefTy = 2;
-  const wc1 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:rX+1.5,   ty:wcY+1, anim:'chatting_l', type:'group', groupId:20, role:'L', w:8, _objId:'cooler', _defObjTx:_coolerDefTx, _defObjTy:_coolerDefTy, _offsetX:-1, _offsetY:1 });
-  const wc2 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:rX+3.5,   ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8, _objId:'cooler', _defObjTx:_coolerDefTx, _defObjTy:_coolerDefTy, _offsetX:1, _offsetY:1 });
-  GROUP_PAIRS[20] = [wc1, wc2];
+  // (Water cooler removed)
 
   // ── 2. Dartboard (solo — agent throws darts) ───────────────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7, _objId:'darts', _defObjTx:rX+1.5, _defObjTy:0, _offsetX:0, _offsetY:6 });
@@ -2917,8 +2910,7 @@ function generateLayout(n) {
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
 
-  // ── Vending machine spot (inside kitchen) ────────────────────────
-  IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL+1.5, ty: ACT_ZONE_Y-1.5, anim:'eating', type:'kitchen', w:3 });
+  // (Vending machine removed)
 
   // ── Conference table — 2 GROUP_PAIRS, in social zone below gym ───
   const confY = ACT_ZONE_Y + 10; // below gym/gaming/pp zone
@@ -4057,31 +4049,7 @@ function buildBackground() {
     ctx.fillText('PRINT', prx + 8, pry + 14);
   }
 
-  // ── Vending Machine (inside kitchen area) ────────────────────────
-  if (KITCHEN_WALL_COL > 0 && ACT_ZONE_Y > 0) {
-    const [_vmTx,_vmTy] = getAdminPos('vending', KITCHEN_WALL_COL+1, ACT_ZONE_Y-2);
-    const [vmx, vmy] = ts(_vmTx, _vmTy);
-    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
-    fillR(ctx, vmx, vmy, T*1.5, T*2.2, '#282840'); ctx.restore();
-    fillR(ctx, vmx + 2, vmy + 2, T*1.5-4, T*2.2-4, '#30304a');
-    // Glass front
-    fillR(ctx, vmx + 4, vmy + 6, T*1.5-8, T*1.4, '#101828');
-    // Snack rows
-    const vmColors = ['#e0a030','#c04040','#40a060','#8040c0','#2ac3de','#f7768e'];
-    for (let r = 0; r < 3; r++) {
-      for (let c2 = 0; c2 < 3; c2++) {
-        fillR(ctx, vmx+6+c2*12, vmy+8+r*14, 10, 11, vmColors[(r*3+c2)%6]);
-        fillR(ctx, vmx+7+c2*12, vmy+9+r*14, 4, 3, '#ffffff30');
-      }
-    }
-    // Coin slot
-    fillR(ctx, vmx + 4, vmy + T*1.4+8, 8, 3, '#404058');
-    // Display
-    fillR(ctx, vmx + 14, vmy + T*1.4+6, T*1.5-18, 8, '#0a1828');
-    fillR(ctx, vmx + 15, vmy + T*1.4+7, T*1.5-20, 6, SCREEN_C);
-    // Delivery slot
-    fillR(ctx, vmx + 4, vmy + T*2.2-8, T*1.5-8, 6, '#1a1830');
-  }
+  // (Vending machine removed)
 
   // ── Conference Table (social zone below gym) ─────────────────────
   if (ACT_ZONE_Y > 0) {
@@ -4143,22 +4111,7 @@ function buildBackground() {
   {
     const rX = PER_ROW * STEP_X + 2;
 
-    // ── 1. Water Cooler (compact) ───────────────────────────────
-    const [_coolerTx, _coolerTy] = getAdminPos('cooler', rX+2.5, 2);
-    const [wcx, wcy] = ts(_coolerTx, _coolerTy);
-    const wcW = T*0.9, wcH = T*1.2;
-    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
-    fillR(ctx, wcx, wcy, wcW, wcH, '#d0d8e0'); ctx.restore();
-    fillR(ctx, wcx+2, wcy+2, wcW-4, wcH*0.35, '#80c0e8'); // water tank
-    fillR(ctx, wcx+2, wcy+wcH*0.35+2, wcW-4, wcH*0.6, '#e8ecf0'); // body
-    fillR(ctx, wcx+wcW/2-3, wcy+wcH*0.45, 6, 4, '#707880'); // tap
-    ctx.fillStyle='#4488dd'; ctx.fillRect(wcx+3, wcy+wcH*0.55, 5, 3);
-    ctx.fillStyle='#dd4444'; ctx.fillRect(wcx+wcW-8, wcy+wcH*0.55, 5, 3);
-    // Jug on top
-    ctx.fillStyle='#70b8e870';
-    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-1, 9, 11, 0, Math.PI, 0); ctx.fill();
-    ctx.strokeStyle='#5090b8'; ctx.lineWidth=1;
-    ctx.beginPath(); ctx.ellipse(wcx+wcW/2, wcy-1, 9, 11, 0, Math.PI, 0); ctx.stroke();
+    // (Water cooler removed)
 
     // ── 3. Aquarium (right zone, row 8) ─────────────────────────
     const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
@@ -5664,6 +5617,197 @@ function drawMess(ctx, mx, my, tick) {
   }
 }
 
+// ── drawGoose ──────────────────────────────────────────────────────
+function drawGoose(ctx, cx, cy, tick, state, gooseObj) {
+  const phase = tick * 0.05;
+
+  // shadow
+  ctx.fillStyle='rgba(0,0,0,0.15)';
+  ctx.beginPath(); ctx.ellipse(cx,cy+11,8,2.5,0,0,Math.PI*2); ctx.fill();
+
+  if (state === 'napping') {
+    ctx.fillStyle='#f0f0f0';
+    ctx.beginPath(); ctx.ellipse(cx,cy+4,10,7,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#dde0e4';
+    ctx.beginPath(); ctx.ellipse(cx+2,cy+3,7,5,0.3,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e88a20';
+    ctx.beginPath(); ctx.moveTo(cx+7,cy+1); ctx.lineTo(cx+11,cy+2); ctx.lineTo(cx+7,cy+3); ctx.closePath(); ctx.fill();
+    const zOff = Math.sin(tick*0.06)*2;
+    ctx.fillStyle='rgba(150,180,255,0.7)'; ctx.font='bold 7px monospace';
+    ctx.fillText('z',cx+10,cy-6+zOff);
+    ctx.fillText('z',cx+14,cy-11+zOff);
+    return;
+  }
+
+  if (state === 'swimming') {
+    ctx.fillStyle='#4488cc30';
+    ctx.beginPath(); ctx.ellipse(cx,cy+8,12,3,0,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#4488cc50'; ctx.lineWidth=1;
+    for(let i=-1;i<=1;i++){
+      const rOff=Math.sin(tick*0.08+i*1.5)*3;
+      ctx.beginPath(); ctx.arc(cx+i*6+rOff,cy+9,4,0,Math.PI); ctx.stroke();
+    }
+    ctx.fillStyle='#f0f0f0';
+    ctx.beginPath(); ctx.ellipse(cx,cy+2,9,6,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f0f0f0';
+    ctx.beginPath(); ctx.ellipse(cx+4,cy-6,3.5,7,0.15,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+5,cy-13,4,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e88a20';
+    ctx.beginPath(); ctx.moveTo(cx+9,cy-14); ctx.lineTo(cx+15,cy-13); ctx.lineTo(cx+9,cy-12); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#111';
+    ctx.beginPath(); ctx.arc(cx+6,cy-14,1.2,0,Math.PI*2); ctx.fill();
+    return;
+  }
+
+  if (state === 'hiding_bush') {
+    ctx.fillStyle='#2a8a40';
+    ctx.beginPath(); ctx.ellipse(cx,cy+4,14,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1e7030';
+    ctx.beginPath(); ctx.ellipse(cx-3,cy+5,10,6,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#34a050';
+    ctx.beginPath(); ctx.ellipse(cx+4,cy+3,8,5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f0f0f0';
+    ctx.beginPath(); ctx.ellipse(cx,cy-6,4,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e88a20';
+    ctx.beginPath(); ctx.moveTo(cx+4,cy-7); ctx.lineTo(cx+9,cy-6); ctx.lineTo(cx+4,cy-5); ctx.closePath(); ctx.fill();
+    const eyeShift = Math.sin(tick*0.1)*1.5;
+    ctx.fillStyle='#111';
+    ctx.beginPath(); ctx.arc(cx-1+eyeShift,cy-7,1.2,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(cx+2+eyeShift,cy-7,1.2,0,Math.PI*2); ctx.fill();
+    return;
+  }
+
+  const wobble = (state === 'waddling') ? Math.sin(phase*2)*2 : 0;
+  const neckExt = (state === 'honking' || state === 'bothering_cat') ? 4 : 0;
+  const lowPosture = (state === 'chasing_agent') ? 3 : 0;
+  const peckOff = (state === 'pecking') ? (Math.sin(tick*0.3)*0.5+0.5)*8 : 0;
+  const flapAngle = (state === 'flapping') ? Math.sin(tick*0.2)*0.8 : 0;
+  const flapLift = (state === 'flapping') ? Math.abs(Math.sin(tick*0.2))*3 : 0;
+
+  const bodyY = cy + 3 + lowPosture - flapLift;
+
+  // Orange feet
+  ctx.fillStyle='#e88a20';
+  const footStep = (state==='waddling'||state==='stealing'||state==='chasing_agent') ? Math.sin(phase*3)*3 : 0;
+  ctx.beginPath(); ctx.ellipse(cx-3+footStep,cy+11,3,1.5,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+3-footStep,cy+11,3,1.5,0,0,Math.PI*2); ctx.fill();
+  ctx.strokeStyle='#d07818'; ctx.lineWidth=0.8;
+  ctx.beginPath(); ctx.moveTo(cx-5+footStep,cy+11); ctx.lineTo(cx-3+footStep,cy+10); ctx.lineTo(cx-1+footStep,cy+11); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx+1-footStep,cy+11); ctx.lineTo(cx+3-footStep,cy+10); ctx.lineTo(cx+5-footStep,cy+11); ctx.stroke();
+
+  // Tail feathers
+  ctx.fillStyle='#e0e3e8';
+  ctx.beginPath(); ctx.moveTo(cx-8,bodyY+1); ctx.lineTo(cx-14,bodyY-3); ctx.lineTo(cx-12,bodyY+3); ctx.closePath(); ctx.fill();
+  ctx.beginPath(); ctx.moveTo(cx-8,bodyY+2); ctx.lineTo(cx-15,bodyY-1); ctx.lineTo(cx-13,bodyY+5); ctx.closePath(); ctx.fill();
+
+  // Body
+  ctx.fillStyle='#f0f0f0';
+  ctx.beginPath(); ctx.ellipse(cx+wobble,bodyY,10,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#dde0e4';
+  ctx.beginPath(); ctx.ellipse(cx+wobble+1,bodyY+2,6,4,0,0,Math.PI*2); ctx.fill();
+
+  // Wings
+  if (state === 'flapping') {
+    ctx.fillStyle='#e8eaee';
+    ctx.save();
+    ctx.translate(cx-5,bodyY-2);
+    ctx.rotate(-flapAngle-0.3);
+    ctx.beginPath(); ctx.ellipse(0,0,4,12,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    ctx.save();
+    ctx.translate(cx+5,bodyY-2);
+    ctx.rotate(flapAngle+0.3);
+    ctx.beginPath(); ctx.ellipse(0,0,4,12,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    if (tick % 8 < 2) {
+      ctx.fillStyle='rgba(220,225,235,0.6)';
+      for(let i=0;i<3;i++){
+        const fx=cx+(Math.random()-0.5)*20, fy=bodyY-10+Math.random()*6;
+        ctx.beginPath(); ctx.ellipse(fx,fy,2,1,Math.random()*Math.PI,0,Math.PI*2); ctx.fill();
+      }
+    }
+  } else if (state === 'chasing_agent') {
+    ctx.fillStyle='#e8eaee';
+    ctx.beginPath(); ctx.ellipse(cx-6,bodyY-1,3,8,-0.3,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+6,bodyY-1,3,8,0.3,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#e0e3e8';
+    ctx.beginPath(); ctx.ellipse(cx-5,bodyY+1,3,5.5,0.15,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+5,bodyY+1,3,5.5,-0.15,0,Math.PI*2); ctx.fill();
+  }
+
+  // Neck
+  const neckBaseX = cx + 6 + wobble;
+  const neckBaseY = bodyY - 4;
+  const neckTopY = neckBaseY - 10 - neckExt + peckOff;
+  const neckTopX = neckBaseX + 2;
+  ctx.fillStyle='#f0f0f0';
+  ctx.beginPath();
+  ctx.moveTo(neckBaseX-3,neckBaseY);
+  ctx.quadraticCurveTo(neckTopX-4,neckTopY+5,neckTopX-3,neckTopY);
+  ctx.lineTo(neckTopX+3,neckTopY);
+  ctx.quadraticCurveTo(neckTopX+4,neckTopY+5,neckBaseX+3,neckBaseY);
+  ctx.closePath(); ctx.fill();
+
+  // Head
+  const headX = neckTopX;
+  const headY = neckTopY - 2;
+  ctx.fillStyle='#f0f0f0';
+  ctx.beginPath(); ctx.ellipse(headX,headY,4.5,3.5,0,0,Math.PI*2); ctx.fill();
+
+  // Beak
+  ctx.fillStyle='#e88a20';
+  if (state === 'honking' || state === 'bothering_cat') {
+    ctx.beginPath(); ctx.moveTo(headX+4,headY-2); ctx.lineTo(headX+13,headY-4); ctx.lineTo(headX+4,headY); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(headX+4,headY); ctx.lineTo(headX+13,headY+3); ctx.lineTo(headX+4,headY+2); ctx.closePath(); ctx.fill();
+  } else if (state === 'stealing') {
+    ctx.beginPath(); ctx.moveTo(headX+4,headY-1); ctx.lineTo(headX+11,headY); ctx.lineTo(headX+4,headY+1); ctx.closePath(); ctx.fill();
+    ctx.fillStyle='#f7d060';
+    ctx.fillRect(headX+9,headY-1,7,3);
+    ctx.fillStyle='#f06060';
+    ctx.fillRect(headX+14,headY-1,3,3);
+  } else {
+    ctx.beginPath(); ctx.moveTo(headX+4,headY-1); ctx.lineTo(headX+11,headY); ctx.lineTo(headX+4,headY+1); ctx.closePath(); ctx.fill();
+  }
+
+  // Eye
+  ctx.fillStyle='#111';
+  ctx.beginPath(); ctx.arc(headX+1,headY-1.5,1.3,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#fff';
+  ctx.beginPath(); ctx.arc(headX+0.5,headY-2,0.5,0,Math.PI*2); ctx.fill();
+
+  // State effects
+  if (state === 'honking') {
+    const vib = Math.sin(tick*0.5)*1.5;
+    ctx.save();
+    ctx.fillStyle='#ff3333';
+    ctx.font='bold 10px monospace';
+    ctx.textAlign='center';
+    ctx.fillText('HONK!',cx+vib,headY-12);
+    ctx.restore();
+    ctx.textAlign='left';
+  }
+
+  if (state === 'bothering_cat') {
+    if ((tick>>3)&1) {
+      ctx.fillStyle='rgba(255,60,60,0.8)';
+      ctx.font='bold 7px monospace';
+      ctx.textAlign='center';
+      ctx.fillText('honk',cx,headY-10);
+      ctx.textAlign='left';
+    }
+  }
+
+  if (state === 'pecking') {
+    if (tick%6<2) {
+      ctx.fillStyle='rgba(160,140,100,0.5)';
+      for(let i=0;i<2;i++){
+        ctx.fillRect(cx+8+Math.random()*6,cy+8+Math.random()*4,2,2);
+      }
+    }
+  }
+}
+
 class CatState {
   constructor() {
     this.tx = 5 + Math.random() * (COLS * 0.5);
@@ -6034,6 +6178,200 @@ class CatState {
 }
 
 const cat = new CatState();
+
+// ════════════════════════════════════════════════════════════════
+//  GOOSE STATE — Untitled Goose Game-style troublemaker
+// ════════════════════════════════════════════════════════════════
+class GooseState {
+  constructor() {
+    this.tx = 8 + Math.random() * (COLS * 0.4);
+    this.ty = ACT_ZONE_Y + 5 + Math.random() * 3;
+    this.targetTx = this.tx; this.targetTy = this.ty;
+    this.state = 'waddling';
+    this.stateTimer = 4 + Math.random() * 4;
+    this.flip = false;
+    this.chaseTarget = null;
+    this.chaseTimer = 0;
+    this.stolenItem = false;
+    this.plantSpot = null;
+  }
+  get sx() { return OX + this.tx * T + T/2; }
+  get sy() { return OY + this.ty * T + T/2; }
+
+  _pickWanderTarget() {
+    this.targetTx = 2 + Math.random() * Math.min(COLS-4, 22);
+    this.targetTy = 2 + Math.random() * Math.max(4, ROWS*0.6);
+  }
+
+  _findNearestDesk() {
+    let best = null, bestD = Infinity;
+    for (const d of DESK_DEFS) {
+      const dx = d.tx - this.tx, dy = d.ty - this.ty;
+      const dist = dx*dx + dy*dy;
+      if (dist < bestD) { bestD = dist; best = d; }
+    }
+    return best;
+  }
+
+  _findRandomAgent() {
+    const agents = Object.values(agentStates).filter(s => s.arrived);
+    if (agents.length === 0) return null;
+    return agents[Math.floor(Math.random() * agents.length)];
+  }
+
+  _findPlantSpot() {
+    const plants = IDLE_SPOTS.filter(s => s.type === 'plant');
+    if (plants.length === 0) return null;
+    return plants[Math.floor(Math.random() * plants.length)];
+  }
+
+  _findAquariumSpot() {
+    const aq = IDLE_SPOTS.find(s => s.type === 'aquarium');
+    return aq || null;
+  }
+
+  _moveToward(targetX, targetY, speed, dt) {
+    const dtx = targetX - this.tx, dty = targetY - this.ty;
+    const dist = Math.sqrt(dtx*dtx + dty*dty);
+    if (dist < 0.25) return true;
+    const step = Math.min(speed * dt, dist);
+    this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+    this.flip = dtx < 0;
+    return false;
+  }
+
+  update(dt, tick) {
+    this.stateTimer -= dt;
+
+    // Waddling
+    if (this.state === 'waddling') {
+      if (this._moveToward(this.targetTx, this.targetTy, 1.6, dt)) {
+        this.stateTimer = 0;
+      }
+    }
+
+    // Honking — just stands still, timer runs out
+    // Stealing — run to desk, grab item, run away
+    if (this.state === 'stealing') {
+      if (!this.stolenItem) {
+        if (this._moveToward(this.targetTx, this.targetTy, 2.0, dt)) {
+          this.stolenItem = true;
+          this._pickWanderTarget();
+        }
+      } else {
+        this._moveToward(this.targetTx, this.targetTy, 2.8, dt);
+      }
+    }
+
+    // Chasing agent
+    if (this.state === 'chasing_agent') {
+      this.chaseTimer -= dt;
+      if (this.chaseTarget) {
+        const sp = this.chaseTarget;
+        if (agentStates[sp.id]) {
+          this._moveToward(sp.tx, sp.ty, 2.2, dt);
+        }
+      }
+      if (this.chaseTimer <= 0) {
+        this.stateTimer = 0;
+      }
+    }
+
+    // Swimming — sit still at aquarium
+    // Flapping — stand in place
+    // Pecking — stand in place
+
+    // Hiding in bush — walk to plant, then sit
+    if (this.state === 'hiding_bush' && this.plantSpot) {
+      this._moveToward(this.plantSpot.tx, this.plantSpot.ty, 1.4, dt);
+    }
+
+    // Bothering cat — walk toward cat
+    if (this.state === 'bothering_cat') {
+      this._moveToward(cat.tx, cat.ty, 1.8, dt);
+    }
+
+    // Swimming — walk to aquarium then sit
+    if (this.state === 'swimming' && this._swimTarget) {
+      this._moveToward(this._swimTarget.tx, this._swimTarget.ty, 1.4, dt);
+    }
+
+    // State transitions
+    if (this.stateTimer <= 0) {
+      this._changeState();
+    }
+  }
+
+  _changeState() {
+    const r = Math.random();
+
+    // 20% chance to honk on any state change
+    if (Math.random() < 0.20) {
+      this.state = 'honking'; this.stateTimer = 2 + Math.random() * 2;
+      return;
+    }
+
+    // 5% chance to steal
+    if (Math.random() < 0.05) {
+      const desk = this._findNearestDesk();
+      if (desk) {
+        this.state = 'stealing'; this.stolenItem = false;
+        this.targetTx = desk.tx + 1; this.targetTy = desk.ty + 1;
+        this.stateTimer = 8 + Math.random() * 4;
+        return;
+      }
+    }
+
+    if (r < 0.25) {
+      this.state = 'waddling'; this._pickWanderTarget(); this.stateTimer = 5 + Math.random() * 6;
+    } else if (r < 0.35) {
+      this.state = 'pecking'; this.stateTimer = 3 + Math.random() * 3;
+    } else if (r < 0.45) {
+      this.state = 'flapping'; this.stateTimer = 3 + Math.random() * 2;
+    } else if (r < 0.55) {
+      const agent = this._findRandomAgent();
+      if (agent) {
+        this.state = 'chasing_agent'; this.chaseTarget = agent;
+        this.chaseTimer = 8 + Math.random() * 2;
+        this.stateTimer = this.chaseTimer;
+      } else {
+        this.state = 'waddling'; this._pickWanderTarget(); this.stateTimer = 4;
+      }
+    } else if (r < 0.62) {
+      const plant = this._findPlantSpot();
+      if (plant) {
+        this.state = 'hiding_bush'; this.plantSpot = plant; this.stateTimer = 6 + Math.random() * 4;
+      } else {
+        this.state = 'waddling'; this._pickWanderTarget(); this.stateTimer = 4;
+      }
+    } else if (r < 0.70) {
+      this.state = 'bothering_cat'; this.stateTimer = 5 + Math.random() * 3;
+    } else if (r < 0.78) {
+      const aq = this._findAquariumSpot();
+      if (aq) {
+        this.state = 'swimming'; this._swimTarget = aq; this.stateTimer = 8 + Math.random() * 5;
+      } else {
+        this.state = 'pecking'; this.stateTimer = 3;
+      }
+    } else if (r < 0.88) {
+      this.state = 'napping'; this.stateTimer = 10 + Math.random() * 10;
+    } else {
+      this.state = 'honking'; this.stateTimer = 2 + Math.random() * 2;
+    }
+  }
+
+  draw(ctx, tick) {
+    ctx.save();
+    if (this.flip) {
+      ctx.translate(this.sx, this.sy); ctx.scale(-1,1); ctx.translate(-this.sx, -this.sy);
+    }
+    drawGoose(ctx, this.sx, this.sy, tick, this.state, this);
+    ctx.restore();
+  }
+}
+
+let goose = new GooseState();
+
 // Bowl refill tracking: [{agentId, bowlIdx, refillTimer}]
 const bowlRefills = {}; // bowlIdx -> {agentId, timer}
 
@@ -6186,20 +6524,29 @@ function drawRightPanel(ctx, tick) {
   ctx.font = 'bold 11px monospace';
   ctx.fillText(catMood, panelX+8, 286);
 
+  // Goose status
+  ctx.fillStyle = '#565f89'; ctx.font = '9px monospace'; ctx.textAlign='left';
+  ctx.fillText('GOOSE', panelX+8, 302);
+  const _gooseMoods = {waddling:'🦆 waddling',honking:'📢 HONK!',stealing:'🏃 stealing!',chasing_agent:'😤 chasing',swimming:'🏊 swimming',flapping:'🪽 flapping',pecking:'🐦 pecking',hiding_bush:'🌿 hiding',bothering_cat:'😈 annoying',napping:'😴 napping'};
+  const gooseMood = _gooseMoods[goose.state] || '🦆 waddling';
+  ctx.fillStyle = (goose.state==='honking'||goose.state==='stealing') ? '#f7768e' : '#c8d3f5';
+  ctx.font = 'bold 11px monospace';
+  ctx.fillText(gooseMood, panelX+8, 318);
+
   // Mini activity bar
   ctx.fillStyle = '#2a2c4e';
-  ctx.fillRect(panelX+6, 306, W-12, 1);
+  ctx.fillRect(panelX+6, 338, W-12, 1);
   ctx.fillStyle = '#565f89'; ctx.font = '9px monospace';
-  ctx.fillText('ACTIVITY', panelX+8, 320);
+  ctx.fillText('ACTIVITY', panelX+8, 352);
   if (agents.length > 0) {
     const barW = W - 16;
     const wFrac = working / agents.length;
     ctx.fillStyle = '#1a2040';
-    ctx.fillRect(panelX+8, 326, barW, 8);
+    ctx.fillRect(panelX+8, 358, barW, 8);
     ctx.fillStyle = '#9ece6a';
-    ctx.fillRect(panelX+8, 326, barW * wFrac, 8);
+    ctx.fillRect(panelX+8, 358, barW * wFrac, 8);
     ctx.fillStyle = '#ffffff20';
-    ctx.fillRect(panelX+8, 326, barW, 3);
+    ctx.fillRect(panelX+8, 358, barW, 3);
   }
 
   // Blinking indicator
@@ -6284,6 +6631,7 @@ function loop(now) {
   }
 
   cat.update(dt, globalTick);
+  goose.update(dt, globalTick);
 
   // ── Ping pong ball physics ──────────────────────────────────────
   {
@@ -6553,6 +6901,7 @@ function loop(now) {
   drawPingPongBall(ctx);
   drawDartAnimation(ctx, globalTick);
   cat.draw(ctx, globalTick);
+  goose.draw(ctx, globalTick);
   PS.draw(ctx);
 
   // Phase 2: all overlays strictly on top
@@ -7193,6 +7542,57 @@ function findClickableAt(tx, ty) {
 canvas.addEventListener('click', e => {
   if (adminMode) return;
   const {tx, ty} = mouseToTile(e);
+
+  // Check if clicked on cat
+  if (cat) {
+    const catDist = Math.sqrt((tx - cat.tx)*(tx - cat.tx) + (ty - cat.ty)*(ty - cat.ty));
+    if (catDist < 1.5) {
+      // Cat reacts to click!
+      if (cat.state === 'sleeping' || cat.state === 'napping') {
+        // Wake up startled
+        cat.state = 'scared'; cat.stateTimer = 2;
+        cat.scaredTimer = 2;
+      } else if (cat.state === 'sitting' || cat.state === 'grooming') {
+        // Start purring (happy)
+        cat.state = 'purring'; cat.stateTimer = 8;
+        cat.purrHearts = [];
+      } else if (cat.state === 'walking' || cat.state === 'waddling') {
+        // Start playing
+        cat.state = 'playing'; cat.stateTimer = 6;
+        cat.playAngle = 0;
+      } else {
+        // Default: honk-like meow — zoomies!
+        cat.state = 'zoomies'; cat.stateTimer = 4;
+        cat.zoomieTimer = 0; cat.zoomieTrails = [];
+      }
+      // Click animation: hearts/sparkles at cat position
+      clickAnims.push({
+        id: '_cat_' + Date.now(),
+        type: 'cat_pet',
+        cx: OX + cat.tx * T + T/2,
+        cy: OY + cat.ty * T + T/2,
+        startTick: globalTick
+      });
+      return;
+    }
+  }
+
+  // Check if clicked on goose
+  if (typeof goose !== 'undefined' && goose) {
+    const gooseDist = Math.sqrt((tx - goose.tx)*(tx - goose.tx) + (ty - goose.ty)*(ty - goose.ty));
+    if (gooseDist < 1.5) {
+      goose.state = 'honking'; goose.stateTimer = 3;
+      clickAnims.push({
+        id: '_goose_' + Date.now(),
+        type: 'goose_honk',
+        cx: OX + goose.tx * T + T/2,
+        cy: OY + goose.ty * T + T/2,
+        startTick: globalTick
+      });
+      return;
+    }
+  }
+
   const hit = findClickableAt(tx, ty);
   if (!hit) return;
   if (clickAnims.some(a => a.id === hit.id)) return;
@@ -7425,6 +7825,48 @@ function drawClickAnims(ctx, tick) {
           ctx.font = "7px 'Press Start 2P',monospace";
           ctx.globalAlpha = alpha * (t < 0.5 ? 1 : 1 - (t-0.5)/0.2);
           ctx.fillText('BONG', ccx - 12, ccy - 16);
+        }
+        break;
+      }
+      case 'cat_pet': {
+        // Hearts rising from cat
+        ctx.globalAlpha = alpha;
+        for (let h = 0; h < 4; h++) {
+          const hx = a.cx + Math.sin(t*6 + h*1.5) * 12;
+          const hy = a.cy - 10 - t * 40 - h * 8;
+          const hs = 4 + Math.sin(t*4+h) * 1.5;
+          ctx.fillStyle = ['#ff6080','#ff80a0','#ff4060','#ff90b0'][h];
+          ctx.font = Math.round(hs+6) + "px serif";
+          ctx.fillText('♥', hx, hy);
+        }
+        // "purr~" text
+        if (t < 0.6) {
+          ctx.fillStyle = '#ffb0c0';
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * (1 - t/0.6);
+          ctx.fillText('purr~', a.cx - 14, a.cy - 30 - t*20);
+        }
+        break;
+      }
+      case 'goose_honk': {
+        // HONK! text big and bold
+        ctx.globalAlpha = alpha;
+        const scale = 1 + Math.sin(t*20) * 0.15; // vibrate
+        ctx.save();
+        ctx.translate(a.cx, a.cy - 25 - t*15);
+        ctx.scale(scale, scale);
+        ctx.fillStyle = '#ff4040';
+        ctx.font = "bold 10px 'Press Start 2P',monospace";
+        ctx.textAlign = 'center';
+        ctx.fillText('HONK!', 0, 0);
+        ctx.textAlign = 'left';
+        ctx.restore();
+        // Feathers flying
+        for (let f = 0; f < 3; f++) {
+          ctx.fillStyle = '#ffffff';
+          const fx = a.cx + Math.sin(t*8+f*2) * 20;
+          const fy = a.cy - t*30 - f*10;
+          ctx.fillRect(fx, fy, 3, 2);
         }
         break;
       }
