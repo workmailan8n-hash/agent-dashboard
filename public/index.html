@@ -7710,18 +7710,16 @@ canvas.addEventListener('mousemove', e => {
     } else {
       w.pos = Math.max(w.min, Math.min(w.max, Math.round(ty)));
     }
-    // Live-resize canvas when dragging outer walls
+    // Live-resize canvas when dragging outer walls (no rebuild during drag)
     if (w.id === 'wall_right') {
       COLS = Math.round(w.pos);
       CW = OX + COLS*T + OX;
       canvas.width = CW; bgBuf.width = CW;
-      buildBackground();
     }
     if (w.id === 'wall_bottom') {
       ROWS = Math.round(w.pos);
       CH = OY + ROWS*T + OY;
       canvas.height = CH; bgBuf.height = CH;
-      buildBackground();
     }
     return;
   }
@@ -7746,6 +7744,38 @@ canvas.addEventListener('mousemove', e => {
       canvas.style.cursor = obj ? 'grab' : 'crosshair';
     }
   }
+});
+
+// Use document-level mouseup/mousemove for wall drags (mouse can leave canvas)
+document.addEventListener('mousemove', e => {
+  if (!adminDraggingWall || !adminSelectedWall) return;
+  const {tx, ty} = mouseToTile(e);
+  const w = adminSelectedWall;
+  if (w.type === 'vertical') {
+    w.pos = Math.max(w.min, Math.min(w.max, Math.round(tx)));
+  } else {
+    w.pos = Math.max(w.min, Math.min(w.max, Math.round(ty)));
+  }
+  if (w.id === 'wall_right') { COLS = Math.round(w.pos); CW = OX+COLS*T+OX; canvas.width=CW; bgBuf.width=CW; }
+  if (w.id === 'wall_bottom') { ROWS = Math.round(w.pos); CH = OY+ROWS*T+OY; canvas.height=CH; bgBuf.height=CH; }
+});
+
+document.addEventListener('mouseup', e => {
+  if (!adminDraggingWall) return;
+  adminDraggingWall = false;
+  canvas.style.cursor = 'crosshair';
+  const wallPos = {};
+  for (const w2 of adminWalls) wallPos[w2.id] = w2.pos;
+  localStorage.setItem('admin_walls', JSON.stringify(wallPos));
+  for (const w2 of adminWalls) {
+    if (w2.id === 'wall_kitchen_x') KITCHEN_WALL_COL = Math.round(w2.pos);
+    if (w2.id === 'wall_kitchen_y') { KITCHEN_START_ROW = Math.round(w2.pos); KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1; }
+    if (w2.id === 'wall_zone') ACT_ZONE_Y = Math.round(w2.pos);
+    if (w2.id === 'wall_right') { COLS=Math.round(w2.pos); CW=OX+COLS*T+OX; canvas.width=CW; bgBuf.width=CW; }
+    if (w2.id === 'wall_bottom') { ROWS=Math.round(w2.pos); CH=OY+ROWS*T+OY; canvas.height=CH; bgBuf.height=CH; }
+  }
+  buildBackground(); buildObstacleGrid();
+  if (typeof syncIdleSpotsToAdmin === 'function') syncIdleSpotsToAdmin();
 });
 
 canvas.addEventListener('mouseup', e => {
