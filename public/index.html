@@ -2690,11 +2690,13 @@ function buildObstacleGrid() {
     markRect(gmTx, gmTy, 5, 3);
   }
 
-  // ── Kanban board ─────
-  if (KITCHEN_WALL_COL > 0) {
-    const kanbanCol = Math.max(PER_ROW * STEP_X + 2, KITCHEN_WALL_COL - 9);
-    const kanbanW = KITCHEN_WALL_COL - kanbanCol;
-    if (kanbanW >= 3) markRect(kanbanCol, 1, kanbanW, 7);
+  // ── Kanban board (right entertainment zone) ─────
+  {
+    const rXkb = PER_ROW * STEP_X + 2;
+    const [kbTx,kbTy] = getAdminPos('kanban', rXkb+0.2, 2.5);
+    const kanbanCol = Math.floor(kbTx);
+    const kanbanW = Math.min(5, COLS - 1 - kanbanCol);
+    if (kanbanW >= 2) markRect(kanbanCol, Math.floor(kbTy), kanbanW, 4);
   }
 
   // ── Bookshelf ─────
@@ -2863,15 +2865,15 @@ function astar(fromTx, fromTy, toTx, toTy) {
 // Positioned on the right wall of the main office, ABOVE the kitchen partition
 function drawKanban(ctx) {
   if (!myTasks || KITCHEN_WALL_COL === 0) return;
-  // Position: right side of the main office, between desks and kitchen wall
-  // Tiles: col (KITCHEN_WALL_COL - 9) to (KITCHEN_WALL_COL - 1), rows 1..6
-  const kanbanCol = Math.max(PER_ROW * STEP_X + 2, KITCHEN_WALL_COL - 9);
-  const bx = OX + kanbanCol * T;
-  const by = OY + T * 1;
-  const bw = (KITCHEN_WALL_COL - kanbanCol - 0.5) * T;
-  const bh = T * 7;
+  // Position: right entertainment zone, below darts and above aquarium
+  const rX = PER_ROW * STEP_X + 2;
+  const [_kbTx, _kbTy] = getAdminPos('kanban', rX + 0.2, 2.5);
+  const bx = OX + _kbTx * T;
+  const by = OY + _kbTy * T;
+  const bw = (COLS - 1 - _kbTx - 0.3) * T;
+  const bh = T * 4;
 
-  if (bw < T * 3) return; // not enough space
+  if (bw < T * 2) return; // not enough space
 
   // Board background (corkboard feel)
   ctx.save();
@@ -5525,6 +5527,10 @@ function buildAdminObjects() {
   if (ACT_ZONE_Y > 0) {
     adminObjects.push({id:'gaming_sofa', label:'🛋 Gaming Sofa', tx:11, ty:ACT_ZONE_Y+3.7, w:4, h:1.5});
   }
+
+  // Kanban board
+  const rXkb = PER_ROW * STEP_X + 2;
+  adminObjects.push({id:'kanban', label:'📋 Kanban', tx:rXkb+0.2, ty:2.5, w:4.5, h:4});
 
   // Snapshot default positions (before applying saved overrides)
   if (!window._defaultPositions) {
