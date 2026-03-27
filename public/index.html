@@ -2863,50 +2863,56 @@ function generateLayout(n) {
   // ── 3. Aquarium (solo — agent watches fish) ────────────────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:9, anim:'window_gaze', type:'aquarium', w:8, _objId:'aquarium', _defObjTx:rX+0.3, _defObjTy:8, _offsetX:1.2, _offsetY:1 });
 
-  // ── 4. Massage Chair (right zone, row 11) ────────────────────
-  IDLE_SPOTS.push({ tx:rX+1.5, ty:12, anim:'sleeping', type:'massage', w:6,
-    _objId:'massage_chair', _defObjTx:rX+0.5, _defObjTy:11, _offsetX:1, _offsetY:1 });
+  // ══ Zone 1: RECREATION (ACT_ZONE+9, spread across full width) ══
 
-  // ── 5. Arcade Machine (social zone, ACT_ZONE+13, col 2) ──────
-  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+14, anim:'gaming', type:'arcade', w:7,
-    _objId:'arcade', _defObjTx:2, _defObjTy:ACT_ZONE_Y+13, _offsetX:1, _offsetY:1 });
+  // ── 5. Hammock (recreation, cols 1-3) ──────────────────────────
+  IDLE_SPOTS.push({ tx:2.5, ty:ACT_ZONE_Y+10, anim:'sleeping', type:'hammock', w:8,
+    _objId:'hammock', _defObjTx:1.5, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
 
-  // ── 6. Espresso Bar (social zone, ACT_ZONE+13, col 8) ────────
-  IDLE_SPOTS.push({ tx:9, ty:ACT_ZONE_Y+14, anim:'drinking_beer', type:'espresso', w:6,
-    _objId:'espresso_bar', _defObjTx:8, _defObjTy:ACT_ZONE_Y+13, _offsetX:1, _offsetY:1 });
+  // ── 6. Massage Chair (recreation, cols 4-6) ───────────────────
+  IDLE_SPOTS.push({ tx:5.5, ty:ACT_ZONE_Y+10, anim:'sleeping', type:'massage', w:6,
+    _objId:'massage_chair', _defObjTx:4.5, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
 
-  // ── 7. DJ Console (social zone, ACT_ZONE+19, col 2) ──────────
-  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+20, anim:'headphones', type:'dj', w:5,
-    _objId:'dj_console', _defObjTx:2, _defObjTy:ACT_ZONE_Y+19, _offsetX:1, _offsetY:1 });
-
-  // ── 8. Server Rack (social zone, ACT_ZONE+15, col 2) ─────────
-  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+16, anim:'reading', type:'server', w:4,
-    _objId:'server_rack', _defObjTx:2, _defObjTy:ACT_ZONE_Y+15, _offsetX:1, _offsetY:1 });
-
-  // ── 9. 3D Printer (social zone, ACT_ZONE+15, col 8) ──────────
-  IDLE_SPOTS.push({ tx:9, ty:ACT_ZONE_Y+16, anim:'reading', type:'printer3d', w:4,
-    _objId:'printer_3d', _defObjTx:8, _defObjTy:ACT_ZONE_Y+15, _offsetX:1, _offsetY:1 });
-
-  // ── 10. Hammock (social zone, ACT_ZONE+17, col 2) ────────────
-  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+18, anim:'sleeping', type:'hammock', w:8,
-    _objId:'hammock', _defObjTx:2, _defObjTy:ACT_ZONE_Y+17, _offsetX:1, _offsetY:1 });
-
-  // ── 11. Basketball Hoop (social zone, ACT_ZONE+17, col 8) ────
-  IDLE_SPOTS.push({ tx:9, ty:ACT_ZONE_Y+18, anim:'stretching', type:'basketball', w:5,
-    _objId:'basketball', _defObjTx:8, _defObjTy:ACT_ZONE_Y+17, _offsetX:1, _offsetY:1 });
-
-  // ── 12. Foosball Table (social zone, ACT_ZONE+17, col 14) ────
+  // ── 7. Foosball Table (recreation, cols 8-10) ─────────────────
   const fb1 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:14, ty:ACT_ZONE_Y+18, anim:'arguing_l', type:'group', groupId:21, role:'L', w:7,
-    _objId:'foosball', _defObjTx:14, _defObjTy:ACT_ZONE_Y+17, _offsetX:0, _offsetY:1 });
+  IDLE_SPOTS.push({ tx:8, ty:ACT_ZONE_Y+10, anim:'arguing_l', type:'group', groupId:21, role:'L', w:7,
+    _objId:'foosball', _defObjTx:8, _defObjTy:ACT_ZONE_Y+9, _offsetX:0, _offsetY:1 });
   const fb2 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({ tx:17, ty:ACT_ZONE_Y+18, anim:'arguing_r', type:'group', groupId:21, role:'R', w:7,
-    _objId:'foosball', _defObjTx:14, _defObjTy:ACT_ZONE_Y+17, _offsetX:3, _offsetY:1 });
+  IDLE_SPOTS.push({ tx:11, ty:ACT_ZONE_Y+10, anim:'arguing_r', type:'group', groupId:21, role:'R', w:7,
+    _objId:'foosball', _defObjTx:8, _defObjTy:ACT_ZONE_Y+9, _offsetX:3, _offsetY:1 });
   GROUP_PAIRS[21] = [fb1, fb2];
 
-  // ── 13. Telescope (social zone, ACT_ZONE+19, col 10) ─────────
-  IDLE_SPOTS.push({ tx:11, ty:ACT_ZONE_Y+20, anim:'window_gaze', type:'telescope', w:5,
-    _objId:'telescope', _defObjTx:10, _defObjTy:ACT_ZONE_Y+19, _offsetX:1, _offsetY:1 });
+  // ── 8. Basketball Hoop (recreation, cols 12-13) ───────────────
+  IDLE_SPOTS.push({ tx:13, ty:ACT_ZONE_Y+10, anim:'stretching', type:'basketball', w:5,
+    _objId:'basketball', _defObjTx:12, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
+
+  // ── 9. Arcade Machine (recreation, cols 16-17) ────────────────
+  IDLE_SPOTS.push({ tx:17, ty:ACT_ZONE_Y+10, anim:'gaming', type:'arcade', w:7,
+    _objId:'arcade', _defObjTx:16, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
+
+  // ── 10. DJ Console (recreation, cols 20-22) ───────────────────
+  IDLE_SPOTS.push({ tx:21, ty:ACT_ZONE_Y+10, anim:'headphones', type:'dj', w:5,
+    _objId:'dj_console', _defObjTx:20, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
+
+  // ══ Zone 2: MAKERS LAB (ACT_ZONE+14, left side) ═══════════════
+
+  // ── 11. Server Rack (makers lab, cols 2-3) ────────────────────
+  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+15, anim:'reading', type:'server', w:4,
+    _objId:'server_rack', _defObjTx:2, _defObjTy:ACT_ZONE_Y+14, _offsetX:1, _offsetY:1 });
+
+  // ── 12. 3D Printer (makers lab, cols 7-8) ─────────────────────
+  IDLE_SPOTS.push({ tx:8, ty:ACT_ZONE_Y+15, anim:'reading', type:'printer3d', w:4,
+    _objId:'printer_3d', _defObjTx:7, _defObjTy:ACT_ZONE_Y+14, _offsetX:1, _offsetY:1 });
+
+  // ── 13. Telescope (makers lab, cols 23-24, right side) ────────
+  IDLE_SPOTS.push({ tx:19, ty:ACT_ZONE_Y+15, anim:'window_gaze', type:'telescope', w:5,
+    _objId:'telescope', _defObjTx:18, _defObjTy:ACT_ZONE_Y+14, _offsetX:1, _offsetY:1 });
+
+  // ══ Zone 3: CAFE (ACT_ZONE+14, center-right) ═════════════════
+
+  // ── 14. Espresso Bar (cafe, cols 13-15) ───────────────────────
+  IDLE_SPOTS.push({ tx:14, ty:ACT_ZONE_Y+15, anim:'drinking_beer', type:'espresso', w:6,
+    _objId:'espresso_bar', _defObjTx:13, _defObjTy:ACT_ZONE_Y+14, _offsetX:1, _offsetY:1 });
 
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
@@ -3041,62 +3047,43 @@ function buildObstacleGrid() {
   const [aqTx,aqTy] = getAdminPos('aquarium', rXobs+0.3, 8);
   markRect(aqTx, aqTy, 3, 2);
 
-  // ── Massage Chair ─────
-  const [mcObsTx,mcObsTy] = getAdminPos('massage_chair', rXobs+0.5, 11);
-  markRect(mcObsTx, mcObsTy, 2, 2);
-
-  // ── Arcade Machine ─────
+  // ── Zone 1: RECREATION obstacles (ACT_ZONE+9) ─────
   if (ACT_ZONE_Y > 0) {
-    const [arcObsTx,arcObsTy] = getAdminPos('arcade', 2, ACT_ZONE_Y+13);
-    markRect(arcObsTx, arcObsTy, 2, 3);
-  }
-
-  // ── Espresso Bar ─────
-  if (ACT_ZONE_Y > 0) {
-    const [espObsTx,espObsTy] = getAdminPos('espresso_bar', 8, ACT_ZONE_Y+13);
-    markRect(espObsTx, espObsTy, 3, 2);
-  }
-
-  // ── Server Rack ─────
-  if (ACT_ZONE_Y > 0) {
-    const [srvObsTx,srvObsTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y+15);
-    markRect(srvObsTx, srvObsTy, 2, 2);
-  }
-
-  // ── 3D Printer ─────
-  if (ACT_ZONE_Y > 0) {
-    const [p3ObsTx,p3ObsTy] = getAdminPos('printer_3d', 8, ACT_ZONE_Y+15);
-    markRect(p3ObsTx, p3ObsTy, 2, 2);
-  }
-
-  // ── Hammock ─────
-  if (ACT_ZONE_Y > 0) {
-    const [hamObsTx,hamObsTy] = getAdminPos('hammock', 2, ACT_ZONE_Y+17);
+    const [hamObsTx,hamObsTy] = getAdminPos('hammock', 1.5, ACT_ZONE_Y+9);
     markRect(hamObsTx, hamObsTy, 3, 1);
-  }
 
-  // ── Basketball Hoop ─────
-  if (ACT_ZONE_Y > 0) {
-    const [bbObsTx,bbObsTy] = getAdminPos('basketball', 8, ACT_ZONE_Y+17);
-    markRect(bbObsTx, bbObsTy, 2, 2);
-  }
+    const [mcObsTx,mcObsTy] = getAdminPos('massage_chair', 4.5, ACT_ZONE_Y+9);
+    markRect(mcObsTx, mcObsTy, 2, 2);
 
-  // ── Foosball Table ─────
-  if (ACT_ZONE_Y > 0) {
-    const [fbObsTx,fbObsTy] = getAdminPos('foosball', 14, ACT_ZONE_Y+17);
+    const [fbObsTx,fbObsTy] = getAdminPos('foosball', 8, ACT_ZONE_Y+9);
     markRect(fbObsTx, fbObsTy, 3, 2);
-  }
 
-  // ── DJ Console ─────
-  if (ACT_ZONE_Y > 0) {
-    const [djObsTx,djObsTy] = getAdminPos('dj_console', 2, ACT_ZONE_Y+19);
+    const [bbObsTx,bbObsTy] = getAdminPos('basketball', 12, ACT_ZONE_Y+9);
+    markRect(bbObsTx, bbObsTy, 2, 2);
+
+    const [arcObsTx,arcObsTy] = getAdminPos('arcade', 16, ACT_ZONE_Y+9);
+    markRect(arcObsTx, arcObsTy, 2, 3);
+
+    const [djObsTx,djObsTy] = getAdminPos('dj_console', 20, ACT_ZONE_Y+9);
     markRect(djObsTx, djObsTy, 3, 1);
   }
 
-  // ── Telescope ─────
+  // ── Zone 2: MAKERS LAB obstacles (ACT_ZONE+14) ─────
   if (ACT_ZONE_Y > 0) {
-    const [telObsTx,telObsTy] = getAdminPos('telescope', 10, ACT_ZONE_Y+19);
+    const [srvObsTx,srvObsTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y+14);
+    markRect(srvObsTx, srvObsTy, 2, 2);
+
+    const [p3ObsTx,p3ObsTy] = getAdminPos('printer_3d', 7, ACT_ZONE_Y+14);
+    markRect(p3ObsTx, p3ObsTy, 2, 2);
+
+    const [telObsTx,telObsTy] = getAdminPos('telescope', 18, ACT_ZONE_Y+14);
     markRect(telObsTx, telObsTy, 1, 2);
+  }
+
+  // ── Zone 3: CAFE obstacles (ACT_ZONE+14) ─────
+  if (ACT_ZONE_Y > 0) {
+    const [espObsTx,espObsTy] = getAdminPos('espresso_bar', 13, ACT_ZONE_Y+14);
+    markRect(espObsTx, espObsTy, 3, 2);
   }
 
   // ── Printer ─────
@@ -4230,28 +4217,22 @@ function buildBackground() {
     // Bullseye
     ctx.fillStyle='#f0e8d0'; ctx.beginPath(); ctx.arc(dartWallX,dartWallY,1.5,0,Math.PI*2); ctx.fill();
 
-    // ── 4. Massage Chair (right zone, row 11) ─────────────────────
-    const [_mcTx, _mcTy] = getAdminPos('massage_chair', rX+0.5, 11);
-    const [mcx, mcy] = ts(_mcTx, _mcTy);
-    const mcW = T*2, mcH = T*1.8;
-    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
-    fillR(ctx, mcx, mcy, mcW, mcH, '#2a2838'); ctx.restore();
-    fillR(ctx, mcx+4, mcy+mcH*0.3, mcW-8, mcH*0.5, '#38304a');
-    fillR(ctx, mcx+mcW*0.3, mcy, mcW*0.4, mcH*0.3, '#322a44');
-    ctx.fillStyle='#2a2238';
-    ctx.beginPath(); ctx.ellipse(mcx+mcW*0.5, mcy+4, mcW*0.15, 6, 0, 0, Math.PI*2); ctx.fill();
-    fillR(ctx, mcx, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
-    fillR(ctx, mcx+mcW-6, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
-    fillR(ctx, mcx+6, mcy+mcH-8, mcW-12, 8, '#38304a');
-    fillR(ctx, mcx+8, mcy+mcH-6, mcW-16, 4, '#403858');
-    fillR(ctx, mcx+mcW*0.35, mcy+mcH, mcW*0.3, 6, '#1a1828');
   }
 
   // ── Social zone entertainment objects ─────────────────────────
   if (ACT_ZONE_Y > 0) {
 
-    // ── 5. Arcade Machine (ACT_ZONE+13, col 2) ─────────────────
-    const [_arcTx, _arcTy] = getAdminPos('arcade', 2, ACT_ZONE_Y+13);
+    // ── Zone labels ──────────────────────────────────────────────
+    ctx.fillStyle='#5a5070'; ctx.font="5px 'Press Start 2P',monospace";
+    const [_rzLx, _rzLy] = ts(1, ACT_ZONE_Y+9);
+    ctx.fillText('RECREATION', _rzLx, _rzLy-4);
+    const [_mlLx, _mlLy] = ts(1, ACT_ZONE_Y+14);
+    ctx.fillText('MAKERS LAB', _mlLx, _mlLy-4);
+    const [_cfLx, _cfLy] = ts(13, ACT_ZONE_Y+14);
+    ctx.fillText('CAFE', _cfLx, _cfLy-4);
+
+    // ── Arcade Machine (recreation, col 16) ────────────────────
+    const [_arcTx, _arcTy] = getAdminPos('arcade', 16, ACT_ZONE_Y+9);
     const [arcx, arcy] = ts(_arcTx, _arcTy);
     const arcW = T*2, arcH = T*2.5;
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
@@ -4276,8 +4257,8 @@ function buildBackground() {
     ctx.fillStyle='#40a0e0'; ctx.beginPath(); ctx.arc(arcx+arcW-8, arcy+arcH*0.65+6, 3, 0, Math.PI*2); ctx.fill();
     fillR(ctx, arcx+arcW/2-3, arcy+arcH-10, 6, 3, '#404058');
 
-    // ── 6. Espresso Bar (ACT_ZONE+13, col 8) ───────────────────
-    const [_espTx, _espTy] = getAdminPos('espresso_bar', 8, ACT_ZONE_Y+13);
+    // ── Espresso Bar (cafe, col 13) ─────────────────────────────
+    const [_espTx, _espTy] = getAdminPos('espresso_bar', 13, ACT_ZONE_Y+14);
     const [espx, espy] = ts(_espTx, _espTy);
     const espW = T*3, espH = T*1.5;
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
@@ -4305,8 +4286,8 @@ function buildBackground() {
       fillR(ctx, stx+1, espy+espH+14, 8, 2, '#404050');
     }
 
-    // ── 8. Server Rack (ACT_ZONE+15, col 2) ────────────────────
-    const [_srvTx, _srvTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y+15);
+    // ── Server Rack (makers lab, col 2) ─────────────────────────
+    const [_srvTx, _srvTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y+14);
     const [srvx, srvy] = ts(_srvTx, _srvTy);
     const srvW = T*2, srvH = T*2.2;
     ctx.save(); ctx.shadowColor='#00000080'; ctx.shadowBlur=8;
@@ -4333,8 +4314,8 @@ function buildBackground() {
     ctx.fillStyle='#505068'; ctx.font="4px 'Press Start 2P',monospace";
     ctx.textAlign='center'; ctx.fillText('SERVER', srvx+srvW/2, srvy+srvH-2); ctx.textAlign='left';
 
-    // ── 9. 3D Printer (ACT_ZONE+15, col 8) ─────────────────────
-    const [_p3Tx, _p3Ty] = getAdminPos('printer_3d', 8, ACT_ZONE_Y+15);
+    // ── 3D Printer (makers lab, col 7) ──────────────────────────
+    const [_p3Tx, _p3Ty] = getAdminPos('printer_3d', 7, ACT_ZONE_Y+14);
     const [p3x, p3y] = ts(_p3Tx, _p3Ty);
     const p3W = T*2, p3H = T*1.8;
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
@@ -4354,8 +4335,8 @@ function buildBackground() {
     ctx.fillStyle='#606078'; ctx.font="4px 'Press Start 2P',monospace";
     ctx.textAlign='center'; ctx.fillText('3D', p3x+p3W/2, p3y+p3H+8); ctx.textAlign='left';
 
-    // ── 10. Hammock (ACT_ZONE+17, col 2) ────────────────────────
-    const [_hamTx, _hamTy] = getAdminPos('hammock', 2, ACT_ZONE_Y+17);
+    // ── Hammock (recreation, col 1.5) ───────────────────────────
+    const [_hamTx, _hamTy] = getAdminPos('hammock', 1.5, ACT_ZONE_Y+9);
     const [hamx, hamy] = ts(_hamTx, _hamTy);
     const hamW = T*3, hamH = T*1.2;
     fillR(ctx, hamx, hamy-8, 6, hamH+16, '#6a5030');
@@ -4379,8 +4360,8 @@ function buildBackground() {
     ctx.fillStyle='#d8d0b8';
     ctx.beginPath(); ctx.ellipse(hamx+16, hamy+6, 6, 3, -0.3, 0, Math.PI*2); ctx.fill();
 
-    // ── 11. Basketball Hoop (ACT_ZONE+17, col 8) ───────────────
-    const [_bbTx, _bbTy] = getAdminPos('basketball', 8, ACT_ZONE_Y+17);
+    // ── Basketball Hoop (recreation, col 12) ───────────────────
+    const [_bbTx, _bbTy] = getAdminPos('basketball', 12, ACT_ZONE_Y+9);
     const [bbx, bby] = ts(_bbTx, _bbTy);
     fillR(ctx, bbx+T-2, bby+T*0.4, 4, T*1.8, '#606070');
     fillR(ctx, bbx+4, bby, T*1.8, T*1.0, '#e8e0d0');
@@ -4398,8 +4379,8 @@ function buildBackground() {
       ctx.stroke();
     }
 
-    // ── 12. Foosball Table (ACT_ZONE+17, col 14) ───────────────
-    const [_fbTx, _fbTy] = getAdminPos('foosball', 14, ACT_ZONE_Y+17);
+    // ── Foosball Table (recreation, col 8) ──────────────────────
+    const [_fbTx, _fbTy] = getAdminPos('foosball', 8, ACT_ZONE_Y+9);
     const [fbx, fby] = ts(_fbTx, _fbTy);
     const fbW = T*3, fbH = T*1.5;
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=6;
@@ -4426,8 +4407,8 @@ function buildBackground() {
     fillR(ctx, fbx+4, fby+fbH, 4, 8, '#1a3020');
     fillR(ctx, fbx+fbW-8, fby+fbH, 4, 8, '#1a3020');
 
-    // ── 7. DJ Console (ACT_ZONE+19, col 2) ─────────────────────
-    const [_djTx, _djTy] = getAdminPos('dj_console', 2, ACT_ZONE_Y+19);
+    // ── DJ Console (recreation, col 20) ─────────────────────────
+    const [_djTx, _djTy] = getAdminPos('dj_console', 20, ACT_ZONE_Y+9);
     const [djx, djy] = ts(_djTx, _djTy);
     const djW = T*2.5, djH = T*1.2;
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
@@ -4458,8 +4439,8 @@ function buildBackground() {
     ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3-6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3+6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
 
-    // ── 13. Telescope (ACT_ZONE+19, col 10) ────────────────────
-    const [_telTx, _telTy] = getAdminPos('telescope', 10, ACT_ZONE_Y+19);
+    // ── Telescope (makers lab, col 23) ──────────────────────────
+    const [_telTx, _telTy] = getAdminPos('telescope', 18, ACT_ZONE_Y+14);
     const [telx, tely] = ts(_telTx, _telTy);
     ctx.strokeStyle='#606070'; ctx.lineWidth=2;
     ctx.beginPath(); ctx.moveTo(telx+T*0.5, tely+T*0.6); ctx.lineTo(telx+2, tely+T*1.6); ctx.stroke();
@@ -4474,6 +4455,22 @@ function buildBackground() {
     ctx.restore();
     ctx.fillStyle='#303040';
     ctx.beginPath(); ctx.arc(telx+T*0.5-12, tely+T*0.5+10, 3, 0, Math.PI*2); ctx.fill();
+
+    // ── Massage Chair (recreation, col 4.5) ─────────────────────
+    const [_mcTx, _mcTy] = getAdminPos('massage_chair', 4.5, ACT_ZONE_Y+9);
+    const [mcx, mcy] = ts(_mcTx, _mcTy);
+    const mcW = T*2, mcH = T*1.8;
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
+    fillR(ctx, mcx, mcy, mcW, mcH, '#2a2838'); ctx.restore();
+    fillR(ctx, mcx+4, mcy+mcH*0.3, mcW-8, mcH*0.5, '#38304a');
+    fillR(ctx, mcx+mcW*0.3, mcy, mcW*0.4, mcH*0.3, '#322a44');
+    ctx.fillStyle='#2a2238';
+    ctx.beginPath(); ctx.ellipse(mcx+mcW*0.5, mcy+4, mcW*0.15, 6, 0, 0, Math.PI*2); ctx.fill();
+    fillR(ctx, mcx, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
+    fillR(ctx, mcx+mcW-6, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
+    fillR(ctx, mcx+6, mcy+mcH-8, mcW-12, 8, '#38304a');
+    fillR(ctx, mcx+8, mcy+mcH-6, mcW-16, 4, '#403858');
+    fillR(ctx, mcx+mcW*0.35, mcy+mcH, mcW*0.3, 6, '#1a1828');
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
@@ -6856,20 +6853,21 @@ function buildAdminObjects() {
     adminObjects.push({id:'gaming_sofa', label:'🛋 Gaming Sofa', tx:11, ty:ACT_ZONE_Y+3.7, w:4, h:1.5});
   }
 
-  // Massage chair (right zone)
-  adminObjects.push({id:'massage_chair', label:'💆 Massage Chair', tx:rX+0.5, ty:11, w:2, h:2});
-
-  // Entertainment objects (social zone)
+  // Entertainment objects (recreation / makers lab / cafe zones)
   if (ACT_ZONE_Y > 0) {
-    adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:2, ty:ACT_ZONE_Y+13, w:2, h:2.5});
-    adminObjects.push({id:'espresso_bar', label:'☕ Espresso Bar', tx:8, ty:ACT_ZONE_Y+13, w:3, h:1.5});
-    adminObjects.push({id:'server_rack', label:'🖥 Server Rack', tx:2, ty:ACT_ZONE_Y+15, w:2, h:2.2});
-    adminObjects.push({id:'printer_3d', label:'🖨 3D Printer', tx:8, ty:ACT_ZONE_Y+15, w:2, h:1.8});
-    adminObjects.push({id:'hammock', label:'🛏 Hammock', tx:2, ty:ACT_ZONE_Y+17, w:3, h:1.2});
-    adminObjects.push({id:'basketball', label:'🏀 Basketball', tx:8, ty:ACT_ZONE_Y+17, w:2, h:2});
-    adminObjects.push({id:'foosball', label:'⚽ Foosball', tx:14, ty:ACT_ZONE_Y+17, w:3, h:1.5});
-    adminObjects.push({id:'dj_console', label:'🎧 DJ Console', tx:2, ty:ACT_ZONE_Y+19, w:2.5, h:1.2});
-    adminObjects.push({id:'telescope', label:'🔭 Telescope', tx:10, ty:ACT_ZONE_Y+19, w:1, h:2});
+    // Zone 1: RECREATION (ACT_ZONE+9)
+    adminObjects.push({id:'hammock', label:'🛏 Hammock', tx:1.5, ty:ACT_ZONE_Y+9, w:3, h:1.2});
+    adminObjects.push({id:'massage_chair', label:'💆 Massage Chair', tx:4.5, ty:ACT_ZONE_Y+9, w:2, h:2});
+    adminObjects.push({id:'foosball', label:'⚽ Foosball', tx:8, ty:ACT_ZONE_Y+9, w:3, h:1.5});
+    adminObjects.push({id:'basketball', label:'🏀 Basketball', tx:12, ty:ACT_ZONE_Y+9, w:2, h:2});
+    adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:16, ty:ACT_ZONE_Y+9, w:2, h:2.5});
+    adminObjects.push({id:'dj_console', label:'🎧 DJ Console', tx:20, ty:ACT_ZONE_Y+9, w:2.5, h:1.2});
+    // Zone 2: MAKERS LAB (ACT_ZONE+14)
+    adminObjects.push({id:'server_rack', label:'🖥 Server Rack', tx:2, ty:ACT_ZONE_Y+14, w:2, h:2.2});
+    adminObjects.push({id:'printer_3d', label:'🖨 3D Printer', tx:7, ty:ACT_ZONE_Y+14, w:2, h:1.8});
+    adminObjects.push({id:'telescope', label:'🔭 Telescope', tx:18, ty:ACT_ZONE_Y+14, w:1, h:2});
+    // Zone 3: CAFE (ACT_ZONE+14)
+    adminObjects.push({id:'espresso_bar', label:'☕ Espresso Bar', tx:13, ty:ACT_ZONE_Y+14, w:3, h:1.5});
   }
 
   // Kanban board
