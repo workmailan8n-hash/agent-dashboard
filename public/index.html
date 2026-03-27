@@ -7499,10 +7499,14 @@ function applyWallPositions() {
   KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1;
 }
 
+// Default layout positions (exported from localhost admin editor)
+const BUILTIN_POSITIONS = {"clock":{"tx":18,"ty":0},"cooler":{"tx":25.5,"ty":34.5},"darts":{"tx":24.5,"ty":0},"aquarium":{"tx":23.5,"ty":7.5},"printer":{"tx":24.5,"ty":18},"trashcan":{"tx":26,"ty":32.5},"plant_0":{"tx":1.5,"ty":24},"plant_1":{"tx":25.5,"ty":20},"conf_table":{"tx":20,"ty":49},"bookshelf":{"tx":13,"ty":54},"desk_0":{"tx":1,"ty":1},"desk_1":{"tx":7,"ty":1},"desk_2":{"tx":7,"ty":13},"desk_3":{"tx":1,"ty":5},"desk_4":{"tx":4,"ty":1},"desk_5":{"tx":7,"ty":5},"desk_6":{"tx":1,"ty":9},"desk_7":{"tx":4,"ty":5},"desk_8":{"tx":4,"ty":13},"desk_9":{"tx":1,"ty":13},"desk_10":{"tx":4,"ty":9},"desk_11":{"tx":7,"ty":17},"desk_12":{"tx":1,"ty":17},"desk_13":{"tx":4,"ty":17},"desk_14":{"tx":7,"ty":9},"desk_15":{"tx":1,"ty":21},"desk_16":{"tx":8,"ty":21},"couch_0":{"tx":1.5,"ty":26},"couch_1":{"tx":6.7,"ty":26},"couch_2":{"tx":11.5,"ty":26},"couch_3":{"tx":11.5,"ty":42},"couch_4":{"tx":6.5,"ty":35},"couch_5":{"tx":1.5,"ty":29},"couch_6":{"tx":6.5,"ty":29},"couch_7":{"tx":11.5,"ty":29},"couch_8":{"tx":11.5,"ty":35},"couch_9":{"tx":11.5,"ty":38},"couch_10":{"tx":1.5,"ty":32},"couch_11":{"tx":6.5,"ty":32},"couch_12":{"tx":11.5,"ty":32},"couch_13":{"tx":1.5,"ty":38},"couch_14":{"tx":6.5,"ty":38},"couch_15":{"tx":1.5,"ty":35},"couch_16":{"tx":6.7,"ty":35},"pingpong":{"tx":19.5,"ty":41},"tv":{"tx":21.5,"ty":57},"gym":{"tx":1.5,"ty":54},"vending":{"tx":25.5,"ty":37.5},"kitchen_table":{"tx":20.5,"ty":32},"kitchen_counter":{"tx":18,"ty":24.5},"fridge":{"tx":26,"ty":25},"gaming_sofa":{"tx":9,"ty":64.5},"foosball":{"tx":20.5,"ty":45},"basketball":{"tx":6.5,"ty":52},"arcade":{"tx":18,"ty":60},"dj_console":{"tx":2,"ty":60.5},"server_rack":{"tx":6,"ty":47.5},"printer_3d":{"tx":8,"ty":48},"telescope":{"tx":20,"ty":1},"espresso_bar":{"tx":19.5,"ty":37.5},"kanban":{"tx":23.2,"ty":2.5}};
+
 // Apply custom positions to actual game objects
 function applyCustomPositions() {
   const saved = JSON.parse(localStorage.getItem('admin_positions') || '{}');
-  window._adminPos = saved;
+  // Merge: builtin is default for everyone, saved overrides per-browser
+  window._adminPos = Object.assign({}, BUILTIN_POSITIONS, saved);
 }
 
 // Get position for an object — returns saved admin position or default
