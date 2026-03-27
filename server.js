@@ -12,6 +12,9 @@ const PORT = process.env.PORT || 3737;
 const agents = {};
 const agentTasks = {}; // agentId -> { todos: [{id,content,status,priority}], updatedAt }
 
+// Shared layout — synced to all clients when admin moves objects
+let sharedLayout = { positions: null, walls: null };
+
 const TASKS_FILE = path.join(__dirname, 'tasks.json');
 
 // Load persisted tasks on startup
@@ -300,6 +303,36 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── API: GET /api/layout — get shared layout positions ──
+  if (req.url === '/api/layout' && req.method === 'GET') {
+    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
+    res.end(JSON.stringify(sharedLayout));
+    return;
+  }
+
+  // ── API: POST /api/layout — save + broadcast layout to all clients ──
+  if (req.url === '/api/layout' && req.method === 'POST') {
+    let body = '';
+    req.on('data', d => body += d);
+    req.on('end', () => {
+      try {
+        const data = JSON.parse(body);
+        if (data.positions) sharedLayout.positions = data.positions;
+        if (data.walls) sharedLayout.walls = data.walls;
+        // Broadcast to all connected clients
+        broadcast({ type: 'layout_update', layout: sharedLayout });
+        res.writeHead(200); res.end('ok');
+      } catch { res.writeHead(400); res.end('bad'); }
+    });
+    return;
+  }
+
+  if (req.url === '/api/layout' && req.method === 'OPTIONS') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST', 'Access-Control-Allow-Headers': 'Content-Type' });
+    res.end();
+    return;
+  }
+
   // ── API: GET /api/state — full state snapshot for HTTP polling ──
   if (req.url === '/api/state' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -418,6 +451,7 @@ wss.on("connection", (ws) => {
   ws.send(JSON.stringify({ type: "init", agents: Object.values(agents) }));
   ws.send(JSON.stringify({ type: 'tasks_init', tasks: agentTasks }));
   ws.send(JSON.stringify({ type: 'mytasks_init', tasks: myTasks }));
+  if (sharedLayout.positions) ws.send(JSON.stringify({ type: 'layout_update', layout: sharedLayout }));
   ws.on("close", () => clients.delete(ws));
 });
 

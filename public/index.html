@@ -7302,6 +7302,18 @@ function connect() {
     if (msg.type==='agent_update') { agentsData[msg.agent.id]=msg.agent; renderCard(msg.agent); updateUI(); }
     if (msg.type==='mytasks_init' || msg.type==='mytasks_update') { myTasks = msg.tasks; renderTasks(); }
     if (msg.type==='agent_remove') { delete agentsData[msg.id]; document.getElementById(`c-${msg.id}`)?.remove(); updateUI(); }
+    if (msg.type==='layout_update' && msg.layout) {
+      // Another admin moved objects — apply their layout
+      if (msg.layout.positions && !adminMode) {
+        window._adminPos = Object.assign({}, BUILTIN_POSITIONS, msg.layout.positions);
+        localStorage.setItem('admin_positions', JSON.stringify(msg.layout.positions));
+        if (msg.layout.walls) localStorage.setItem('admin_walls', JSON.stringify(msg.layout.walls));
+        applyWallPositions();
+        syncIdleSpotsToAdmin();
+        buildBackground();
+        buildObstacleGrid();
+      }
+    }
     if (msg.type==='public_url') {
       const el=document.getElementById('public-url');
       if (msg.url) { el.href=msg.url; el.textContent='🌐 '+msg.url.replace('https://',''); el.className=''; }
@@ -7571,6 +7583,13 @@ function saveAdminPositions() {
       }
     }
   }
+  // Push layout to server — all connected clients will see the change
+  const walls = JSON.parse(localStorage.getItem('admin_walls') || 'null');
+  fetch('/api/layout', {
+    method: 'POST',
+    headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({ positions: pos, walls })
+  }).catch(() => {});
 }
 
 let adminAuthed = false;
