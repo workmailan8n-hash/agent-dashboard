@@ -7352,6 +7352,7 @@ setInterval(updateUI, 5000);
 document.fonts.ready.then(() => {
   generateLayout(1);
   applyCustomPositions();
+  applyWallPositions();
   buildAdminObjects(); // init _defaultPositions for click detection
   syncIdleSpotsToAdmin();
   buildBackground();
@@ -7370,6 +7371,10 @@ let adminSelected = null;
 let adminDragging = false;
 let adminDragOff = {x:0, y:0};
 let adminHover = null;
+let adminWalls = []; // {id, label, type:'vertical'|'horizontal', pos, min, max}
+let adminHoverWall = null;
+let adminSelectedWall = null;
+let adminDraggingWall = false;
 
 // Build the list of draggable objects from current state
 function buildAdminObjects() {
@@ -7472,6 +7477,26 @@ function buildAdminObjects() {
   for (const obj of adminObjects) {
     if (saved[obj.id]) { obj.tx = saved[obj.id].tx; obj.ty = saved[obj.id].ty; }
   }
+
+  // Wall handles for room resizing
+  adminWalls = [
+    {id:'wall_kitchen_x', label:'Kitchen Wall \u2194', type:'vertical', pos:KITCHEN_WALL_COL, min:12, max:COLS-4, row1:KITCHEN_START_ROW, row2:ROWS-1},
+    {id:'wall_kitchen_y', label:'Kitchen Top \u2195', type:'horizontal', pos:KITCHEN_START_ROW, min:8, max:ROWS-6, col1:KITCHEN_WALL_COL, col2:COLS-1},
+    {id:'wall_zone', label:'Activity Zone \u2195', type:'horizontal', pos:ACT_ZONE_Y, min:10, max:ROWS-10, col1:0, col2:COLS-1},
+  ];
+  const savedWalls = JSON.parse(localStorage.getItem('admin_walls') || '{}');
+  for (const w of adminWalls) {
+    if (savedWalls[w.id] !== undefined) w.pos = savedWalls[w.id];
+  }
+}
+
+// Apply saved wall positions to game variables
+function applyWallPositions() {
+  const saved = JSON.parse(localStorage.getItem('admin_walls') || '{}');
+  if (saved.wall_kitchen_x !== undefined) KITCHEN_WALL_COL = Math.round(saved.wall_kitchen_x);
+  if (saved.wall_kitchen_y !== undefined) KITCHEN_START_ROW = Math.round(saved.wall_kitchen_y);
+  if (saved.wall_zone !== undefined) ACT_ZONE_Y = Math.round(saved.wall_zone);
+  KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1;
 }
 
 // Apply custom positions to actual game objects
@@ -7594,6 +7619,9 @@ function toggleAdmin() {
     adminBtn.style.background = '#2a2848';
     adminPanel.style.display = 'none';
     adminSelected = null;
+    adminSelectedWall = null;
+    adminDraggingWall = false;
+    adminHoverWall = null;
   } else {
     // Enter admin — check auth
     if (adminAuthed) {
@@ -7626,6 +7654,24 @@ function findObjectAt(tx, ty) {
 canvas.addEventListener('mousedown', e => {
   if (!adminMode) return;
   const {tx, ty} = mouseToTile(e);
+  // Check walls first (higher priority than objects)
+  for (const w of adminWalls) {
+    if (w.type === 'vertical') {
+      if (Math.abs(tx - w.pos) < 0.8 && ty >= (w.row1||0) && ty <= (w.row2||ROWS)) {
+        adminSelectedWall = w;
+        adminDraggingWall = true;
+        canvas.style.cursor = 'ew-resize';
+        return;
+      }
+    } else {
+      if (Math.abs(ty - w.pos) < 0.8 && tx >= (w.col1||0) && tx <= (w.col2||COLS)) {
+        adminSelectedWall = w;
+        adminDraggingWall = true;
+        canvas.style.cursor = 'ns-resize';
+        return;
+      }
+    }
+  }
   const obj = findObjectAt(tx, ty);
   if (obj) {
     adminSelected = obj;
@@ -7640,6 +7686,16 @@ canvas.addEventListener('mousedown', e => {
 canvas.addEventListener('mousemove', e => {
   if (!adminMode) return;
   const {tx, ty} = mouseToTile(e);
+  // Wall dragging
+  if (adminDraggingWall && adminSelectedWall) {
+    const w = adminSelectedWall;
+    if (w.type === 'vertical') {
+      w.pos = Math.max(w.min, Math.min(w.max, Math.round(tx)));
+    } else {
+      w.pos = Math.max(w.min, Math.min(w.max, Math.round(ty)));
+    }
+    return;
+  }
   if (adminDragging && adminSelected) {
     adminSelected.tx = Math.round((tx - adminDragOff.x) * 2) / 2; // snap to half-tiles
     adminSelected.ty = Math.round((ty - adminDragOff.y) * 2) / 2;
@@ -7647,14 +7703,43 @@ canvas.addEventListener('mousemove', e => {
     adminSelected.tx = Math.max(0, Math.min(COLS - adminSelected.w, adminSelected.tx));
     adminSelected.ty = Math.max(0, Math.min(ROWS - adminSelected.h, adminSelected.ty));
   } else {
-    const obj = findObjectAt(tx, ty);
-    adminHover = obj;
-    canvas.style.cursor = obj ? 'grab' : 'crosshair';
+    // Wall hover detection
+    adminHoverWall = null;
+    for (const w of adminWalls) {
+      if (w.type === 'vertical' && Math.abs(tx - w.pos) < 0.8 && ty >= (w.row1||0) && ty <= (w.row2||ROWS)) { adminHoverWall = w; break; }
+      if (w.type === 'horizontal' && Math.abs(ty - w.pos) < 0.8 && tx >= (w.col1||0) && tx <= (w.col2||COLS)) { adminHoverWall = w; break; }
+    }
+    if (adminHoverWall && !adminDragging) {
+      canvas.style.cursor = adminHoverWall.type === 'vertical' ? 'ew-resize' : 'ns-resize';
+    } else {
+      const obj = findObjectAt(tx, ty);
+      adminHover = obj;
+      canvas.style.cursor = obj ? 'grab' : 'crosshair';
+    }
   }
 });
 
 canvas.addEventListener('mouseup', e => {
   if (!adminMode) return;
+  if (adminDraggingWall) {
+    adminDraggingWall = false;
+    canvas.style.cursor = 'crosshair';
+    // Save wall positions
+    const wallPos = {};
+    for (const w of adminWalls) wallPos[w.id] = w.pos;
+    localStorage.setItem('admin_walls', JSON.stringify(wallPos));
+    // Apply to game variables
+    for (const w of adminWalls) {
+      if (w.id === 'wall_kitchen_x') KITCHEN_WALL_COL = Math.round(w.pos);
+      if (w.id === 'wall_kitchen_y') { KITCHEN_START_ROW = Math.round(w.pos); KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1; }
+      if (w.id === 'wall_zone') ACT_ZONE_Y = Math.round(w.pos);
+    }
+    // Rebuild everything
+    buildBackground();
+    buildObstacleGrid();
+    if (typeof syncIdleSpotsToAdmin === 'function') syncIdleSpotsToAdmin();
+    return;
+  }
   if (adminDragging) {
     adminDragging = false;
     canvas.style.cursor = 'grab';
@@ -7718,13 +7803,49 @@ function drawAdminOverlay(ctx) {
     }
   }
 
+  // Wall handles
+  for (const w of adminWalls) {
+    const isHover = w === adminHoverWall;
+    const isSelected = w === adminSelectedWall;
+    ctx.strokeStyle = isSelected ? '#ff4060' : isHover ? '#40ff60' : '#ffffff50';
+    ctx.lineWidth = isSelected ? 4 : isHover ? 3 : 2;
+    ctx.setLineDash([6, 4]);
+
+    if (w.type === 'vertical') {
+      const x = OX + w.pos * T;
+      const y1 = OY + (w.row1 || 0) * T;
+      const y2 = OY + (w.row2 || ROWS) * T;
+      ctx.beginPath(); ctx.moveTo(x, y1); ctx.lineTo(x, y2); ctx.stroke();
+      ctx.fillStyle = isSelected ? '#ff4060' : '#40ff60';
+      ctx.font = "7px 'Press Start 2P',monospace";
+      ctx.textAlign = 'center';
+      ctx.fillText(w.label, x, y1 - 6);
+      ctx.fillText('\u2194', x, (y1+y2)/2);
+    } else {
+      const y = OY + w.pos * T;
+      const x1 = OX + (w.col1 || 0) * T;
+      const x2 = OX + (w.col2 || COLS) * T;
+      ctx.beginPath(); ctx.moveTo(x1, y); ctx.lineTo(x2, y); ctx.stroke();
+      ctx.fillStyle = isSelected ? '#ff4060' : '#40ff60';
+      ctx.font = "7px 'Press Start 2P',monospace";
+      ctx.textAlign = 'center';
+      ctx.fillText(w.label, (x1+x2)/2, y - 6);
+      ctx.fillText('\u2195', (x1+x2)/2, y + 4);
+    }
+    ctx.setLineDash([]);
+    ctx.textAlign = 'left';
+  }
+
   // Coord display at cursor
-  if (adminHover || adminDragging) {
+  if (adminHover || adminDragging || adminDraggingWall) {
     // info bar at bottom of canvas
     ctx.fillStyle='#000000a0'; ctx.fillRect(OX, OY+ROWS*T-20, COLS*T, 20);
     ctx.fillStyle='#fff'; ctx.font="7px 'Press Start 2P',monospace";
-    const info = adminSelected && adminDragging
+    const info = adminDraggingWall && adminSelectedWall
+      ? `Moving: ${adminSelectedWall.label} → pos ${adminSelectedWall.pos}`
+      : adminSelected && adminDragging
       ? `Moving: ${adminSelected.label} → (${adminSelected.tx.toFixed(1)}, ${adminSelected.ty.toFixed(1)})`
+      : adminHoverWall ? `${adminHoverWall.label} — drag to resize`
       : adminHover ? `${adminHover.label} at (${adminHover.tx.toFixed(1)}, ${adminHover.ty.toFixed(1)}) — click & drag to move` : '';
     ctx.fillText(info, OX+8, OY+ROWS*T-6);
   }
@@ -8550,6 +8671,7 @@ document.getElementById('admin-start-pos').onclick = () => {
       pos[id] = {tx: p.tx, ty: p.ty};
     }
     localStorage.setItem('admin_positions', JSON.stringify(pos));
+    localStorage.removeItem('admin_walls');
     window._adminPos = pos;
     buildAdminObjects();
     buildBackground();
@@ -8560,6 +8682,7 @@ document.getElementById('admin-start-pos').onclick = () => {
 
 document.getElementById('admin-reset').onclick = () => {
   localStorage.removeItem('admin_positions');
+  localStorage.removeItem('admin_walls');
   window._adminPos = {};
   buildAdminObjects();
   syncIdleSpotsToAdmin();
