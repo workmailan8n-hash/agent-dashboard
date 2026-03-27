@@ -2848,7 +2848,14 @@ function generateLayout(n) {
   // ══════════════════════════════════════════════════════════════════
   const rX = PER_ROW * STEP_X + 2; // right zone start col (~23)
 
-  // (Water cooler removed)
+  // ── 1. Water Cooler (pair chat) ────────────────────────────────
+  const wcY = 2;
+  const _coolerDefTx = rX+2.5, _coolerDefTy = 2;
+  const wc1 = IDLE_SPOTS.length;
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:wcY+1, anim:'chatting_l', type:'group', groupId:20, role:'L', w:8, _objId:'cooler', _defObjTx:_coolerDefTx, _defObjTy:_coolerDefTy, _offsetX:-1, _offsetY:1 });
+  const wc2 = IDLE_SPOTS.length;
+  IDLE_SPOTS.push({ tx:rX+3.5, ty:wcY+1, anim:'chatting_r', type:'group', groupId:20, role:'R', w:8, _objId:'cooler', _defObjTx:_coolerDefTx, _defObjTy:_coolerDefTy, _offsetX:1, _offsetY:1 });
+  GROUP_PAIRS[20] = [wc1, wc2];
 
   // ── 2. Dartboard (solo — agent throws darts) ───────────────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:6, anim:'stretching', type:'darts', w:7, _objId:'darts', _defObjTx:rX+1.5, _defObjTy:0, _offsetX:0, _offsetY:6 });
@@ -2910,7 +2917,8 @@ function generateLayout(n) {
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
 
-  // (Vending machine removed)
+  // ── Vending machine spot (inside kitchen) ────────────────────────
+  IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL+1.5, ty: ACT_ZONE_Y-1.5, anim:'eating', type:'kitchen', w:3 });
 
   // ── Conference table — 2 GROUP_PAIRS, in social zone below gym ───
   const confY = ACT_ZONE_Y + 10; // below gym/gaming/pp zone
@@ -4049,7 +4057,24 @@ function buildBackground() {
     ctx.fillText('PRINT', prx + 8, pry + 14);
   }
 
-  // (Vending machine removed)
+  // ── Vending Machine (inside kitchen area) ────────────────────────
+  if (KITCHEN_WALL_COL > 0 && ACT_ZONE_Y > 0) {
+    const [_vmTx,_vmTy] = getAdminPos('vending', KITCHEN_WALL_COL+1, ACT_ZONE_Y-2);
+    const [vmx, vmy] = ts(_vmTx, _vmTy);
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
+    fillR(ctx, vmx, vmy, T*1.5, T*2.2, '#282840'); ctx.restore();
+    fillR(ctx, vmx+2, vmy+2, T*1.5-4, T*2.2-4, '#30304a');
+    fillR(ctx, vmx+4, vmy+6, T*1.5-8, T*1.4, '#101828');
+    const vmColors = ['#e0a030','#c04040','#40a060','#8040c0','#2ac3de','#f7768e'];
+    for (let r=0; r<3; r++) for (let c2=0; c2<3; c2++) {
+      fillR(ctx, vmx+6+c2*12, vmy+8+r*14, 10, 11, vmColors[(r*3+c2)%6]);
+      fillR(ctx, vmx+7+c2*12, vmy+9+r*14, 4, 3, '#ffffff30');
+    }
+    fillR(ctx, vmx+4, vmy+T*1.4+8, 8, 3, '#404058');
+    fillR(ctx, vmx+14, vmy+T*1.4+6, T*1.5-18, 8, '#0a1828');
+    fillR(ctx, vmx+15, vmy+T*1.4+7, T*1.5-20, 6, SCREEN_C);
+    fillR(ctx, vmx+4, vmy+T*2.2-8, T*1.5-8, 6, '#1a1830');
+  }
 
   // ── Conference Table (social zone below gym) ─────────────────────
   if (ACT_ZONE_Y > 0) {
@@ -4111,7 +4136,27 @@ function buildBackground() {
   {
     const rX = PER_ROW * STEP_X + 2;
 
-    // (Water cooler removed)
+    // ── 1. Water Cooler ─────────────────────────────────────────
+    const [_coolerTx, _coolerTy] = getAdminPos('cooler', rX+2.5, 2);
+    const [wcx, wcy] = ts(_coolerTx, _coolerTy);
+    // Cooler body
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
+    fillR(ctx, wcx, wcy, T*1.5, T*2, '#d0d8e0'); ctx.restore();
+    fillR(ctx, wcx+3, wcy+3, T*1.5-6, T*0.7, '#80c0e8'); // water tank
+    fillR(ctx, wcx+3, wcy+T*0.7+3, T*1.5-6, T*1.3-6, '#e8ecf0'); // body
+    fillR(ctx, wcx+T*0.75-4, wcy+T*0.8, 8, 5, '#707880'); // tap
+    ctx.fillStyle='#4488dd'; ctx.fillRect(wcx+6, wcy+T*0.9+4, 7, 4);
+    ctx.fillStyle='#dd4444'; ctx.fillRect(wcx+T*1.5-13, wcy+T*0.9+4, 7, 4);
+    // Water jug
+    ctx.fillStyle='#70b8e880';
+    ctx.beginPath(); ctx.ellipse(wcx+T*0.75, wcy-2, 12, 14, 0, Math.PI, 0); ctx.fill();
+    ctx.strokeStyle='#5090b8'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.ellipse(wcx+T*0.75, wcy-2, 12, 14, 0, Math.PI, 0); ctx.stroke();
+    // Drip tray
+    fillR(ctx, wcx+4, wcy+T*2-5, T*1.5-8, 4, '#a0a8b0');
+    // Label
+    ctx.fillStyle='#5a6080'; ctx.font="5px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('WATER COOLER', wcx+T*0.75, wcy+T*2+10); ctx.textAlign='left';
 
     // ── 3. Aquarium (right zone, row 8) ─────────────────────────
     const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
@@ -6184,8 +6229,9 @@ const cat = new CatState();
 // ════════════════════════════════════════════════════════════════
 class GooseState {
   constructor() {
-    this.tx = 8 + Math.random() * (COLS * 0.4);
-    this.ty = ACT_ZONE_Y + 5 + Math.random() * 3;
+    // Goose roams the main office floor + entertainment zone
+    this.tx = 5 + Math.random() * 10;
+    this.ty = 3 + Math.random() * 6;
     this.targetTx = this.tx; this.targetTy = this.ty;
     this.state = 'waddling';
     this.stateTimer = 4 + Math.random() * 4;
