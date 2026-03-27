@@ -3943,28 +3943,7 @@ function buildBackground() {
     ctx.fillText('KITCHEN',klx,kly);
   }
 
-  // Water cooler
-  if (ROWS>4) {
-    const [wx,wy]=ts(COLS-3, Math.floor(ROWS/2)-1);
-    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
-    fillR(ctx,wx+6,wy+2,18,26,'#d0d8e8'); ctx.restore();
-    fillR(ctx,wx+8,wy+2,14,16,'#5090c0'); fillR(ctx,wx+9,wy+3,12,14,'#70b0e0');
-    fillR(ctx,wx+8,wy+18,14,10,'#e0e8f0');
-    fillR(ctx,wx+9,wy+22,4,4,'#4080c0'); fillR(ctx,wx+15,wy+22,4,4,'#c04040');
-    fillR(ctx,wx+6,wy+28,18,4,'#a0b0c8');
-  }
-
-  // Snack machine
-  if (ROWS>6) {
-    const [smx,smy]=ts(COLS-3, Math.floor(ROWS/2)+2);
-    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=7;
-    fillR(ctx,smx+2,smy+1,26,28,'#282840'); ctx.restore();
-    fillR(ctx,smx+4,smy+3,22,18,'#101020'); fillR(ctx,smx+5,smy+4,20,16,'#0a1830');
-    const sc=['#e0a030','#c04040','#40a060','#8040c0'];
-    for (let r=0;r<3;r++) for (let c2=0;c2<3;c2++) fillR(ctx,smx+7+c2*6,smy+6+r*4,4,3,sc[(r+c2)%4]);
-    fillR(ctx,smx+4,smy+21,22,4,'#1e1e38'); fillR(ctx,smx+8,smy+22,8,2,'#3a3a60');
-    fillR(ctx,smx+2,smy+29,26,4,'#1a1830');
-  }
+  // (Old small cooler and snack machine removed — replaced by full-size versions)
 
   // Nameplate
   const npX=OX+Math.floor((COLS-10)/2)*T, npY=OY+6;
