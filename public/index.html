@@ -4496,6 +4496,131 @@ function buildBackground() {
 
     // (Dumbbell rack and exercise mat removed)
 
+    // ── Dumbbell Rack (below treadmill 1) ──
+    const [drx,dry] = ts(_gymTx, _gymTy+2.5);
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
+    // Rack frame
+    fillR(ctx,drx,dry,T*2,T*0.8,'#3a3020');
+    ctx.restore();
+    fillR(ctx,drx+2,dry+2,T*2-4,T*0.8-4,'#4a4030');
+    // Shelf divider
+    fillR(ctx,drx+2,dry+Math.floor(T*0.4),T*2-4,2,'#5a5040');
+    // Top shelf dumbbells (3)
+    // Dumbbell 1 (small, iron)
+    fillR(ctx,drx+6,dry+6,4,4,'#404050'); fillR(ctx,drx+4,dry+7,2,2,'#404050'); fillR(ctx,drx+12,dry+7,2,2,'#404050');
+    // Dumbbell 2 (medium, chrome)
+    fillR(ctx,drx+20,dry+5,6,4,'#606070'); fillR(ctx,drx+17,dry+6,3,3,'#606070'); fillR(ctx,drx+26,dry+6,3,3,'#606070');
+    // Dumbbell 3 (small, dark)
+    fillR(ctx,drx+36,dry+6,4,4,'#353545'); fillR(ctx,drx+34,dry+7,2,2,'#353545'); fillR(ctx,drx+42,dry+7,2,2,'#353545');
+    // Bottom shelf dumbbells (3)
+    const bsy = dry+Math.floor(T*0.4)+4;
+    // Dumbbell 4 (big, iron)
+    fillR(ctx,drx+5,bsy+2,8,4,'#404050'); fillR(ctx,drx+3,bsy+1,3,5,'#505060'); fillR(ctx,drx+13,bsy+1,3,5,'#505060');
+    // Dumbbell 5 (big, chrome)
+    fillR(ctx,drx+22,bsy+2,8,4,'#606070'); fillR(ctx,drx+20,bsy+1,3,5,'#707080'); fillR(ctx,drx+30,bsy+1,3,5,'#707080');
+    // Dumbbell 6 (medium, dark)
+    fillR(ctx,drx+38,bsy+2,6,4,'#353545'); fillR(ctx,drx+36,bsy+1,2,5,'#454555'); fillR(ctx,drx+44,bsy+1,2,5,'#454555');
+
+    // ── Bench Press (below treadmill 2) ──
+    const [bpx,bpy] = ts(_gymTx+3, _gymTy+2.5);
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
+    // Bench pad
+    fillR(ctx,bpx+8,bpy+6,T*1.4,T*0.35,'#3a3040');
+    ctx.restore();
+    fillR(ctx,bpx+10,bpy+8,T*1.4-4,T*0.35-4,'#4a3858');
+    // Bench legs
+    fillR(ctx,bpx+10,bpy+T*0.35+6,4,6,'#2a2a3a');
+    fillR(ctx,bpx+T*1.4+2,bpy+T*0.35+6,4,6,'#2a2a3a');
+    // Uprights
+    fillR(ctx,bpx+4,bpy-6,3,18,'#606070');
+    fillR(ctx,bpx+T*1.4+12,bpy-6,3,18,'#606070');
+    // Upright hooks
+    fillR(ctx,bpx+3,bpy-2,5,2,'#707080');
+    fillR(ctx,bpx+T*1.4+11,bpy-2,5,2,'#707080');
+    // Barbell bar
+    fillR(ctx,bpx,bpy,T*1.8,2,'#808090');
+    // Weight plates (left)
+    ctx.fillStyle='#404050'; ctx.beginPath(); ctx.ellipse(bpx+3,bpy+1,4,6,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#353545'; ctx.beginPath(); ctx.ellipse(bpx+7,bpy+1,3,5,0,0,Math.PI*2); ctx.fill();
+    // Weight plates (right)
+    ctx.fillStyle='#404050'; ctx.beginPath(); ctx.ellipse(bpx+T*1.8-3,bpy+1,4,6,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#353545'; ctx.beginPath(); ctx.ellipse(bpx+T*1.8-7,bpy+1,3,5,0,0,Math.PI*2); ctx.fill();
+
+    // ── Punching Bag (right of treadmills) ──
+    const [pbx,pby] = ts(_gymTx+6, _gymTy+0.5);
+    // Chain from ceiling
+    ctx.strokeStyle='#808090'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(pbx+10,pby-16); ctx.lineTo(pbx+10,pby); ctx.stroke();
+    // Mounting bracket
+    fillR(ctx,pbx+6,pby-16,8,3,'#505060');
+    // Bag body
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
+    ctx.fillStyle='#a03020';
+    ctx.beginPath(); ctx.ellipse(pbx+10,pby+16,8,18,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    // Bag highlight
+    ctx.fillStyle='#b8402e';
+    ctx.beginPath(); ctx.ellipse(pbx+8,pby+12,3,10,0,0,Math.PI*2); ctx.fill();
+    // Bag bottom cap
+    fillR(ctx,pbx+6,pby+32,8,3,'#802818');
+    // Shadow below
+    ctx.fillStyle='#00000030';
+    ctx.beginPath(); ctx.ellipse(pbx+10,pby+40,10,3,0,0,Math.PI*2); ctx.fill();
+
+    // ── Exercise Bike (right of bench press) ──
+    const [ebx,eby] = ts(_gymTx+6, _gymTy+2.5);
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
+    // Bike frame base
+    fillR(ctx,ebx+2,eby+T*0.8,T*1.2,4,'#303040');
+    ctx.restore();
+    // Front leg
+    fillR(ctx,ebx+2,eby+T*0.8+4,4,8,'#303040');
+    // Rear leg
+    fillR(ctx,ebx+T*1.2-2,eby+T*0.8+4,4,8,'#303040');
+    // Seat post
+    fillR(ctx,ebx+T*0.8,eby+T*0.2,3,T*0.6,'#505060');
+    // Seat
+    fillR(ctx,ebx+T*0.8-4,eby+T*0.2-2,12,4,'#2a2a3a');
+    fillR(ctx,ebx+T*0.8-3,eby+T*0.2-3,10,3,'#3a3a4a');
+    // Handlebar post
+    fillR(ctx,ebx+6,eby+T*0.1,3,T*0.7,'#505060');
+    // Handlebars
+    fillR(ctx,ebx+2,eby+T*0.1-2,14,3,'#606070');
+    fillR(ctx,ebx+2,eby+T*0.1-2,3,6,'#606070');
+    fillR(ctx,ebx+13,eby+T*0.1-2,3,6,'#606070');
+    // Display panel
+    fillR(ctx,ebx+5,eby+T*0.1-8,8,6,'#101828');
+    fillR(ctx,ebx+6,eby+T*0.1-7,6,4,SCREEN_C);
+    fillR(ctx,ebx+7,eby+T*0.1-6,2,1,'#7aa2f7');
+    // Wheel
+    ctx.strokeStyle='#404050'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.arc(ebx+8,eby+T*0.8-2,6,0,Math.PI*2); ctx.stroke();
+    // Pedals
+    fillR(ctx,ebx+4,eby+T*0.8-4,3,3,'#505060');
+    fillR(ctx,ebx+11,eby+T*0.8-4,3,3,'#505060');
+
+    // ── Yoga Mat with Props (below dumbbells) ──
+    const [ymx,ymy] = ts(_gymTx+0.5, _gymTy+4);
+    ctx.save(); ctx.shadowColor='#00000040'; ctx.shadowBlur=4;
+    // Mat
+    fillR(ctx,ymx,ymy,T*2.5,T*0.5,'#2a6838');
+    ctx.restore();
+    // Mat border/edge highlight
+    fillR(ctx,ymx,ymy,T*2.5,2,'#358045');
+    fillR(ctx,ymx,ymy+T*0.5-2,T*2.5,2,'#1e5528');
+    // Texture lines on mat
+    fillR(ctx,ymx+8,ymy+4,T*2.5-16,1,'#2e7040');
+    fillR(ctx,ymx+8,ymy+T*0.25,T*2.5-16,1,'#2e7040');
+    fillR(ctx,ymx+8,ymy+T*0.5-6,T*2.5-16,1,'#2e7040');
+    // Yoga block (purple, on right end of mat)
+    fillR(ctx,ymx+T*2.5-14,ymy+2,10,T*0.5-4,'#6a3088');
+    fillR(ctx,ymx+T*2.5-13,ymy+3,8,T*0.5-6,'#7a40a0');
+    // Water bottle (next to mat)
+    fillR(ctx,ymx+T*2.5+4,ymy+T*0.25-8,6,16,'#4090c0');
+    fillR(ctx,ymx+T*2.5+5,ymy+T*0.25-8,4,4,'#50a0d0');
+    // Bottle cap
+    fillR(ctx,ymx+T*2.5+5,ymy+T*0.25-10,4,3,'#305870');
+
     // ── GAMING/TV ZONE (center) ──────────────────────────────────
     const [_tvATx,_tvATy] = getAdminPos('tv', 10, ACT_ZONE_Y+0.3);
     const [tvx,tvy] = ts(_tvATx, _tvATy);
