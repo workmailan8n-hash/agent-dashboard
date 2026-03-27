@@ -2679,7 +2679,7 @@ function buildObstacleGrid() {
 
   // ── TV + gaming sofa ─────
   if (ACT_ZONE_Y > 0) {
-    const [tvTx,tvTy] = getAdminPos('tv', 9, ACT_ZONE_Y+0.3);
+    const [tvTx,tvTy] = getAdminPos('tv', 10, ACT_ZONE_Y+0.3);
     markRect(tvTx, tvTy, 4, 3);
     markRect(tvTx+1, tvTy+3.5, 4, 1); // sofa
   }
@@ -2741,6 +2741,22 @@ function buildObstacleGrid() {
       if (c >= doorL && c <= doorR) continue; // door gap
       mark(c, ACT_ZONE_Y);
     }
+  }
+
+  // ── Gaming sofa ─────
+  if (ACT_ZONE_Y > 0) {
+    const [gsTx,gsTy] = getAdminPos('gaming_sofa', 11, ACT_ZONE_Y+3.7);
+    markRect(gsTx, gsTy, 4, 1);
+  }
+
+  // ── Kitchen counter ─────
+  if (KITCHEN_WALL_COL > 0) {
+    const kitIntXobs = KITCHEN_WALL_COL + 1;
+    const [kcTx,kcTy] = getAdminPos('kitchen_counter', kitIntXobs, KITCHEN_START_ROW);
+    markRect(kcTx, kcTy, 9, 1);
+    // Fridge
+    const [frTx,frTy] = getAdminPos('fridge', kitIntXobs+8, KITCHEN_START_ROW);
+    markRect(frTx, frTy, 1, 2);
   }
 
   // ── Kitchen dining table ─────
@@ -3817,7 +3833,7 @@ function buildBackground() {
     for(let m=0;m<4;m++) fillR(ctx,mx+4+m*9,my+3,1,T*0.35-8,'#22502e');
 
     // ── GAMING/TV ZONE (center) ──────────────────────────────────
-    const [_tvATx,_tvATy] = getAdminPos('tv', 9, ACT_ZONE_Y+0.3);
+    const [_tvATx,_tvATy] = getAdminPos('tv', 10, ACT_ZONE_Y+0.3);
     const [tvx,tvy] = ts(_tvATx, _tvATy);
 
     // TV label
@@ -5093,11 +5109,11 @@ function loop(now) {
       const d = Math.sqrt(dx*dx + dy*dy);
       if (d < nearestDist) { nearestDist = d; nearest = aid; }
     }
-    if (nearest) trashAgentId = nearest;
+    if (nearest) { trashAgentId = nearest; agentStates[nearest].isCleaning = true; }
   }
   if (trashAgentId && agentStates[trashAgentId]) {
     const sp = agentStates[trashAgentId];
-    if (sp.isWorking) { trashAgentId = null; }
+    if (sp.isWorking) { sp.isCleaning = false; trashAgentId = null; }
     else {
       const trashTx = KITCHEN_WALL_COL - 2 + 0.5, trashTy = 3 + 0.5;
       const dx = trashTx - sp.tx, dy = trashTy - sp.ty;
@@ -5113,6 +5129,7 @@ function loop(now) {
           trashLevel = 0;
           trashAgentId = null;
           sp._cleanTimer = 0;
+          sp.isCleaning = false;
           sp.arrived = false; sp.activityDur = 0;
         }
       }
@@ -5138,7 +5155,7 @@ function loop(now) {
   // TV game animation — active when any agent is gaming
   if (ACT_ZONE_Y > 0) {
     const anyGaming = Object.values(agentStates).some(s => s.activityAnim === 'gaming' && s.arrived);
-    const [_tvATx2,_tvATy2] = getAdminPos('tv', 9, ACT_ZONE_Y+0.3);
+    const [_tvATx2,_tvATy2] = getAdminPos('tv', 10, ACT_ZONE_Y+0.3);
     const [tvx, tvy] = ts(_tvATx2, _tvATy2);
     const sx = tvx + 6, sy = tvy + 6, sw = T*4 - 14, sh = T*2.5 - 12;
     if (anyGaming) {
@@ -5421,6 +5438,7 @@ setInterval(updateUI, 5000);
 document.fonts.ready.then(() => {
   generateLayout(1);
   applyCustomPositions();
+  buildAdminObjects(); // init _defaultPositions for click detection
   syncIdleSpotsToAdmin();
   buildBackground();
   buildObstacleGrid();
