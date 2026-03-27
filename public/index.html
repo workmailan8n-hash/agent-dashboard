@@ -2858,15 +2858,18 @@ let printerActive = 0;   // countdown timer for printer animation
 let trashLevel    = 0;   // 0-10: how full the trash can is
 let trashAgentId  = null; // agent currently assigned to stomp trash
 
+let _maxLayoutN = 12; // minimum 12 agents worth of space — office never shrinks
 function generateLayout(n) {
   const count = Math.max(1, n);
-  if (count === layoutN) return false;
-  layoutN = count;
+  _maxLayoutN = Math.max(_maxLayoutN, count);
+  const stableCount = Math.max(count, _maxLayoutN); // never shrink below peak
+  if (stableCount === layoutN) return false;
+  layoutN = stableCount;
   DESK_DEFS=[]; DESK_SLOTS=[]; COUCH_DEFS=[]; COUCH_SLOTS=[];
 
   // 3 стола в ряд — у каждого агента своё место
   PER_ROW=3; STEP_X=7; STEP_Y=4; START_ROW=1;
-  for (let i=0; i<count; i++) {
+  for (let i=0; i<stableCount; i++) {
     const col=i%PER_ROW, row=Math.floor(i/PER_ROW);
     const dtx=1+col*STEP_X, dty=START_ROW+row*STEP_Y;
     DESK_DEFS.push({tx:dtx, ty:dty});
@@ -2874,9 +2877,9 @@ function generateLayout(n) {
   }
 
   // 5 диванов в ряд, у каждого агента свой диван
-  const deskRows=Math.ceil(count/PER_ROW), LOUNGE_Y=START_ROW+deskRows*STEP_Y+1;
+  const deskRows=Math.ceil(stableCount/PER_ROW), LOUNGE_Y=START_ROW+deskRows*STEP_Y+1;
   const COUCH_PER_ROW=5;
-  for (let i=0; i<count; i++) {
+  for (let i=0; i<stableCount; i++) {
     const col=i%COUCH_PER_ROW, row=Math.floor(i/COUCH_PER_ROW);
     const cx=1.5+col*5.2;
     const cy=LOUNGE_Y+row*3;
@@ -2884,7 +2887,7 @@ function generateLayout(n) {
     COUCH_SLOTS.push({tx:cx+1.3, ty:cy+0.4});
   }
 
-  const couchRows=Math.ceil(count/COUCH_PER_ROW);
+  const couchRows=Math.ceil(stableCount/COUCH_PER_ROW);
   const baseRows=LOUNGE_Y+couchRows*3+2;
   ACT_ZONE_Y = baseRows;
   ROWS = baseRows + 24;  // 9 gym/gaming/pp + 15 for conference/bookshelf + entertainment zone
