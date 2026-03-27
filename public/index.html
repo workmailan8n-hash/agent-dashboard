@@ -4494,22 +4494,7 @@ function buildBackground() {
     fillR(ctx,t2x+4,t2y+T*0.7+10,4,8,'#1e1e30');
     fillR(ctx,t2x+T*1.2,t2y+T*0.7+10,4,8,'#1e1e30');
 
-    // Dumbbell rack
-    const [drx,dry] = ts(1, ACT_ZONE_Y+3.5);
-    fillR(ctx,drx,dry,T*1.4,T*0.4,'#1e1e30');  // rack frame
-    for(let d=0;d<4;d++){
-      const dx=drx+4+d*10;
-      fillR(ctx,dx,dry+2,8,T*0.3,'#404050');
-      fillR(ctx,dx,dry+3,8,4,'#606070');  // weights
-      fillR(ctx,dx+2,dry+2,4,T*0.3,'#484858');
-    }
-
-    // Exercise mat
-    const [mx,my] = ts(3.5, ACT_ZONE_Y+3.2);
-    ctx.save(); ctx.shadowColor='#00000050'; ctx.shadowBlur=4;
-    fillR(ctx,mx,my,T*1.5,T*0.35,'#2a5a3a'); ctx.restore();
-    fillR(ctx,mx+2,my+2,T*1.5-4,T*0.35-4,'#2e6640');
-    for(let m=0;m<4;m++) fillR(ctx,mx+4+m*9,my+3,1,T*0.35-8,'#22502e');
+    // (Dumbbell rack and exercise mat removed)
 
     // ── GAMING/TV ZONE (center) ──────────────────────────────────
     const [_tvATx,_tvATy] = getAdminPos('tv', 10, ACT_ZONE_Y+0.3);
