@@ -8704,15 +8704,19 @@ document.getElementById('admin-start-pos').onclick = () => {
 
   box.querySelector('#sp-yes').onclick = () => {
     overlay.remove();
-    // Use BUILTIN_POSITIONS (the user's exported JSON layout)
+    // Reset objects to BUILTIN_POSITIONS
     localStorage.setItem('admin_positions', JSON.stringify(BUILTIN_POSITIONS));
     localStorage.removeItem('admin_walls');
     window._adminPos = Object.assign({}, BUILTIN_POSITIONS);
-    applyWallPositions();
+    // Reset walls to default sizes
+    COLS = 28; CW = OX + COLS*T + OX;
+    canvas.width = CW; bgBuf.width = CW;
+    generateLayout(Math.max(12, Object.keys(agentsData).length));
+    applyCustomPositions();
     buildAdminObjects();
+    syncIdleSpotsToAdmin();
     buildBackground();
     buildObstacleGrid();
-    if (typeof syncIdleSpotsToAdmin === 'function') syncIdleSpotsToAdmin();
   };
 };
 
