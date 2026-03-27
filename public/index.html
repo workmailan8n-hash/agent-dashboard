@@ -4199,14 +4199,7 @@ function buildBackground() {
   // ── Social zone entertainment objects ─────────────────────────
   if (ACT_ZONE_Y > 0) {
 
-    // ── Zone labels ──────────────────────────────────────────────
-    ctx.fillStyle='#5a5070'; ctx.font="5px 'Press Start 2P',monospace";
-    const [_rzLx, _rzLy] = ts(1, ACT_ZONE_Y+9);
-    ctx.fillText('RECREATION', _rzLx, _rzLy-4);
-    const [_mlLx, _mlLy] = ts(1, ACT_ZONE_Y+14);
-    ctx.fillText('MAKERS LAB', _mlLx, _mlLy-4);
-    const [_cfLx, _cfLy] = ts(13, ACT_ZONE_Y+14);
-    ctx.fillText('CAFE', _cfLx, _cfLy-4);
+    // (Zone labels removed — objects speak for themselves)
 
     // ── Arcade Machine (recreation, col 16) ────────────────────
     const [_arcTx, _arcTy] = getAdminPos('arcade', 16, ACT_ZONE_Y+9);
