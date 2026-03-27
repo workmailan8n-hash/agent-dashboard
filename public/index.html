@@ -2637,9 +2637,15 @@ function buildObstacleGrid() {
       for (let dc = 0; dc < w; dc++) mark(Math.floor(tx) + dc, Math.floor(ty) + dr);
   }
 
-  // Outer walls
+  // Outer walls (with entrance door gap on right wall)
   for (let c = 0; c < COLS; c++) { obstacleGrid[0][c] = 1; obstacleGrid[ROWS-1][c] = 1; }
-  for (let r = 0; r < ROWS; r++) { obstacleGrid[r][0] = 1; obstacleGrid[r][COLS-1] = 1; }
+  const entrDoorY = KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS*0.38);
+  for (let r = 0; r < ROWS; r++) {
+    obstacleGrid[r][0] = 1;
+    // Right wall — open 3 tiles for entrance door
+    const isEntrance = r >= entrDoorY && r <= entrDoorY + 2;
+    if (!isEntrance) obstacleGrid[r][COLS-1] = 1;
+  }
 
   // Kitchen partition wall — door is 3 rows tall for traffic flow
   if (KITCHEN_WALL_COL > 0) {
@@ -3098,6 +3104,28 @@ function buildBackground() {
     fillR(ctx,dx+T-4,dy,4,T*5,'#4a4880'); // door frame right
   }
 
+  // ── Main entrance door (right wall) — agents spawn here ──────
+  {
+    const edx = OX + (COLS-1)*T;
+    const edy = OY + (KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS*0.38)) * T;
+    // Door opening (3 tiles tall)
+    fillR(ctx, edx, edy, T, T*3, '#3a3050');
+    // Door frame
+    fillR(ctx, edx, edy, 4, T*3, '#6a5090');
+    fillR(ctx, edx+T-4, edy, 4, T*3, '#6a5090');
+    fillR(ctx, edx, edy-3, T, 4, '#6a5090');   // top frame
+    fillR(ctx, edx, edy+T*3, T, 4, '#6a5090'); // bottom frame
+    // Door surface (brown wood, slightly open)
+    fillR(ctx, edx+4, edy+2, T-12, T*3-4, '#5a4030');
+    fillR(ctx, edx+6, edy+4, T-16, T*3-8, '#6a4c38');
+    // Door handle
+    ctx.fillStyle='#c0b060';
+    ctx.beginPath(); ctx.arc(edx+10, edy+T*1.5, 3, 0, Math.PI*2); ctx.fill();
+    // "ENTER" label above
+    ctx.fillStyle='#8080a0'; ctx.font="4px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('ENTRANCE', edx+T/2, edy-6); ctx.textAlign='left';
+  }
+
   // Windows
   for (let i=0; i<4; i++) {
     const wx=OX+(3+i*6)*T+4, wy=OY+5;
@@ -3255,27 +3283,137 @@ function buildBackground() {
     fillR(ctx,kx,ky,T*9,3,'#d4c49a');  // counter highlight
     fillR(ctx,kx,ky+T*0.6,T*9,5,DESK_FRONT); // counter front
 
-    // Coffee machine (dark, glowing display)
-    const [cmx,cmy] = [kx+4, ky+3];
-    ctx.save(); ctx.shadowColor='#3060a060'; ctx.shadowBlur=10;
-    fillR(ctx,cmx,cmy,24,26,'#1a1824'); ctx.restore();
-    fillR(ctx,cmx+2,cmy+2,20,11,'#0a0e18');
-    fillR(ctx,cmx+3,cmy+3,18,9,SCREEN_C);
-    fillR(ctx,cmx+5,cmy+5,5,2,'#9ece6a');
-    fillR(ctx,cmx+12,cmy+5,4,2,'#7aa2f7');
-    fillR(ctx,cmx+5,cmy+14,14,7,'#2a2a3c');
-    fillR(ctx,cmx+10,cmy+20,4,5,'#404050');
-    fillR(ctx,cmx+11,cmy+21,2,2,'#c8a060'); // drip
+    // ── Coffee Machine (espresso style) ──
+    const cmx = kx + 6, cmy = ky - 26;
+    // Body
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=4;
+    fillR(ctx, cmx, cmy+4, 22, 26, '#282838'); ctx.restore();
+    fillR(ctx, cmx+1, cmy+4, 20, 2, '#383848'); // top highlight
+    // Rounded top
+    ctx.fillStyle='#282838';
+    ctx.beginPath(); ctx.arc(cmx+11, cmy+5, 10, Math.PI, 0); ctx.fill();
+    ctx.fillStyle='#383848';
+    ctx.beginPath(); ctx.arc(cmx+11, cmy+5, 9, Math.PI, Math.PI+0.5); ctx.fill();
+    // Chrome band
+    fillR(ctx, cmx+1, cmy+10, 20, 2, '#a0a8b8');
+    fillR(ctx, cmx+1, cmy+11, 20, 1, '#808890');
+    // Portafilter holder (chrome)
+    fillR(ctx, cmx+6, cmy+20, 10, 3, '#b0b8c8');
+    fillR(ctx, cmx+4, cmy+22, 14, 2, '#9098a8');
+    fillR(ctx, cmx+8, cmy+24, 6, 3, '#a0a8b8'); // spout
+    // Drip tray
+    fillR(ctx, cmx+2, cmy+27, 18, 3, '#505060');
+    fillR(ctx, cmx+3, cmy+28, 16, 1, '#404050');
+    // Display panel
+    fillR(ctx, cmx+3, cmy+13, 16, 6, '#0a0e18');
+    fillR(ctx, cmx+4, cmy+14, 14, 4, '#101828');
+    // Indicator lights
+    fillR(ctx, cmx+5, cmy+15, 2, 2, '#40e040'); // green = ready
+    fillR(ctx, cmx+9, cmy+15, 2, 2, '#e04040'); // red = power
+    // "COFFEE" label
+    ctx.fillStyle='#606878'; ctx.font='3px monospace';
+    ctx.fillText('COFFEE', cmx+3, cmy+9);
+    // Steam nozzle (side)
+    fillR(ctx, cmx+20, cmy+16, 3, 2, '#9098a8');
+    fillR(ctx, cmx+21, cmy+18, 2, 5, '#808890');
 
-    // Toaster / microwave
-    const [mcx,mcy] = [kx+T+4, ky+3];
-    fillR(ctx,mcx,mcy,28,20,'#2a2830');
-    fillR(ctx,mcx+2,mcy+2,24,8,'#181624');
-    fillR(ctx,mcx+3,mcy+3,20,6,SCREEN_C);
-    fillR(ctx,mcx+4,mcy+4,3,2,'#f7768e');
-    fillR(ctx,mcx+9,mcy+4,3,2,'#9ece6a');
-    fillR(ctx,mcx+14,mcy+4,6,2,'#7aa2f7');
-    fillR(ctx,mcx+22,mcy+4,3,10,'#404058');
+    // ── Microwave ──
+    const mcx = kx + T + 8, mcy = ky - 22;
+    ctx.save(); ctx.shadowColor='#00000050'; ctx.shadowBlur=3;
+    fillR(ctx, mcx, mcy, 30, 22, '#303040'); ctx.restore();
+    fillR(ctx, mcx+1, mcy, 28, 1, '#404050'); // top highlight
+    // Glass door window
+    fillR(ctx, mcx+2, mcy+3, 18, 14, '#1a1a2a'); // door frame
+    fillR(ctx, mcx+3, mcy+4, 16, 12, '#1a2a3a'); // glass
+    fillR(ctx, mcx+4, mcy+5, 14, 10, '#12202e'); // interior dark
+    // Rotating plate inside (subtle circle)
+    ctx.strokeStyle='#2a3a4a'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(mcx+11, mcy+10, 4, 0, Math.PI*2); ctx.stroke();
+    // Handle (right side)
+    fillR(ctx, mcx+21, mcy+5, 2, 10, '#505868');
+    fillR(ctx, mcx+22, mcy+6, 1, 8, '#606878');
+    // Digital clock display
+    fillR(ctx, mcx+24, mcy+4, 5, 4, '#0a0e10');
+    ctx.fillStyle='#40e850'; ctx.font='3px monospace';
+    ctx.fillText('12:00', mcx+24, mcy+7);
+    // Control buttons
+    fillR(ctx, mcx+24, mcy+10, 3, 2, '#e05050'); // stop
+    fillR(ctx, mcx+24, mcy+13, 3, 2, '#50e050'); // start
+    fillR(ctx, mcx+24, mcy+16, 3, 2, '#5080e0'); // timer
+    // Bottom vent
+    for (let vi=0; vi<5; vi++) fillR(ctx, mcx+3+vi*4, mcy+19, 2, 1, '#404050');
+
+    // ── Toaster (chrome) ──
+    const tsx = kx + T*2 + 14, tsy = ky - 14;
+    ctx.save(); ctx.shadowColor='#00000040'; ctx.shadowBlur=2;
+    fillR(ctx, tsx, tsy, 16, 14, '#c0c8d0'); ctx.restore();
+    fillR(ctx, tsx+1, tsy, 14, 1, '#d8e0e8'); // top highlight
+    fillR(ctx, tsx, tsy+1, 16, 1, '#b0b8c0'); // subtle edge
+    // Two slots on top
+    fillR(ctx, tsx+2, tsy-1, 4, 2, '#404048');
+    fillR(ctx, tsx+9, tsy-1, 4, 2, '#404048');
+    // Bread peeking out (tiny)
+    fillR(ctx, tsx+3, tsy-2, 2, 2, '#d4a850');
+    fillR(ctx, tsx+10, tsy-2, 2, 2, '#d4a850');
+    // Chrome body detail
+    fillR(ctx, tsx+1, tsy+4, 14, 1, '#d0d8e0');
+    fillR(ctx, tsx+1, tsy+8, 14, 1, '#a8b0b8');
+    // Push lever (side)
+    fillR(ctx, tsx+15, tsy+3, 2, 6, '#808890');
+    fillR(ctx, tsx+16, tsy+4, 1, 3, '#606870');
+    // Crumb tray
+    fillR(ctx, tsx+1, tsy+13, 14, 2, '#a0a8b0');
+    fillR(ctx, tsx+2, tsy+14, 12, 1, '#909098');
+
+    // ── Knife Block ──
+    const kbx = kx + T*3 + 8, kby = ky - 18;
+    // Wooden block body
+    fillR(ctx, kbx, kby+4, 10, 14, '#6a4020');
+    fillR(ctx, kbx+1, kby+5, 8, 12, '#7a4c28');
+    fillR(ctx, kbx+1, kby+4, 8, 1, '#805530'); // top highlight
+    // Knife handles sticking out
+    fillR(ctx, kbx+2, kby, 2, 6, '#303030');   // black handle
+    fillR(ctx, kbx+4, kby+1, 2, 5, '#8b2020');  // red handle
+    fillR(ctx, kbx+6, kby+2, 2, 4, '#204080');  // blue handle
+    fillR(ctx, kbx+8, kby+1, 1, 5, '#c0c8d0');  // blade glint
+    // Blade tips visible
+    fillR(ctx, kbx+2, kby-1, 1, 2, '#c0c8d0');
+    fillR(ctx, kbx+4, kby, 1, 2, '#c0c8d0');
+    fillR(ctx, kbx+6, kby+1, 1, 2, '#c0c8d0');
+
+    // ── Cutting Board with food ──
+    const cbx = kx + T*4, cby = ky - 8;
+    // Wooden board
+    fillR(ctx, cbx, cby, 20, 10, '#c8a060');
+    fillR(ctx, cbx+1, cby+1, 18, 8, '#d0a868');
+    fillR(ctx, cbx, cby, 20, 1, '#d8b870'); // highlight
+    // Board grain lines
+    fillR(ctx, cbx+5, cby+2, 1, 6, '#b89850');
+    fillR(ctx, cbx+12, cby+2, 1, 6, '#b89850');
+    // Food pieces (chopped veggies)
+    fillR(ctx, cbx+3, cby+3, 3, 2, '#e05030'); // tomato
+    fillR(ctx, cbx+7, cby+4, 2, 2, '#40b040'); // lettuce
+    fillR(ctx, cbx+10, cby+3, 3, 2, '#f0c020'); // cheese
+    fillR(ctx, cbx+14, cby+4, 2, 2, '#e08030'); // carrot
+    fillR(ctx, cbx+14, cby+2, 2, 2, '#40b040'); // more green
+
+    // ── Sink (far end of counter) ──
+    const snx = kx + T*7, sny = ky - 4;
+    // Basin (inset into counter)
+    fillR(ctx, snx, sny, T*1.5, 10, '#a09870'); // counter around
+    fillR(ctx, snx+3, sny+2, T*1.5-6, 7, '#606858'); // basin dark
+    fillR(ctx, snx+4, sny+3, T*1.5-8, 5, '#505848'); // basin inner
+    fillR(ctx, snx+5, sny+4, T*1.5-10, 3, '#485040'); // water dark
+    // Chrome faucet - base
+    fillR(ctx, snx+T-2, sny-2, 4, 4, '#b0b8c8');
+    // Faucet curved pipe (going up then arching over)
+    fillR(ctx, snx+T-1, sny-14, 3, 12, '#c0c8d8'); // vertical pipe
+    fillR(ctx, snx+T-1, sny-15, 3, 2, '#d0d8e8'); // top highlight
+    fillR(ctx, snx+T-6, sny-13, 6, 2, '#b0b8c8'); // horizontal arm
+    fillR(ctx, snx+T-7, sny-13, 2, 3, '#a0a8b8'); // spout tip
+    // Faucet handles
+    fillR(ctx, snx+T-5, sny-3, 3, 2, '#d04040'); // hot
+    fillR(ctx, snx+T+3, sny-3, 3, 2, '#4040d0'); // cold
 
     // Fridge (tall, silver)
     const [_frATx,_frATy] = getAdminPos('fridge', kitIntX+8, KITCHEN_START_ROW);
@@ -3905,6 +4043,57 @@ function drawDynamicEffects(ctx, tick) {
     ctx.closePath(); ctx.fill();
     ctx.restore();
   }
+
+  // ── Kitchen appliance animations (steam, water, microwave glow) ──
+  if (ROWS > 6 && KITCHEN_WALL_COL > 0) {
+    const kitIntX = KITCHEN_WALL_COL + 1;
+    const [_kcTx2,_kcTy2] = getAdminPos('kitchen_counter', kitIntX, KITCHEN_START_ROW);
+    const [kx2, ky2] = ts(_kcTx2, _kcTy2);
+
+    // Coffee steam particles (always rising gently)
+    const steamX = kx2 + 17, steamBaseY = ky2 - 28;
+    ctx.save();
+    for (let si=0; si<4; si++) {
+      const phase = tick * 0.06 + si * 1.8;
+      const sy2 = steamBaseY - ((tick * 0.3 + si * 8) % 18);
+      const sx2 = steamX + Math.sin(phase) * 2;
+      const sa = 0.35 - ((tick * 0.3 + si * 8) % 18) / 50;
+      if (sa > 0) {
+        ctx.globalAlpha = sa;
+        ctx.fillStyle = '#d0d8e8';
+        ctx.fillRect(sx2|0, sy2|0, 2, 2);
+      }
+    }
+    ctx.restore();
+
+    // Microwave interior glow (subtle pulse)
+    const mgx = kx2 + T + 12, mgy = ky2 - 17;
+    ctx.save();
+    ctx.globalAlpha = 0.08 + Math.sin(tick * 0.08) * 0.04;
+    const mg = ctx.createRadialGradient(mgx, mgy, 0, mgx, mgy, 10);
+    mg.addColorStop(0, '#40a0ff'); mg.addColorStop(1, 'transparent');
+    ctx.fillStyle = mg; ctx.fillRect(mgx-10, mgy-8, 20, 16);
+    ctx.restore();
+
+    // Sink water drops (intermittent dripping)
+    const wdx = kx2 + T*7 + T - 6, wdy = ky2 - 10;
+    ctx.save();
+    const drip = (tick % 80);
+    if (drip < 30) {
+      const dy = drip * 0.4;
+      ctx.globalAlpha = 0.6 - drip * 0.015;
+      ctx.fillStyle = '#80c0e0';
+      ctx.fillRect((wdx)|0, (wdy + dy)|0, 1, 2);
+    }
+    // Tiny splash at bottom
+    if (drip > 25 && drip < 35) {
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#80c0e0';
+      ctx.fillRect((wdx-1)|0, (wdy+12)|0, 1, 1);
+      ctx.fillRect((wdx+1)|0, (wdy+11)|0, 1, 1);
+    }
+    ctx.restore();
+  }
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -3920,9 +4109,10 @@ class AgentState {
   constructor(id, slug) {
     this.id   = id;
     this.slug = slug;
-    // floating-point tile position
-    this.tx = 4 + Math.random() * 8;
-    this.ty = 2 + Math.random() * 4;
+    // Spawn at right entrance (kitchen door area) — agent walks in from the door
+    const doorY = KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW + 2 : Math.floor(ROWS * 0.4);
+    this.tx = COLS - 2;
+    this.ty = doorY + (Math.random() - 0.5) * 2;
     this.targetTx = this.tx; this.targetTy = this.ty;
     this.palette  = getPalette(slug);
     // state machine
@@ -5025,6 +5215,9 @@ function loop(now) {
   ctx.font = "6px 'Press Start 2P', monospace";
   for (const sp of sorted) sp.drawOverlay(ctx, globalTick);
 
+  // Click animations on interactive objects
+  drawClickAnims(ctx, globalTick);
+
   // Admin editor overlay (on top of everything)
   drawAdminOverlay(ctx);
 
@@ -5584,6 +5777,295 @@ function drawAdminOverlay(ctx) {
       : adminHover ? `${adminHover.label} at (${adminHover.tx.toFixed(1)}, ${adminHover.ty.toFixed(1)}) — click & drag to move` : '';
     ctx.fillText(info, OX+8, OY+ROWS*T-6);
   }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  CLICK ANIMATIONS — interactive object feedback
+// ════════════════════════════════════════════════════════════════
+let clickAnims = [];
+
+const CLICK_OBJ_MAP = {
+  'kitchen_counter': 'coffee',
+  'fridge':          'fridge',
+  'aquarium':        'aquarium',
+  'vending':         'vending',
+  'printer':         'printer',
+  'trashcan':        'trash',
+  'darts':           'darts',
+  'tv':              'tv',
+  'pingpong':        'pingpong',
+  'clock':           'clock',
+};
+
+function findClickableAt(tx, ty) {
+  const saved = window._adminPos || {};
+  const defs = window._defaultPositions || {};
+  const checks = [
+    {id:'kitchen_counter', w:9, h:1},
+    {id:'fridge', w:1, h:1.5},
+    {id:'aquarium', w:2.5, h:2},
+    {id:'vending', w:1.5, h:2.5},
+    {id:'printer', w:2, h:1},
+    {id:'trashcan', w:1, h:1},
+    {id:'darts', w:2, h:1},
+    {id:'tv', w:4, h:3},
+    {id:'pingpong', w:6, h:3},
+    {id:'clock', w:1.5, h:1.5},
+  ];
+  for (const c of checks) {
+    const s = saved[c.id]; const d = defs[c.id];
+    if (!s && !d) continue;
+    const ox = s ? s.tx : d.tx;
+    const oy = s ? s.ty : d.ty;
+    if (tx >= ox && tx <= ox + c.w && ty >= oy && ty <= oy + c.h) {
+      return {id: c.id, type: CLICK_OBJ_MAP[c.id], cx: OX + (ox + c.w/2) * T, cy: OY + (oy + c.h/2) * T};
+    }
+  }
+  return null;
+}
+
+canvas.addEventListener('click', e => {
+  if (adminMode) return;
+  const {tx, ty} = mouseToTile(e);
+  const hit = findClickableAt(tx, ty);
+  if (!hit) return;
+  if (clickAnims.some(a => a.id === hit.id)) return;
+  clickAnims.push({id: hit.id, x: hit.cx, y: hit.cy, startTick: globalTick, type: hit.type,
+    particles: initClickParticles(hit.type, hit.cx, hit.cy)});
+  blip(520, 0.04, 'square', 0.02);
+});
+
+function initClickParticles(type, cx, cy) {
+  const p = [];
+  switch(type) {
+    case 'coffee':
+      for (let i = 0; i < 6; i++) p.push({x: cx + (Math.random()-0.5)*12, y: cy - 4, vx: (Math.random()-0.5)*0.8, vy: -0.5 - Math.random()*0.8, size: 2+Math.random()*2, col: i%2 ? '#ffffff' : '#aabbcc'});
+      break;
+    case 'fridge':
+      for (let i = 0; i < 5; i++) p.push({x: cx + 8 + Math.random()*6, y: cy - 6 + Math.random()*14, vx: 0.3+Math.random()*0.4, vy: (Math.random()-0.5)*0.6, size: 2+Math.random()*2, col: i%2 ? '#c0e8ff' : '#ffffff'});
+      break;
+    case 'aquarium':
+      for (let i = 0; i < 4; i++) p.push({x: cx + (Math.random()-0.5)*20, y: cy - 8, vx: (Math.random()-0.5)*2, vy: -0.3-Math.random()*0.5, size: 2, col: '#ffffff'});
+      break;
+    case 'vending':
+      p.push({x: cx, y: cy - 10, vx: 0, vy: 0.6, size: 6, col: ['#f7768e','#9ece6a','#7aa2f7','#e0af68'][Math.floor(Math.random()*4)]});
+      break;
+    case 'printer':
+      p.push({x: cx, y: cy, vx: 0, vy: -0.5, size: 0, col: '#ffffff'});
+      break;
+    case 'trash':
+      p.push({x: cx, y: cy - 10, vx: 0, vy: -1.2, size: 0, col: '#888'});
+      p.push({x: cx+3, y: cy-6, vx: 1.5, vy: -0.8, size: 2, col: '#556622'});
+      break;
+    case 'darts':
+      p.push({x: cx, y: cy + 30, vx: 0, vy: -2, size: 0, col: '#f7768e'});
+      break;
+    case 'tv':
+      break;
+    case 'pingpong':
+      p.push({x: cx, y: cy + 10, vx: 1.5, vy: -2, size: 3, col: '#ffffff'});
+      break;
+    case 'clock':
+      break;
+  }
+  return p;
+}
+
+function drawClickAnims(ctx, tick) {
+  clickAnims = clickAnims.filter(a => {
+    const age = tick - a.startTick;
+    if (age > 80) return false;
+    const t = age / 80;
+    const alpha = t < 0.7 ? 1 : 1 - (t - 0.7) / 0.3;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+
+    switch(a.type) {
+      case 'coffee': {
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy;
+          p.vy -= 0.01;
+          ctx.fillStyle = p.col;
+          ctx.globalAlpha = alpha * (1 - t * 0.6);
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+        }
+        if (t < 0.6) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#6a4a2a';
+          ctx.fillRect(a.x - 4, a.y + 6, 8, 6);
+          ctx.fillStyle = '#8a6a3a';
+          ctx.fillRect(a.x - 3, a.y + 4, 6, 3);
+        }
+        break;
+      }
+      case 'fridge': {
+        const doorW = 10 * Math.min(1, t * 3);
+        ctx.fillStyle = '#d0d8e0';
+        ctx.globalAlpha = alpha * 0.7;
+        ctx.fillRect(a.x + 4, a.y - 12, doorW, 18);
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy;
+          ctx.fillStyle = p.col;
+          ctx.globalAlpha = alpha * (1 - t);
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+        }
+        break;
+      }
+      case 'aquarium': {
+        ctx.globalAlpha = alpha * (1 - t);
+        ctx.strokeStyle = '#ffffff';
+        ctx.lineWidth = 1;
+        for (let i = 0; i < 3; i++) {
+          const sx = a.x - 10 + i * 10;
+          const spread = t * 8;
+          ctx.beginPath();
+          ctx.arc(sx, a.y - 10, spread, Math.PI, 0);
+          ctx.stroke();
+        }
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy;
+          ctx.fillStyle = p.col;
+          ctx.globalAlpha = alpha * (1 - t * 0.8);
+          ctx.beginPath();
+          ctx.arc(Math.round(p.x), Math.round(p.y), p.size, 0, Math.PI*2);
+          ctx.fill();
+        }
+        break;
+      }
+      case 'vending': {
+        const vp = a.particles[0];
+        if (t < 0.5) { vp.y += vp.vy * 2; }
+        ctx.fillStyle = vp.col;
+        ctx.globalAlpha = alpha;
+        ctx.fillRect(Math.round(vp.x) - 3, Math.round(vp.y), 6, 8);
+        ctx.fillStyle = '#ffffff40';
+        ctx.fillRect(Math.round(vp.x) - 1, Math.round(vp.y) + 1, 2, 6);
+        if (t > 0.35 && t < 0.8) {
+          ctx.globalAlpha = alpha * (t < 0.55 ? 1 : 1 - (t-0.55)/0.25);
+          ctx.fillStyle = '#e0af68';
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.fillText('CLUNK', a.x - 16, a.y - 18);
+        }
+        break;
+      }
+      case 'printer': {
+        const paperY = a.y + 4 - t * 20;
+        ctx.fillStyle = '#ffffff';
+        ctx.globalAlpha = alpha;
+        ctx.fillRect(a.x - 5, paperY, 10, 12);
+        ctx.fillStyle = '#888';
+        for (let i = 0; i < 3; i++) ctx.fillRect(a.x - 3, paperY + 2 + i * 3, 6, 1);
+        ctx.fillStyle = (tick % 8 < 4) ? '#9ece6a' : '#2a4020';
+        ctx.fillRect(a.x + 8, a.y - 2, 3, 3);
+        break;
+      }
+      case 'trash': {
+        const lidP = a.particles[0];
+        if (t < 0.3) { lidP.y += lidP.vy; lidP.vy += 0.08; }
+        else if (t < 0.5) { lidP.vy = 0.6; lidP.y += lidP.vy; }
+        ctx.fillStyle = '#667';
+        ctx.globalAlpha = alpha;
+        ctx.fillRect(Math.round(a.x) - 6, Math.round(lidP.y), 12, 3);
+        const flyP = a.particles[1];
+        if (flyP) {
+          flyP.x += flyP.vx + Math.sin(tick * 0.5) * 0.8;
+          flyP.y += flyP.vy + Math.cos(tick * 0.7) * 0.5;
+          ctx.fillStyle = '#334';
+          ctx.fillRect(Math.round(flyP.x), Math.round(flyP.y), 2, 2);
+          ctx.fillStyle = '#aab8';
+          ctx.fillRect(Math.round(flyP.x)-1, Math.round(flyP.y)-1, 1, 1);
+          ctx.fillRect(Math.round(flyP.x)+2, Math.round(flyP.y)-1, 1, 1);
+        }
+        break;
+      }
+      case 'darts': {
+        const dp = a.particles[0];
+        if (t < 0.4) { dp.y += dp.vy * 2; }
+        ctx.fillStyle = dp.col;
+        ctx.globalAlpha = alpha;
+        const dy = Math.round(Math.max(a.y - 6, dp.y));
+        ctx.fillRect(a.x - 1, dy, 2, 8);
+        ctx.fillStyle = '#ccc';
+        ctx.fillRect(a.x - 1, dy - 2, 2, 2);
+        if (t > 0.35 && t < 0.65) {
+          const shake = Math.sin(tick * 2) * 2;
+          ctx.fillStyle = '#e0af68';
+          ctx.font = "6px 'Press Start 2P',monospace";
+          ctx.fillText('thunk', a.x - 14 + shake, a.y - 16);
+        }
+        break;
+      }
+      case 'tv': {
+        const w = 28, h = 18;
+        if (t < 0.15) {
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = 1 - t / 0.15;
+          ctx.fillRect(a.x - w/2, a.y - h/2 - 4, w, h);
+        } else if (t < 0.3) {
+          ctx.globalAlpha = alpha * 0.8;
+          for (let i = 0; i < 30; i++) {
+            const v = Math.floor(Math.random() * 255);
+            ctx.fillStyle = `rgb(${v},${v},${v})`;
+            ctx.fillRect(a.x - w/2 + Math.random()*w, a.y - h/2 - 4 + Math.random()*h, 2, 2);
+          }
+        } else if (t < 0.7) {
+          const colors = ['#f7768e','#7aa2f7','#9ece6a','#bb9af7','#e0af68'];
+          ctx.fillStyle = colors[tick % colors.length];
+          ctx.globalAlpha = alpha * 0.5;
+          ctx.fillRect(a.x - w/2, a.y - h/2 - 4, w, h);
+        }
+        break;
+      }
+      case 'pingpong': {
+        const bp = a.particles[0];
+        if (t < 0.5) {
+          bp.x += bp.vx;
+          bp.y += bp.vy;
+          bp.vy += 0.15;
+          if (bp.y > a.y + 10) { bp.vy = -Math.abs(bp.vy) * 0.6; }
+        }
+        ctx.fillStyle = bp.col;
+        ctx.globalAlpha = alpha;
+        ctx.beginPath();
+        ctx.arc(Math.round(bp.x), Math.round(bp.y), bp.size, 0, Math.PI*2);
+        ctx.fill();
+        if (t > 0.15 && t < 0.55) {
+          ctx.fillStyle = '#e0af68';
+          ctx.font = "8px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * (t < 0.35 ? 1 : 1 - (t-0.35)/0.2);
+          ctx.fillText('POP', a.x - 10, a.y - 18);
+        }
+        break;
+      }
+      case 'clock': {
+        ctx.globalAlpha = alpha;
+        const ccx = a.x, ccy = a.y;
+        const r = 10;
+        const angle1 = t * Math.PI * 12;
+        ctx.strokeStyle = '#c8d3f5';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(ccx, ccy);
+        ctx.lineTo(ccx + Math.cos(angle1)*r, ccy + Math.sin(angle1)*r);
+        ctx.stroke();
+        const angle2 = t * Math.PI * 4;
+        ctx.lineWidth = 2;
+        ctx.beginPath();
+        ctx.moveTo(ccx, ccy);
+        ctx.lineTo(ccx + Math.cos(angle2)*r*0.6, ccy + Math.sin(angle2)*r*0.6);
+        ctx.stroke();
+        if (t > 0.3 && t < 0.7) {
+          ctx.fillStyle = '#e0af68';
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * (t < 0.5 ? 1 : 1 - (t-0.5)/0.2);
+          ctx.fillText('BONG', ccx - 12, ccy - 16);
+        }
+        break;
+      }
+    }
+    ctx.restore();
+    return true;
+  });
 }
 
 // Add admin button to header

@@ -5,3 +5,5 @@ tasks.json
 demo.js
 seed_tasks.js
 .claude/settings.local.json
+
+.vercel
