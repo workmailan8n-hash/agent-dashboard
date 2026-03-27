@@ -292,11 +292,11 @@
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
 // ════════════════════════════════════════════════════════════════
-const CW   = 1200;
+let   CW   = 1200;
 const T    = 32;        // tile size px
 const OX   = 140;       // canvas left margin
 const OY   = 12;        // canvas top margin
-const COLS = 28;        // room width in tiles
+let   COLS = 28;        // room width in tiles (mutable for wall editor)
 let   ROWS = 14;
 let   CH   = OY + ROWS * T + OY;
 // цвета объявляем сразу — используются в draw-функциях ниже
@@ -7483,6 +7483,8 @@ function buildAdminObjects() {
     {id:'wall_kitchen_x', label:'Kitchen Wall \u2194', type:'vertical', pos:KITCHEN_WALL_COL, min:12, max:COLS-4, row1:KITCHEN_START_ROW, row2:ROWS-1},
     {id:'wall_kitchen_y', label:'Kitchen Top \u2195', type:'horizontal', pos:KITCHEN_START_ROW, min:8, max:ROWS-6, col1:KITCHEN_WALL_COL, col2:COLS-1},
     {id:'wall_zone', label:'Activity Zone \u2195', type:'horizontal', pos:ACT_ZONE_Y, min:10, max:ROWS-10, col1:0, col2:COLS-1},
+    {id:'wall_right', label:'Right Wall \u2194', type:'vertical', pos:COLS, min:20, max:50, row1:0, row2:ROWS, isOuter:true},
+    {id:'wall_bottom', label:'Bottom Wall \u2195', type:'horizontal', pos:ROWS, min:30, max:100, col1:0, col2:COLS, isOuter:true},
   ];
   const savedWalls = JSON.parse(localStorage.getItem('admin_walls') || '{}');
   for (const w of adminWalls) {
@@ -7496,6 +7498,20 @@ function applyWallPositions() {
   if (saved.wall_kitchen_x !== undefined) KITCHEN_WALL_COL = Math.round(saved.wall_kitchen_x);
   if (saved.wall_kitchen_y !== undefined) KITCHEN_START_ROW = Math.round(saved.wall_kitchen_y);
   if (saved.wall_zone !== undefined) ACT_ZONE_Y = Math.round(saved.wall_zone);
+  if (saved.wall_right !== undefined) {
+    COLS = Math.round(saved.wall_right);
+    CW = OX + COLS*T + OX;
+    const cv = document.getElementById('office');
+    if (cv) cv.width = CW;
+    bgBuf.width = CW;
+  }
+  if (saved.wall_bottom !== undefined) {
+    ROWS = Math.round(saved.wall_bottom);
+    CH = OY + ROWS*T + OY;
+    const cv = document.getElementById('office');
+    if (cv) cv.height = CH;
+    bgBuf.height = CH;
+  }
   KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1;
 }
 
@@ -7737,6 +7753,16 @@ canvas.addEventListener('mouseup', e => {
       if (w.id === 'wall_kitchen_x') KITCHEN_WALL_COL = Math.round(w.pos);
       if (w.id === 'wall_kitchen_y') { KITCHEN_START_ROW = Math.round(w.pos); KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1; }
       if (w.id === 'wall_zone') ACT_ZONE_Y = Math.round(w.pos);
+      if (w.id === 'wall_right') {
+        COLS = Math.round(w.pos);
+        CW = OX + COLS*T + OX;
+        canvas.width = CW; bgBuf.width = CW;
+      }
+      if (w.id === 'wall_bottom') {
+        ROWS = Math.round(w.pos);
+        CH = OY + ROWS*T + OY;
+        canvas.height = CH; bgBuf.height = CH;
+      }
     }
     // Rebuild everything
     buildBackground();
@@ -8669,14 +8695,11 @@ document.getElementById('admin-start-pos').onclick = () => {
 
   box.querySelector('#sp-yes').onclick = () => {
     overlay.remove();
-    if (!window._defaultPositions) return;
-    const pos = {};
-    for (const [id, p] of Object.entries(window._defaultPositions)) {
-      pos[id] = {tx: p.tx, ty: p.ty};
-    }
-    localStorage.setItem('admin_positions', JSON.stringify(pos));
+    // Use BUILTIN_POSITIONS (the user's exported JSON layout)
+    localStorage.setItem('admin_positions', JSON.stringify(BUILTIN_POSITIONS));
     localStorage.removeItem('admin_walls');
-    window._adminPos = pos;
+    window._adminPos = Object.assign({}, BUILTIN_POSITIONS);
+    applyWallPositions();
     buildAdminObjects();
     buildBackground();
     buildObstacleGrid();
@@ -8685,9 +8708,10 @@ document.getElementById('admin-start-pos').onclick = () => {
 };
 
 document.getElementById('admin-reset').onclick = () => {
-  localStorage.removeItem('admin_positions');
+  localStorage.setItem('admin_positions', JSON.stringify(BUILTIN_POSITIONS));
   localStorage.removeItem('admin_walls');
-  window._adminPos = {};
+  window._adminPos = Object.assign({}, BUILTIN_POSITIONS);
+  applyWallPositions();
   buildAdminObjects();
   syncIdleSpotsToAdmin();
   buildBackground();
