@@ -7755,7 +7755,12 @@ const CLICK_OBJ_MAP = {
   'bookshelf':       'bookshelf',
   'conf_table':      'conf_table',
   'gaming_sofa':     'gaming_sofa',
+  'gym':             'gym',
 };
+
+// Dynamic: desks and couches
+for (let i = 0; i < 30; i++) CLICK_OBJ_MAP['desk_'+i] = 'desk';
+for (let i = 0; i < 30; i++) CLICK_OBJ_MAP['couch_'+i] = 'couch';
 
 function findClickableAt(tx, ty) {
   const saved = window._adminPos || {};
@@ -7783,7 +7788,11 @@ function findClickableAt(tx, ty) {
     {id:'bookshelf', w:4.5, h:3.5},
     {id:'conf_table', w:6, h:3},
     {id:'gaming_sofa', w:4, h:1.5},
+    {id:'gym', w:5, h:4},
   ];
+  // Add desks and couches dynamically
+  for (let i = 0; i < DESK_DEFS.length; i++) checks.push({id:'desk_'+i, w:3.5, h:3});
+  for (let i = 0; i < COUCH_DEFS.length; i++) checks.push({id:'couch_'+i, w:COUCH_DEFS[i].w||3, h:2});
   for (const c of checks) {
     const s = saved[c.id]; const d = defs[c.id];
     if (!s && !d) continue;
@@ -7919,6 +7928,19 @@ function initClickParticles(type, cx, cy) {
       for (let i = 0; i < 5; i++) p.push({x: cx + (Math.random()-0.5)*20, y: cy - 4, vx: (Math.random()-0.5)*3, vy: -1-Math.random()*1.5, size: 0, col: '#ffffff'});
       break;
     case 'gaming_sofa':
+      break;
+    case 'desk':
+      // Monitor flickers + keyboard sparks
+      p.push({x:cx-5, y:cy-12, vx:0, vy:0, size:0, col:'#7aa2f7'});
+      for (let i=0;i<3;i++) p.push({x:cx-8+i*6, y:cy+4, vx:(Math.random()-0.5)*2, vy:-1-Math.random(), size:1, col:'#9ece6a'});
+      break;
+    case 'couch':
+      // Cushion poof + dust
+      for (let i=0;i<4;i++) p.push({x:cx+(Math.random()-0.5)*20, y:cy, vx:(Math.random()-0.5)*1.5, vy:-1.5-Math.random(), size:2+Math.random()*2, col:['#4a3880','#604ca0','#3a2868','#5a4890'][i]});
+      break;
+    case 'gym':
+      // Sweat drops + energy burst
+      for (let i=0;i<5;i++) p.push({x:cx+(Math.random()-0.5)*30, y:cy-10-Math.random()*10, vx:(Math.random()-0.5)*2, vy:-1-Math.random()*2, size:1.5, col:['#88ccff','#ffcc40','#ff6040','#88ccff','#ffcc40'][i]});
       break;
   }
   return p;
@@ -8402,21 +8424,74 @@ function drawClickAnims(ctx, tick) {
         break;
       }
       case 'gaming_sofa': {
-        // Cushion bounces
         ctx.globalAlpha = alpha;
         const bounce = Math.abs(Math.sin(tick * 0.5)) * 6;
         const squish = Math.sin(tick * 0.5) * 2;
         ctx.fillStyle = '#4a3858';
         ctx.fillRect(a.x - 10, a.y - bounce, 20 + squish, 10 - squish * 0.5);
-        ctx.fillStyle = '#5a4868';
-        ctx.fillRect(a.x - 8, a.y - bounce + 1, 16 + squish, 6 - squish * 0.5);
         if (t > 0.2 && t < 0.5) {
-          ctx.fillStyle = '#a0a0c0';
-          ctx.font = "5px 'Press Start 2P',monospace";
-          ctx.globalAlpha = alpha * 0.6;
+          ctx.fillStyle = '#a0a0c0'; ctx.font = "5px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * 0.6; ctx.textAlign = 'center';
+          ctx.fillText('boing', a.x, a.y - 16); ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'desk': {
+        ctx.globalAlpha = alpha;
+        // Monitor screen flicker
+        const flick = Math.sin(tick * 0.8) > 0;
+        ctx.fillStyle = flick ? '#7aa2f780' : '#4060a080';
+        ctx.fillRect(a.x - 12, a.y - 18, 24, 14);
+        // Screen glitch lines
+        for (let i = 0; i < 3; i++) {
+          ctx.fillStyle = '#ffffff40';
+          ctx.fillRect(a.x - 10, a.y - 16 + i * 5 + Math.sin(tick * 0.3 + i) * 2, 20, 1);
+        }
+        // Keyboard sparks
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.05;
+          ctx.fillStyle = p.col; ctx.globalAlpha = alpha * (1 - t);
+          ctx.fillRect(p.x, p.y, p.size, p.size);
+        }
+        if (t > 0.1 && t < 0.4) {
+          ctx.fillStyle = '#9ece6a'; ctx.font = "6px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * 0.8; ctx.textAlign = 'center';
+          ctx.fillText('TAP TAP', a.x, a.y + 16); ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'couch': {
+        ctx.globalAlpha = alpha;
+        // Cushion poof particles
+        for (const p of a.particles) {
+          p.x += p.vx * 0.95; p.y += p.vy; p.vy += 0.04;
+          ctx.fillStyle = p.col; ctx.globalAlpha = alpha * (1 - t * 0.8);
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size * (1 + t * 0.5), 0, Math.PI * 2); ctx.fill();
+        }
+        // Poof text
+        if (t < 0.4) {
+          ctx.globalAlpha = alpha * (1 - t / 0.4);
+          ctx.fillStyle = '#c0b0d0'; ctx.font = "7px 'Press Start 2P',monospace";
           ctx.textAlign = 'center';
-          ctx.fillText('boing', a.x, a.y - 16);
-          ctx.textAlign = 'left';
+          ctx.fillText('POOF', a.x, a.y - 20 - t * 15); ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'gym': {
+        ctx.globalAlpha = alpha;
+        // Energy burst particles
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy;
+          ctx.fillStyle = p.col; ctx.globalAlpha = alpha * (1 - t * 0.7);
+          ctx.beginPath(); ctx.arc(p.x, p.y, p.size, 0, Math.PI * 2); ctx.fill();
+        }
+        // PUMP IT text
+        if (t > 0.1 && t < 0.5) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#ff6040'; ctx.font = "bold 8px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          const shake = Math.sin(tick * 0.6) * 2;
+          ctx.fillText('PUMP IT!', a.x + shake, a.y - 25 - t * 10); ctx.textAlign = 'left';
         }
         break;
       }
