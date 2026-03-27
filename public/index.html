@@ -2454,7 +2454,7 @@ function generateLayout(n) {
   const couchRows=Math.ceil(count/COUCH_PER_ROW);
   const baseRows=LOUNGE_Y+couchRows*3+2;
   ACT_ZONE_Y = baseRows;
-  ROWS = baseRows + 20;  // 9 gym/gaming/pp + 11 for conference/bookshelf zone (shelf at +14)
+  ROWS = baseRows + 24;  // 9 gym/gaming/pp + 15 for conference/bookshelf + entertainment zone
   CH=OY+ROWS*T+OY;
   const cv=document.getElementById('office');
   if (cv) cv.height=CH;
@@ -2586,6 +2586,51 @@ function generateLayout(n) {
 
   // ── 3. Aquarium (solo — agent watches fish) ────────────────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:9, anim:'window_gaze', type:'aquarium', w:8, _objId:'aquarium', _defObjTx:rX+0.3, _defObjTy:8, _offsetX:1.2, _offsetY:1 });
+
+  // ── 4. Massage Chair (right zone, row 11) ────────────────────
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:12, anim:'sleeping', type:'massage', w:6,
+    _objId:'massage_chair', _defObjTx:rX+0.5, _defObjTy:11, _offsetX:1, _offsetY:1 });
+
+  // ── 5. Arcade Machine (social zone, ACT_ZONE+13, col 2) ──────
+  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+14, anim:'gaming', type:'arcade', w:7,
+    _objId:'arcade', _defObjTx:2, _defObjTy:ACT_ZONE_Y+13, _offsetX:1, _offsetY:1 });
+
+  // ── 6. Espresso Bar (social zone, ACT_ZONE+13, col 8) ────────
+  IDLE_SPOTS.push({ tx:9, ty:ACT_ZONE_Y+14, anim:'drinking_beer', type:'espresso', w:6,
+    _objId:'espresso_bar', _defObjTx:8, _defObjTy:ACT_ZONE_Y+13, _offsetX:1, _offsetY:1 });
+
+  // ── 7. DJ Console (social zone, ACT_ZONE+19, col 2) ──────────
+  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+20, anim:'headphones', type:'dj', w:5,
+    _objId:'dj_console', _defObjTx:2, _defObjTy:ACT_ZONE_Y+19, _offsetX:1, _offsetY:1 });
+
+  // ── 8. Server Rack (social zone, ACT_ZONE+15, col 2) ─────────
+  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+16, anim:'reading', type:'server', w:4,
+    _objId:'server_rack', _defObjTx:2, _defObjTy:ACT_ZONE_Y+15, _offsetX:1, _offsetY:1 });
+
+  // ── 9. 3D Printer (social zone, ACT_ZONE+15, col 8) ──────────
+  IDLE_SPOTS.push({ tx:9, ty:ACT_ZONE_Y+16, anim:'reading', type:'printer3d', w:4,
+    _objId:'printer_3d', _defObjTx:8, _defObjTy:ACT_ZONE_Y+15, _offsetX:1, _offsetY:1 });
+
+  // ── 10. Hammock (social zone, ACT_ZONE+17, col 2) ────────────
+  IDLE_SPOTS.push({ tx:3, ty:ACT_ZONE_Y+18, anim:'sleeping', type:'hammock', w:8,
+    _objId:'hammock', _defObjTx:2, _defObjTy:ACT_ZONE_Y+17, _offsetX:1, _offsetY:1 });
+
+  // ── 11. Basketball Hoop (social zone, ACT_ZONE+17, col 8) ────
+  IDLE_SPOTS.push({ tx:9, ty:ACT_ZONE_Y+18, anim:'stretching', type:'basketball', w:5,
+    _objId:'basketball', _defObjTx:8, _defObjTy:ACT_ZONE_Y+17, _offsetX:1, _offsetY:1 });
+
+  // ── 12. Foosball Table (social zone, ACT_ZONE+17, col 14) ────
+  const fb1 = IDLE_SPOTS.length;
+  IDLE_SPOTS.push({ tx:14, ty:ACT_ZONE_Y+18, anim:'arguing_l', type:'group', groupId:21, role:'L', w:7,
+    _objId:'foosball', _defObjTx:14, _defObjTy:ACT_ZONE_Y+17, _offsetX:0, _offsetY:1 });
+  const fb2 = IDLE_SPOTS.length;
+  IDLE_SPOTS.push({ tx:17, ty:ACT_ZONE_Y+18, anim:'arguing_r', type:'group', groupId:21, role:'R', w:7,
+    _objId:'foosball', _defObjTx:14, _defObjTy:ACT_ZONE_Y+17, _offsetX:3, _offsetY:1 });
+  GROUP_PAIRS[21] = [fb1, fb2];
+
+  // ── 13. Telescope (social zone, ACT_ZONE+19, col 10) ─────────
+  IDLE_SPOTS.push({ tx:11, ty:ACT_ZONE_Y+20, anim:'window_gaze', type:'telescope', w:5,
+    _objId:'telescope', _defObjTx:10, _defObjTy:ACT_ZONE_Y+19, _offsetX:1, _offsetY:1 });
 
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
@@ -4440,7 +4485,7 @@ class AgentState {
 // ════════════════════════════════════════════════════════════════
 //  CAT  🐱
 // ════════════════════════════════════════════════════════════════
-function drawCat(ctx, cx, cy, tick, state) {
+function drawCat(ctx, cx, cy, tick, state, catObj) {
   const phase = tick * 0.04;
   const tailSwing = Math.sin(phase) * 0.5;
 
@@ -4538,6 +4583,345 @@ function drawCat(ctx, cx, cy, tick, state) {
     return;
   }
 
+  // --- Playing (spinning, chasing tail) ---
+  if (state === 'playing' && catObj) {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.rotate(catObj.playAngle);
+    ctx.translate(-cx, -cy);
+    // Body
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy+2,9,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f5c870';
+    ctx.beginPath(); ctx.ellipse(cx,cy+4,5,5,0,0,Math.PI*2); ctx.fill();
+    // Tail arcing out (target of chase)
+    const tAngle = catObj.playAngle * 0.7 + 1;
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4);
+    ctx.quadraticCurveTo(cx-18,cy-2,cx-12+Math.cos(tAngle)*8,cy-10+Math.sin(tAngle)*6);
+    ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4);
+    ctx.quadraticCurveTo(cx-18,cy-2,cx-12+Math.cos(tAngle)*8,cy-10+Math.sin(tAngle)*6);
+    ctx.stroke();
+    // Head (looking at tail)
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+4,cy-8,8,7,0,0,Math.PI*2); ctx.fill();
+    // Ears
+    ctx.beginPath(); ctx.moveTo(cx-1,cy-13); ctx.lineTo(cx+1,cy-20); ctx.lineTo(cx+5,cy-13); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-13); ctx.lineTo(cx+8,cy-20); ctx.lineTo(cx+12,cy-13); ctx.closePath(); ctx.fill();
+    // Excited eyes (big pupils)
+    ctx.fillStyle='#1a1020';
+    ctx.beginPath(); ctx.ellipse(cx+3,cy-10,3,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+9,cy-10,3,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect((cx+2)|0,(cy-12)|0,1,1); ctx.fillRect((cx+8)|0,(cy-12)|0,1,1);
+    // Nose
+    ctx.fillStyle='#e06080';
+    ctx.beginPath(); ctx.ellipse(cx+6,cy-7,2,1.5,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    return;
+  }
+
+  // --- Grooming (licking paw) ---
+  if (state === 'grooming' && catObj) {
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy+2,9,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f5c870';
+    ctx.beginPath(); ctx.ellipse(cx,cy+4,5,5,0,0,Math.PI*2); ctx.fill();
+    // Tail resting
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-16,cy+10,cx-14,cy+2); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-16,cy+10,cx-14,cy+2); ctx.stroke();
+    // Head
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+4,cy-8,8,7,0,0,Math.PI*2); ctx.fill();
+    // Ears
+    ctx.beginPath(); ctx.moveTo(cx-1,cy-13); ctx.lineTo(cx+1,cy-20); ctx.lineTo(cx+5,cy-13); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-13); ctx.lineTo(cx+8,cy-20); ctx.lineTo(cx+12,cy-13); ctx.closePath(); ctx.fill();
+    // Paw raised to face (oscillating)
+    const pawY = cy - 6 + Math.sin(catObj.groomPhase) * 3;
+    const pawX = cx + 8 + Math.cos(catObj.groomPhase * 0.7) * 2;
+    ctx.fillStyle='#d07820';
+    ctx.beginPath(); ctx.ellipse(pawX, pawY, 4, 3, 0.3, 0, Math.PI*2); ctx.fill();
+    // Closed content eyes
+    ctx.strokeStyle='#2a1808'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(cx+3,cy-10,2,0,Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx+9,cy-10,2,0,Math.PI); ctx.stroke();
+    // Nose
+    ctx.fillStyle='#e06080';
+    ctx.beginPath(); ctx.ellipse(cx+6,cy-7,2,1.5,0,0,Math.PI*2); ctx.fill();
+    // Tiny tongue
+    if (Math.sin(catObj.groomPhase * 2) > 0.3) {
+      ctx.fillStyle='#ff8090';
+      ctx.beginPath(); ctx.ellipse(cx+7,cy-5.5,1.5,1,0,0,Math.PI*2); ctx.fill();
+    }
+    return;
+  }
+
+  // --- Stretching (front paws forward, butt up) ---
+  if (state === 'stretching') {
+    // Elongated body
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy+3,14,6,-0.15,0,Math.PI*2); ctx.fill();
+    // Butt raised
+    ctx.beginPath(); ctx.ellipse(cx-8,cy-2,7,6,0.3,0,Math.PI*2); ctx.fill();
+    // Front paws stretched forward
+    ctx.fillStyle='#d07820';
+    ctx.beginPath(); ctx.ellipse(cx+12,cy+8,5,2,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+10,cy+9,5,2,-0.2,0,Math.PI*2); ctx.fill();
+    // Head down between paws
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+10,cy+2,7,6,0.2,0,Math.PI*2); ctx.fill();
+    // Ears
+    ctx.beginPath(); ctx.moveTo(cx+6,cy-2); ctx.lineTo(cx+7,cy-9); ctx.lineTo(cx+10,cy-2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+10,cy-2); ctx.lineTo(cx+12,cy-9); ctx.lineTo(cx+15,cy-2); ctx.closePath(); ctx.fill();
+    // Closed content eyes
+    ctx.strokeStyle='#2a1808'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(cx+9,cy+1,2,0,Math.PI); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx+13,cy+1,2,0,Math.PI); ctx.stroke();
+    // Tail up from butt
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-12,cy-2); ctx.quadraticCurveTo(cx-18,cy-10,cx-14,cy-18); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-12,cy-2); ctx.quadraticCurveTo(cx-18,cy-10,cx-14,cy-18); ctx.stroke();
+    return;
+  }
+
+  // --- Hunting (crouching, butt wiggle, then pounce) ---
+  if (state === 'hunting' && catObj) {
+    const wiggle = catObj.huntPhase === 0 ? Math.sin(tick * 0.3) * 3 : 0;
+    // Low crouching body
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+wiggle*0.3,cy+5,12,5,0,0,Math.PI*2); ctx.fill();
+    // Butt wiggling
+    ctx.beginPath(); ctx.ellipse(cx-7+wiggle,cy+3,6,5,0,0,Math.PI*2); ctx.fill();
+    // Head low, focused
+    ctx.beginPath(); ctx.ellipse(cx+9,cy+2,7,6,0.1,0,Math.PI*2); ctx.fill();
+    // Ears perked
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-2); ctx.lineTo(cx+6,cy-10); ctx.lineTo(cx+9,cy-2); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+9,cy-2); ctx.lineTo(cx+11,cy-10); ctx.lineTo(cx+14,cy-2); ctx.closePath(); ctx.fill();
+    // Big focused eyes
+    ctx.fillStyle='#1a1020';
+    ctx.beginPath(); ctx.ellipse(cx+8,cy,3,4,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+13,cy,3,4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#3a2860';
+    ctx.beginPath(); ctx.ellipse(cx+8,cy,1,3,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+13,cy,1,3,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect((cx+7)|0,(cy-2)|0,1,1); ctx.fillRect((cx+12)|0,(cy-2)|0,1,1);
+    // Tail low, twitching
+    const tTwitch = Math.sin(tick*0.2)*4;
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-10,cy+3); ctx.quadraticCurveTo(cx-18,cy+tTwitch,cx-16,cy-2+tTwitch); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-10,cy+3); ctx.quadraticCurveTo(cx-18,cy+tTwitch,cx-16,cy-2+tTwitch); ctx.stroke();
+    return;
+  }
+
+  // --- Knocking (at desk, pushing item) ---
+  if (state === 'knocking' && catObj) {
+    // Sitting at desk edge
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy+2,9,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f5c870';
+    ctx.beginPath(); ctx.ellipse(cx,cy+4,5,5,0,0,Math.PI*2); ctx.fill();
+    // Head
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+4,cy-8,8,7,0,0,Math.PI*2); ctx.fill();
+    // Ears
+    ctx.beginPath(); ctx.moveTo(cx-1,cy-13); ctx.lineTo(cx+1,cy-20); ctx.lineTo(cx+5,cy-13); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-13); ctx.lineTo(cx+8,cy-20); ctx.lineTo(cx+12,cy-13); ctx.closePath(); ctx.fill();
+    // Devious eyes (half-lidded)
+    ctx.fillStyle='#1a1020';
+    ctx.beginPath(); ctx.ellipse(cx+3,cy-9,2.5,2,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+9,cy-9,2.5,2,0,0,Math.PI*2); ctx.fill();
+    // Paw reaching out to push (if in push phase)
+    if (catObj.knockPhase >= 1) {
+      const pawExt = catObj.knockPhase === 2 ? 6 : Math.sin(tick*0.15)*3;
+      ctx.fillStyle='#d07820';
+      ctx.beginPath(); ctx.ellipse(cx+12+pawExt,cy+2,4,3,0,0,Math.PI*2); ctx.fill();
+    }
+    // Nose
+    ctx.fillStyle='#e06080';
+    ctx.beginPath(); ctx.ellipse(cx+6,cy-7,2,1.5,0,0,Math.PI*2); ctx.fill();
+    // Tail
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-14,cy-4,cx-10,cy-12); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-14,cy-4,cx-10,cy-12); ctx.stroke();
+    return;
+  }
+
+  // --- Zoomies (running fast, same as walking but with motion blur effect) ---
+  if (state === 'zoomies') {
+    // Ghost trail effect
+    ctx.globalAlpha = 0.3;
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx-4,cy+2,9,8,0,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 0.15;
+    ctx.beginPath(); ctx.ellipse(cx-8,cy+2,9,8,0,0,Math.PI*2); ctx.fill();
+    ctx.globalAlpha = 1.0;
+    // Main body
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy+2,9,7,-0.2,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f5c870';
+    ctx.beginPath(); ctx.ellipse(cx,cy+4,5,4,0,0,Math.PI*2); ctx.fill();
+    // Head (leaning forward)
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+7,cy-6,7,6,0.2,0,Math.PI*2); ctx.fill();
+    // Ears flattened back
+    ctx.beginPath(); ctx.moveTo(cx+1,cy-8); ctx.lineTo(cx-2,cy-14); ctx.lineTo(cx+4,cy-9); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-9); ctx.lineTo(cx+2,cy-15); ctx.lineTo(cx+8,cy-10); ctx.closePath(); ctx.fill();
+    // Wild eyes
+    ctx.fillStyle='#1a1020';
+    ctx.beginPath(); ctx.ellipse(cx+6,cy-8,3,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+11,cy-8,3,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect((cx+5)|0,(cy-10)|0,2,2); ctx.fillRect((cx+10)|0,(cy-10)|0,2,2);
+    // Legs in running motion
+    const run = tick*0.15;
+    ctx.fillStyle='#d07820';
+    ctx.beginPath(); ctx.ellipse(cx-3+Math.sin(run)*4,cy+9,4,2,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+5+Math.sin(run+Math.PI)*4,cy+9,4,2,0,0,Math.PI*2); ctx.fill();
+    // Tail straight back
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+2); ctx.lineTo(cx-20,cy-2); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+2); ctx.lineTo(cx-20,cy-2); ctx.stroke();
+    return;
+  }
+
+  // --- Purring (sitting, content) ---
+  if (state === 'purring') {
+    // Vibrating slightly (purr effect)
+    const pVib = Math.sin(tick*0.5)*0.5;
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+pVib,cy+2,9,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#f5c870';
+    ctx.beginPath(); ctx.ellipse(cx+pVib,cy+4,5,5,0,0,Math.PI*2); ctx.fill();
+    // Tail curled around
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-14,cy+12,cx-4,cy+10); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-14,cy+12,cx-4,cy+10); ctx.stroke();
+    // Head
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+4+pVib,cy-8,8,7,0,0,Math.PI*2); ctx.fill();
+    // Ears
+    ctx.beginPath(); ctx.moveTo(cx-1,cy-13); ctx.lineTo(cx+1,cy-20); ctx.lineTo(cx+5,cy-13); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-13); ctx.lineTo(cx+8,cy-20); ctx.lineTo(cx+12,cy-13); ctx.closePath(); ctx.fill();
+    // Happy closed eyes (upturned)
+    ctx.strokeStyle='#2a1808'; ctx.lineWidth=1.5;
+    ctx.beginPath(); ctx.arc(cx+3,cy-10,2.5,Math.PI,0); ctx.stroke();
+    ctx.beginPath(); ctx.arc(cx+9,cy-10,2.5,Math.PI,0); ctx.stroke();
+    // Content smile
+    ctx.strokeStyle='#e06080'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(cx+6,cy-6,2,0,Math.PI); ctx.stroke();
+    // Nose
+    ctx.fillStyle='#e06080';
+    ctx.beginPath(); ctx.ellipse(cx+6,cy-7,2,1.5,0,0,Math.PI*2); ctx.fill();
+    return;
+  }
+
+  // --- Window watching (facing away/up, ears twitching) ---
+  if (state === 'window_watching') {
+    // Body from behind (facing top wall)
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy+2,9,8,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#d07820';
+    // Stripes on back
+    ctx.strokeStyle='#c07018'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-4,cy-2); ctx.lineTo(cx-3,cy+3); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+1,cy-3); ctx.lineTo(cx+2,cy+2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-1); ctx.lineTo(cx+5,cy+4); ctx.stroke();
+    // Back of head
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy-8,8,7,0,0,Math.PI*2); ctx.fill();
+    // Ears (twitching)
+    const earTwitch = Math.sin(tick*0.08)*2;
+    ctx.beginPath(); ctx.moveTo(cx-5,cy-13); ctx.lineTo(cx-4+earTwitch,cy-21); ctx.lineTo(cx-1,cy-13); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+1,cy-13); ctx.lineTo(cx+4-earTwitch,cy-21); ctx.lineTo(cx+7,cy-13); ctx.closePath(); ctx.fill();
+    // Inner ears
+    ctx.fillStyle='#d07050';
+    ctx.beginPath(); ctx.moveTo(cx-4,cy-13); ctx.lineTo(cx-3+earTwitch,cy-19); ctx.lineTo(cx-1,cy-13); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+2,cy-13); ctx.lineTo(cx+3-earTwitch,cy-19); ctx.lineTo(cx+5,cy-13); ctx.closePath(); ctx.fill();
+    // Tail wrapped
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-14,cy+10,cx-6,cy+10); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+4); ctx.quadraticCurveTo(cx-14,cy+10,cx-6,cy+10); ctx.stroke();
+    return;
+  }
+
+  // --- Hiding (only tail visible poking from under desk) ---
+  if (state === 'hiding') {
+    // Only draw a wavy tail sticking out
+    const tWave = Math.sin(tick * 0.06) * 4;
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=4;
+    ctx.beginPath();
+    ctx.moveTo(cx+8,cy+6);
+    ctx.quadraticCurveTo(cx+14,cy+2+tWave,cx+18,cy-2+tWave*0.5);
+    ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.moveTo(cx+8,cy+6);
+    ctx.quadraticCurveTo(cx+14,cy+2+tWave,cx+18,cy-2+tWave*0.5);
+    ctx.stroke();
+    // Tip of tail
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+18,cy-2+tWave*0.5,3,2,0.5,0,Math.PI*2); ctx.fill();
+    return;
+  }
+
+  // --- Scared (puffed up, arched back, big eyes) ---
+  if (state === 'scared') {
+    ctx.save();
+    ctx.translate(cx, cy);
+    ctx.scale(1.3, 1.3);
+    ctx.translate(-cx, -cy);
+    // Arched body
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx,cy,9,9,0,0,Math.PI*2); ctx.fill();
+    // Fur spikes around body
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=2;
+    for (let i=0;i<8;i++) {
+      const a = (i/8)*Math.PI*2;
+      const sx2 = cx+Math.cos(a)*10, sy2 = cy+Math.sin(a)*10;
+      const ex = cx+Math.cos(a)*15, ey = cy+Math.sin(a)*15;
+      ctx.beginPath(); ctx.moveTo(sx2,sy2); ctx.lineTo(ex,ey); ctx.stroke();
+    }
+    // Puffed tail (straight up, bushy)
+    ctx.strokeStyle='#e8902a'; ctx.lineWidth=6;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy); ctx.quadraticCurveTo(cx-14,cy-14,cx-10,cy-22); ctx.stroke();
+    ctx.strokeStyle='#d07820'; ctx.lineWidth=3;
+    ctx.beginPath(); ctx.moveTo(cx-8,cy); ctx.quadraticCurveTo(cx-14,cy-14,cx-10,cy-22); ctx.stroke();
+    // Head
+    ctx.fillStyle='#e8902a';
+    ctx.beginPath(); ctx.ellipse(cx+4,cy-10,8,7,0,0,Math.PI*2); ctx.fill();
+    // Ears perked
+    ctx.beginPath(); ctx.moveTo(cx-1,cy-15); ctx.lineTo(cx+1,cy-22); ctx.lineTo(cx+5,cy-15); ctx.closePath(); ctx.fill();
+    ctx.beginPath(); ctx.moveTo(cx+5,cy-15); ctx.lineTo(cx+8,cy-22); ctx.lineTo(cx+12,cy-15); ctx.closePath(); ctx.fill();
+    // BIG scared eyes
+    ctx.fillStyle='#ffffff';
+    ctx.beginPath(); ctx.ellipse(cx+2,cy-11,4,4,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+9,cy-11,4,4,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1020';
+    ctx.beginPath(); ctx.ellipse(cx+2,cy-11,2,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(cx+9,cy-11,2,3.5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle='#ffffff';
+    ctx.fillRect((cx+1)|0,(cy-13)|0,1,1); ctx.fillRect((cx+8)|0,(cy-13)|0,1,1);
+    // Nose
+    ctx.fillStyle='#e06080';
+    ctx.beginPath(); ctx.ellipse(cx+6,cy-8,2,1.5,0,0,Math.PI*2); ctx.fill();
+    // Open mouth (surprised)
+    ctx.fillStyle='#401020';
+    ctx.beginPath(); ctx.ellipse(cx+6,cy-5,2,1.5,0,0,Math.PI*2); ctx.fill();
+    ctx.restore();
+    return;
+  }
+
   // Normal sitting/walking cat
   // Body
   ctx.fillStyle='#e8902a';
@@ -4623,7 +5007,7 @@ class CatState {
     this.tx = 5 + Math.random() * (COLS * 0.5);
     this.ty = 3 + Math.random() * 4;
     this.targetTx = this.tx; this.targetTy = this.ty;
-    this.state = 'sitting'; // sitting, walking, sleeping, pooping, eating
+    this.state = 'sitting'; // sitting, walking, sleeping, pooping, eating, playing, grooming, stretching, hunting, knocking, zoomies, purring, window_watching, hiding, scared
     this.stateTimer = 4 + Math.random() * 6;
     this.flip = false;
     this.messExists = false;
@@ -4631,6 +5015,20 @@ class CatState {
     this.cleaningAgentId = null;
     this.messAssignTimer = 0;
     this.eatTarget = null; // which bowl it's heading to
+    // New state properties
+    this.playAngle = 0;        // playing: spinning angle
+    this.groomPhase = 0;       // grooming: paw animation phase
+    this.huntPhase = 0;        // hunting: 0=crouch/wiggle, 1=pounce
+    this.huntPounceTimer = 0;
+    this.knockPhase = 0;       // knocking: 0=walking, 1=pause, 2=push
+    this.knockParticle = null;  // {x,y,vy} falling item
+    this.zoomieTimer = 0;      // time until next direction change
+    this.zoomieTrails = [];    // speed line positions
+    this.purrTarget = null;    // agent being purred at
+    this.purrHearts = [];      // [{x,y,life}]
+    this.hideDesk = null;      // desk being hidden under
+    this.scaredTimer = 0;      // how long scared state lasts
+    this.prevState = '';       // for stretching transition from sleeping
   }
   get sx() { return OX + this.tx * T + T/2; }
   get sy() { return OY + this.ty * T + T/2; }
@@ -4650,8 +5048,51 @@ class CatState {
     }
   }
 
+  _findNearestDesk() {
+    let best = null, bestD = Infinity;
+    for (const d of DESK_DEFS) {
+      const dx = d.tx - this.tx, dy = d.ty - this.ty;
+      const dist = dx*dx + dy*dy;
+      if (dist < bestD) { bestD = dist; best = d; }
+    }
+    return best;
+  }
+  _findIdleAgent() {
+    let best = null, bestD = Infinity;
+    for (const [id, sp] of Object.entries(agentStates)) {
+      if (sp.arrived && !sp.isWorking) {
+        const dx = sp.tx - this.tx, dy = sp.ty - this.ty;
+        const dist = dx*dx + dy*dy;
+        if (dist < bestD) { bestD = dist; best = sp; }
+      }
+    }
+    return best;
+  }
+
   update(dt, tick) {
     this.stateTimer -= dt;
+
+    // --- Scared interrupt: check if any agent is within 1.5 tiles and moving ---
+    if (this.state !== 'scared' && this.state !== 'hiding') {
+      for (const sp of Object.values(agentStates)) {
+        if (sp.state === 'walking' && !sp.arrived) {
+          const dx = sp.tx - this.tx, dy = sp.ty - this.ty;
+          if (Math.sqrt(dx*dx + dy*dy) < 1.5) {
+            this.prevState = this.state;
+            this.state = 'scared'; this.scaredTimer = 2;
+            this.stateTimer = 2;
+            // Run away from the agent
+            this.targetTx = this.tx + (this.tx - sp.tx) * 3;
+            this.targetTy = this.ty + (this.ty - sp.ty) * 3;
+            this.targetTx = Math.max(2, Math.min(COLS-3, this.targetTx));
+            this.targetTy = Math.max(2, Math.min(ROWS*0.6, this.targetTy));
+            break;
+          }
+        }
+      }
+    }
+
+    // --- Walking ---
     if (this.state === 'walking') {
       const dtx = this.targetTx - this.tx, dty = this.targetTy - this.ty;
       const dist = Math.sqrt(dtx*dtx + dty*dty);
@@ -4660,7 +5101,6 @@ class CatState {
           this.eatTarget.hasFod = false; // eat the food
           this.state = 'eating'; this.stateTimer = 4 + Math.random() * 5;
         } else if (this.eatTarget && !this.eatTarget.hasFod) {
-          // Bowl empty — sniff and walk away disappointed
           this.eatTarget = null;
           this.state = 'sitting'; this.stateTimer = 2;
         } else {
@@ -4672,20 +5112,211 @@ class CatState {
         this.flip = dtx < 0;
       }
     }
+
+    // --- Scared: run away fast ---
+    if (this.state === 'scared') {
+      this.scaredTimer -= dt;
+      const dtx = this.targetTx - this.tx, dty = this.targetTy - this.ty;
+      const dist = Math.sqrt(dtx*dtx + dty*dty);
+      if (dist > 0.25) {
+        const step = Math.min(3.5 * dt, dist); // fast!
+        this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+        this.flip = dtx < 0;
+      }
+      if (this.scaredTimer <= 0) {
+        this.state = 'sitting'; this.stateTimer = 3 + Math.random() * 4;
+      }
+    }
+
+    // --- Playing (spinning) ---
+    if (this.state === 'playing') {
+      this.playAngle += dt * 4; // spin speed
+    }
+
+    // --- Grooming ---
+    if (this.state === 'grooming') {
+      this.groomPhase += dt * 3;
+    }
+
+    // --- Hunting ---
+    if (this.state === 'hunting') {
+      if (this.huntPhase === 0) {
+        // Crouch and wiggle butt for first 2 seconds
+        if (this.stateTimer < (this._huntDuration || 4) - 2) {
+          this.huntPhase = 1;
+          this.huntPounceTimer = 0.3;
+          // Pounce forward ~2 tiles in facing direction
+          const angle = Math.random() * Math.PI * 2;
+          this.targetTx = Math.max(2, Math.min(COLS-3, this.tx + Math.cos(angle)*2));
+          this.targetTy = Math.max(2, Math.min(ROWS*0.6, this.ty + Math.sin(angle)*2));
+        }
+      }
+      if (this.huntPhase === 1) {
+        const dtx = this.targetTx - this.tx, dty = this.targetTy - this.ty;
+        const dist = Math.sqrt(dtx*dtx + dty*dty);
+        if (dist > 0.15) {
+          const step = Math.min(5 * dt, dist); // fast pounce
+          this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+          this.flip = dtx < 0;
+        }
+      }
+    }
+
+    // --- Knocking ---
+    if (this.state === 'knocking') {
+      if (this.knockPhase === 0) {
+        // Walking to desk
+        const dtx = this.targetTx - this.tx, dty = this.targetTy - this.ty;
+        const dist = Math.sqrt(dtx*dtx + dty*dty);
+        if (dist < 0.3) {
+          this.knockPhase = 1; this.stateTimer = 1.5; // pause at desk
+        } else {
+          const step = Math.min(1.2 * dt, dist);
+          this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+          this.flip = dtx < 0;
+        }
+      } else if (this.knockPhase === 1 && this.stateTimer <= 0.5) {
+        // Push something off!
+        this.knockPhase = 2;
+        this.knockParticle = { x: this.sx, y: this.sy - 5, vy: 0 };
+      }
+      if (this.knockPhase === 2 && this.knockParticle) {
+        this.knockParticle.vy += 200 * dt;
+        this.knockParticle.y += this.knockParticle.vy * dt;
+        this.knockParticle.x += 20 * dt;
+      }
+    }
+
+    // --- Zoomies ---
+    if (this.state === 'zoomies') {
+      this.zoomieTimer -= dt;
+      if (this.zoomieTimer <= 0) {
+        this.zoomieTimer = 0.3 + Math.random() * 0.4;
+        this.targetTx = 2 + Math.random() * Math.min(COLS-4, 22);
+        this.targetTy = 2 + Math.random() * Math.max(4, ROWS*0.5);
+      }
+      const dtx = this.targetTx - this.tx, dty = this.targetTy - this.ty;
+      const dist = Math.sqrt(dtx*dtx + dty*dty);
+      if (dist > 0.2) {
+        const step = Math.min(3.6 * dt, dist); // triple speed
+        this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+        this.flip = dtx < 0;
+      }
+      // Speed trail
+      if (tick % 3 === 0) {
+        this.zoomieTrails.push({x: this.sx, y: this.sy, life: 0.5});
+      }
+      this.zoomieTrails = this.zoomieTrails.filter(t => { t.life -= dt; return t.life > 0; });
+    }
+
+    // --- Purring ---
+    if (this.state === 'purring') {
+      if (this.purrTarget) {
+        const dtx = this.purrTarget.tx - this.tx, dty = this.purrTarget.ty - this.ty;
+        const dist = Math.sqrt(dtx*dtx + dty*dty);
+        if (dist > 1.0) {
+          const step = Math.min(1.2 * dt, dist);
+          this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+          this.flip = dtx < 0;
+        }
+      }
+      // Heart particles
+      if (tick % 20 === 0) {
+        this.purrHearts.push({x: this.sx + (Math.random()-0.5)*8, y: this.sy - 15, life: 1.5});
+      }
+      this.purrHearts = this.purrHearts.filter(h => { h.life -= dt; h.y -= 15*dt; return h.life > 0; });
+    }
+
+    // --- Window watching: face top wall ---
+    if (this.state === 'window_watching') {
+      // Walk to top-ish area if not there
+      if (this.ty > 2.5) {
+        const dtx = this.targetTx - this.tx, dty = this.targetTy - this.ty;
+        const dist = Math.sqrt(dtx*dtx + dty*dty);
+        if (dist > 0.3) {
+          const step = Math.min(1.2 * dt, dist);
+          this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+        }
+      }
+    }
+
+    // --- Hiding ---
+    if (this.state === 'hiding') {
+      if (this.hideDesk) {
+        const dtx = this.hideDesk.tx + 0.5 - this.tx, dty = this.hideDesk.ty + 1 - this.ty;
+        const dist = Math.sqrt(dtx*dtx + dty*dty);
+        if (dist > 0.3) {
+          const step = Math.min(1.2 * dt, dist);
+          this.tx += (dtx/dist)*step; this.ty += (dty/dist)*step;
+          this.flip = dtx < 0;
+        }
+      }
+    }
+
+    // --- Eating timer ---
     if (this.state === 'eating' && this.stateTimer <= 0) {
       this.eatTarget = null;
       this.state = 'walking'; this.pickTarget(); this.stateTimer = 3 + Math.random() * 6;
     }
-    if (this.stateTimer <= 0 && this.state !== 'eating') {
+
+    // --- State transitions ---
+    if (this.stateTimer <= 0 && this.state !== 'eating' && this.state !== 'scared') {
+      const wasState = this.state;
+      this.prevState = wasState;
       const r = Math.random();
-      if (r < 0.30) {
+      // Stretching only from sleeping
+      if (wasState === 'sleeping' && Math.random() < 0.5) {
+        this.state = 'stretching'; this.stateTimer = 3 + Math.random();
+      } else if (r < 0.20) {
         this.state = 'walking'; this.pickTarget(); this.stateTimer = 4 + Math.random() * 8;
-      } else if (r < 0.50) {
+      } else if (r < 0.35) {
         this.state = 'sleeping'; this.stateTimer = 10 + Math.random() * 20;
-      } else if (r < 0.70) {
+      } else if (r < 0.45) {
         this.state = 'sitting'; this.stateTimer = 5 + Math.random() * 8;
-      } else if (!this.messExists && r < 0.85) {
+      } else if (!this.messExists && r < 0.48) {
         this.state = 'pooping'; this.stateTimer = 4 + Math.random() * 3;
+      } else if (r < 0.56) {
+        this.state = 'playing'; this.playAngle = 0; this.stateTimer = 5 + Math.random() * 3;
+      } else if (r < 0.66) {
+        this.state = 'grooming'; this.groomPhase = 0; this.stateTimer = 6 + Math.random() * 4;
+      } else if (r < 0.71) {
+        this.state = 'hunting'; this.huntPhase = 0; this._huntDuration = 3 + Math.random() * 2; this.stateTimer = this._huntDuration;
+      } else if (r < 0.75) {
+        // Knocking — walk to nearest desk
+        const desk = this._findNearestDesk();
+        if (desk) {
+          this.state = 'knocking'; this.knockPhase = 0; this.knockParticle = null;
+          this.targetTx = desk.tx + 1; this.targetTy = desk.ty + 1;
+          this.stateTimer = 6;
+        } else {
+          this.state = 'sitting'; this.stateTimer = 4;
+        }
+      } else if (r < 0.80) {
+        this.state = 'zoomies'; this.zoomieTimer = 0; this.zoomieTrails = []; this.stateTimer = 4 + Math.random();
+      } else if (r < 0.88) {
+        // Purring — find idle agent
+        const agent = this._findIdleAgent();
+        if (agent) {
+          this.state = 'purring'; this.purrTarget = agent; this.purrHearts = [];
+          this.targetTx = agent.tx + 0.5; this.targetTy = agent.ty + 0.5;
+          this.stateTimer = 8 + Math.random() * 6;
+        } else {
+          this.state = 'sitting'; this.stateTimer = 4;
+        }
+      } else if (r < 0.93) {
+        // Window watching — go to top wall
+        this.state = 'window_watching';
+        this.targetTx = 3 + Math.random() * (COLS * 0.5);
+        this.targetTy = 1.5;
+        this.stateTimer = 10 + Math.random() * 5;
+      } else if (r < 0.95) {
+        // Hiding under desk
+        const desk = this._findNearestDesk();
+        if (desk) {
+          this.state = 'hiding'; this.hideDesk = desk; this.stateTimer = 8 + Math.random() * 4;
+        } else {
+          this.state = 'sitting'; this.stateTimer = 4;
+        }
       } else {
         this.state = 'sitting'; this.stateTimer = 4 + Math.random() * 6;
       }
@@ -4699,12 +5330,40 @@ class CatState {
   }
 
   draw(ctx, tick) {
+    // Speed trails for zoomies (draw behind cat)
+    if (this.state === 'zoomies') {
+      for (const t of this.zoomieTrails) {
+        ctx.strokeStyle = `rgba(180,180,200,${t.life * 0.6})`;
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.moveTo(t.x - 6, t.y); ctx.lineTo(t.x + 6, t.y);
+        ctx.stroke();
+      }
+    }
     ctx.save();
     if (this.flip) {
       ctx.translate(this.sx, this.sy); ctx.scale(-1,1); ctx.translate(-this.sx, -this.sy);
     }
-    drawCat(ctx, this.sx, this.sy, tick, this.state);
+    drawCat(ctx, this.sx, this.sy, tick, this.state, this);
     ctx.restore();
+    // Purring hearts
+    if (this.state === 'purring') {
+      for (const h of this.purrHearts) {
+        ctx.fillStyle = `rgba(255,96,128,${Math.min(1, h.life)})`;
+        ctx.font = `${8 + (1.5-h.life)*4}px sans-serif`;
+        ctx.textAlign = 'center';
+        ctx.fillText('\u2665', h.x, h.y);
+      }
+      ctx.textAlign = 'left';
+    }
+    // Knock particle (falling item)
+    if (this.knockParticle && this.state === 'knocking') {
+      const p = this.knockParticle;
+      ctx.fillStyle = '#aab0d0';
+      ctx.fillRect(p.x-3, p.y-3, 6, 6);
+      ctx.fillStyle = '#8890b0';
+      ctx.fillRect(p.x-2, p.y-2, 4, 4);
+    }
     // Draw mess
     if (this.messExists) {
       drawMess(ctx, OX+this.messTx*T+T/2, OY+this.messTy*T+T/2, tick);
@@ -4859,7 +5518,8 @@ function drawRightPanel(ctx, tick) {
   ctx.fillRect(panelX+6, 256, W-12, 1);
   ctx.fillStyle = '#565f89'; ctx.font = '9px monospace'; ctx.textAlign='left';
   ctx.fillText('CAT', panelX+8, 270);
-  const catMood = cat.messExists ? '💩 mess!' : cat.state === 'sleeping' ? '😴 asleep' : cat.state === 'eating' ? '🍽 eating' : '🐱 roaming';
+  const _catMoods = {sleeping:'😴 asleep',eating:'🍽 eating',playing:'🎾 playing',grooming:'🧼 grooming',stretching:'🙆 stretch',hunting:'🎯 hunting',knocking:'😈 knocking',zoomies:'💨 zoomies!',purring:'💕 purring',window_watching:'🪟 watching',hiding:'🙈 hiding',scared:'😱 scared!',pooping:'💩 pooping'};
+  const catMood = cat.messExists ? '💩 mess!' : (_catMoods[cat.state] || '🐱 roaming');
   ctx.fillStyle = cat.messExists ? '#f7768e' : '#c8d3f5';
   ctx.font = 'bold 11px monospace';
   ctx.fillText(catMood, panelX+8, 286);
