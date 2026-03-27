@@ -1,6 +1,6 @@
 # Agent Dashboard — Pixel Art Office Simulator
 
-> Real-time visualization of Claude Code AI agents working in a pixel art office. Each agent gets a desk, walks around, takes breaks, plays games, and interacts with office furniture.
+> Real-time visualization of Claude Code AI agents working in a pixel art office. Each agent gets a desk, walks around, takes breaks, plays games, and interacts with 40+ objects across multiple office zones.
 
 ![Node.js](https://img.shields.io/badge/Node.js-18+-339933) ![License](https://img.shields.io/badge/license-ISC-blue) ![WebSocket](https://img.shields.io/badge/transport-WebSocket-brightgreen)
 
@@ -22,9 +22,9 @@
 
 ## Overview
 
-Agent Dashboard monitors Claude Code sessions by watching `.jsonl` log files in `~/.claude/projects/`. Each active session appears as a pixel art character in an animated office — sitting at desks when working, wandering around the office during idle time, and interacting with 30+ objects in the environment.
+Agent Dashboard monitors Claude Code sessions by watching `.jsonl` log files in `~/.claude/projects/`. Each active session appears as a pixel art character in an animated office — sitting at desks when working, wandering around the office during idle time, and interacting with 40+ objects in the environment.
 
-The frontend is a single-file Canvas 2D application (`public/index.html`, ~5500 lines) with no external JS dependencies. The backend is a lightweight Node.js server using only `ws` and `chokidar`.
+The frontend is a single-file Canvas 2D application (`public/index.html`, ~7200 lines) with no external JS dependencies. The backend is a lightweight Node.js server using only `ws` and `chokidar`.
 
 ---
 
@@ -46,7 +46,7 @@ The frontend is a single-file Canvas 2D application (`public/index.html`, ~5500 
 ### Office Zones & Interactive Objects
 - **Desks** — dynamically generated based on agent count, with typing and thinking animations
 - **Lounge** — couches with sleeping, phone, stretching, and drinking animations
-- **Kitchen** — coffee machine, fridge, dining table with eating spots, counter
+- **Kitchen** — enclosed room with coffee machine, microwave, toaster, knife block, cutting board, sink, fridge, and dining table with eating spots
 - **Gym** — treadmills, yoga mats, stretching, headphones
 - **TV / Gaming area** — couch with gaming controllers, reading spot
 - **Ping Pong table** — paired activity (two agents play together, animated ball)
@@ -62,9 +62,38 @@ The frontend is a single-file Canvas 2D application (`public/index.html`, ~5500 
 - **Plants** — plant care idle activity
 - **Cat Bowls** — food and water bowls for the office cat
 - **Printer** — activates on Write/Edit tool calls
+- **Entrance Door** — agents spawn from the right wall and walk in through a visible door
+
+### Entertainment Zone (10 New Objects)
+- **Massage Chair** — agents relax in a vibrating chair with animated cushions
+- **Arcade Machine** — retro cabinet with screen glow, agents play with gaming animation
+- **Espresso Bar** — barista-style station with steam effects, agents use coffee animation
+- **DJ Console** — turntable with spinning disc, agents bob with headphone animation
+- **Server Rack** — blinking LEDs and status lights, agents use typing animation
+- **3D Printer** — layered printing animation with progress display
+- **Hammock** — suspended between posts, agents use sleeping animation
+- **Basketball Hoop** — backboard with net, agents use stretching animation
+- **Foosball Table** — paired activity with two player positions
+- **Telescope** — mounted scope near window, agents use window-gaze animation
+
+All entertainment objects support **click animations** -- clicking on any object triggers a visual feedback effect.
+
+### Zone Walls
+- **Kitchen walls** — partition separating the kitchen from the main office, with door opening
+- **Zone divider wall** — separates the lounge area from the activity/entertainment zone, with door gap for pathfinding
 
 ### Office Cat
-- Autonomous cat with its own state machine: `sitting`, `walking`, `sleeping`, `eating`, `pooping`
+- Autonomous cat with its own state machine: `sitting`, `walking`, `sleeping`, `eating`, `pooping`, plus 10 new behaviors:
+  - **Playing** — bats at a toy with spinning animation
+  - **Grooming** — licks paw with detailed paw-to-face animation
+  - **Stretching** — full body stretch with arched back
+  - **Hunting** — crouches, wiggles, then pounces at imaginary prey
+  - **Knocking** — walks to desk edges and pushes items off (spawns falling particles)
+  - **Zoomies** — runs in random directions at high speed with motion trails
+  - **Purring** — sits next to nearest agent with heart particles
+  - **Window watching** — sits at window with alert ears and twitching tail
+  - **Hiding** — tucks under a desk with only eyes visible
+  - **Scared** — puffed tail, arched back, triggered by loud events (e.g., nearby celebrations)
 - Eats from food bowls (30% chance to head toward a full bowl)
 - Creates messes that agents get assigned to clean up
 - Agents near a sitting or sleeping cat may start petting it
@@ -93,7 +122,7 @@ Below the canvas, each agent gets an info card showing:
 ```
 ┌────────────────────────┐     ┌──────────────────────────┐
 │  ~/.claude/projects/   │     │  public/index.html       │
-│  *.jsonl log files     │     │  (Canvas 2D, ~5500 LOC)  │
+│  *.jsonl log files     │     │  (Canvas 2D, ~7200 LOC)  │
 └──────────┬─────────────┘     └──────────▲───────────────┘
            │ chokidar watch                │ WebSocket / HTTP
            ▼                               │
@@ -121,7 +150,7 @@ Below the canvas, each agent gets an info card showing:
 | File | Purpose |
 |------|---------|
 | `server.js` | HTTP/WebSocket server, file watcher, API endpoints, Serveo tunnel |
-| `public/index.html` | Single-file frontend: CSS, Canvas 2D rendering, all sprites, pathfinding, state machines |
+| `public/index.html` | Single-file frontend (~7200 LOC): CSS, Canvas 2D rendering, all sprites, pathfinding, state machines |
 | `sync-to-cloud.js` | Syncs local dashboard state to a remote deployment |
 | `tasks.json` | Persisted personal task list (auto-created at runtime) |
 | `package.json` | Dependencies: `ws` (WebSocket) and `chokidar` (file watching) |
@@ -229,12 +258,16 @@ The admin editor provides drag-and-drop layout customization for all office obje
 
 - **Click** an object to select it (highlighted in yellow)
 - **Drag** to reposition the selected object
-- **Start Pos** button — resets all objects to their default positions
+- **Start Position** button — resets all objects to their default positions (with confirmation modal)
 - **Export JSON** button — copies the current layout to clipboard
 
 ### Movable Objects
 
-Desks, couches, gym, TV area, ping pong table, kitchen table, kitchen counter, fridge, vending machine, bookshelf, aquarium, dartboard, water cooler, gaming sofa.
+Desks, couches, gym, TV area, ping pong table, kitchen table, kitchen counter, fridge, vending machine, bookshelf, aquarium, dartboard, water cooler, gaming sofa, massage chair, arcade, espresso bar, DJ console, server rack, 3D printer, hammock, basketball hoop, foosball table, telescope.
+
+### syncIdleSpotsToAdmin
+
+When objects are repositioned via the admin editor, the `syncIdleSpotsToAdmin()` function automatically updates all `IDLE_SPOTS` coordinates so agents walk to the correct positions for their activities. This runs on every layout change, Start Position reset, and page load.
 
 ### Persistence
 
@@ -374,8 +407,8 @@ Deletes a task by ID.
 The main `loop()` function runs via `requestAnimationFrame` and renders each frame in this order:
 
 1. **Clear canvas** and draw floor, walls, grid lines
-2. **Draw static objects** — desks, kitchen appliances, couches, gym equipment, aquarium, windows, plants
-3. **Draw dynamic features** — Kanban board, wall clock, trash can, cat bowls, vending machine, dart animations
+2. **Draw static objects** — desks, kitchen appliances (coffee machine, microwave, toaster, knife block, cutting board, sink), couches, gym equipment, aquarium, windows, plants, entertainment zone objects
+3. **Draw dynamic features** — Kanban board, wall clock, trash can, cat bowls, vending machine, dart animations, click animations, zone walls
 4. **Depth-sort all sprites** — agents and cat sorted by Y-position (`ty + tx * 0.001`) for correct overlap
 5. **Draw agents** — each `AgentState` renders its current animation frame using the appropriate draw function
 6. **Draw cat** — the `CatState` renders independently with its own sprite
@@ -409,7 +442,7 @@ Each agent is an instance of the `AgentState` class:
 
 | Field | Purpose |
 |-------|---------|
-| `state` | Current animation: `walking`, `typing_normal`, `typing_furious`, `thinking`, `sleeping`, `gaming`, `yoga`, `celebrating`, etc. (40+ animation states) |
+| `state` | Current animation: `walking`, `typing_normal`, `typing_furious`, `thinking`, `sleeping`, `gaming`, `yoga`, `celebrating`, `smoking_beer`, etc. (40+ animation states) |
 | `isWorking` | `true` when backend status is `working` or `thinking` |
 | `slotIdx` | Index into `DESK_SLOTS` (when working) or `IDLE_SPOTS` (when idle) |
 | `arrived` | `true` once the agent reaches its target tile |
@@ -420,7 +453,7 @@ Each agent is an instance of the `AgentState` class:
 | `isCleaning` | Assigned to clean up a cat mess; overrides normal slot logic |
 
 **Lifecycle:**
-1. Agent appears in the log files — spawn flash animation, particle burst
+1. Agent appears in the log files — spawns at the entrance door (right wall), spawn flash animation, particle burst
 2. Backend says `working` or `thinking` — agent walks to an available desk, sits down, types
 3. Backend goes `idle` — agent picks a weighted-random idle spot, walks there, performs activity for 10-30 seconds, then picks another
 4. Task completion detected (transition from working to idle) — celebration animation with confetti
@@ -442,7 +475,7 @@ Each agent is an instance of the `AgentState` class:
 }
 ```
 
-Spots are regenerated during `buildLayout()` whenever the office size changes. Types include: `couch`, `window`, `plant`, `floor`, `kitchen`, `group`, `gym`, `gaming`, `darts`, `aquarium`, `shelf`, `printer`.
+Spots are regenerated during `buildLayout()` whenever the office size changes. Types include: `couch`, `window`, `plant`, `floor`, `kitchen`, `group`, `gym`, `gaming`, `darts`, `aquarium`, `shelf`, `printer`, `arcade`, `espresso`, `dj`, `server`, `hammock`, `basketball`, `foosball`, `telescope`, `massage`.
 
 ### GROUP_PAIRS for Paired Activities
 
@@ -489,7 +522,7 @@ Minimal audio via Web Audio API. A `blip()` function generates short square-wave
 ## Development Tips
 
 - **No restart needed** — the frontend auto-reconnects when the server restarts (WebSocket reconnect + polling fallback)
-- **Add a new activity**: create a `drawMyActivity()` function, register it in the `CHAR_DRAW` map, push a new entry to `IDLE_SPOTS` in `buildLayout()`
+- **Add a new activity**: create a `drawMyActivity()` function, register it in the `CHAR_DRAW` map, push a new entry to `IDLE_SPOTS` in `buildLayout()`, and call `syncIdleSpotsToAdmin()` if the object should be movable
 - **Change office size**: adjust `COLS`, `KITCHEN_WALL_COL`, `PER_ROW`, `STEP_X`
 - **Fantasy agents appear automatically** based on session ID hash — no configuration needed
 - **Inject demo agents** via `POST /api/demo` to test without active Claude sessions
@@ -518,7 +551,7 @@ agentStates   // agentId -> AgentState (position, animation, slot, flags)
 agentsData    // agentId -> raw agent data from server
 idleOccupied  // slotIdx -> agentId (exclusive slot ownership)
 myTasks       // [{id, title, status, priority, assignee, createdAt, completedAt}]
-cat           // CatState instance (tx, ty, state, messExists, eatTarget)
+cat           // CatState instance (tx, ty, state, messExists, eatTarget) — 15 states including playing, grooming, hunting, zoomies, etc.
 ppBall        // Ping pong ball state {t, dir, speed, active}
 trashLevel    // 0-10 fill level
 printerActive // Countdown timer when printing
