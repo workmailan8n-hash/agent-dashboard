@@ -489,6 +489,10 @@ const ANIM = {
   // ── Activity zone ─────────────────────────────────────────────────
   gaming:         { frames: 8,  fps:  8, loop: true,  spriteRow: 29 },
   treadmill:      { frames: 8,  fps: 14, loop: true,  spriteRow: 30 },
+  bench_press:    { frames: 8,  fps: 8,  loop: true,  spriteRow: 30 },
+  boxing:         { frames: 8,  fps: 10, loop: true,  spriteRow: 30 },
+  cycling:        { frames: 8,  fps: 10, loop: true,  spriteRow: 30 },
+  lifting_weights:{ frames: 8,  fps: 8,  loop: true,  spriteRow: 30 },
   ping_pong_l:    { frames: 6,  fps: 10, loop: true,  spriteRow: 31 },
   ping_pong_r:    { frames: 6,  fps: 10, loop: true,  spriteRow: 31 },
   smoking_beer:   { frames:12,  fps:  6, loop: true,  spriteRow: 32 },
@@ -1968,6 +1972,155 @@ function drawTreadmill(ctx, cx, cy, pal, t) {
   ctx.restore();
 }
 
+// ── bench_press — lying on bench, arms pushing barbell up/down ─────
+function drawBenchPress(ctx, cx, cy, pal, t) {
+  const push = Math.sin(t * Math.PI * 2) * 10;
+  shd(ctx, cx, cy+14, 14, 3);
+  // Bench
+  ctx.fillStyle='#4a3858';
+  ctx.fillRect(cx-16, cy+4, 32, 6);
+  ctx.fillStyle='#3a2a48';
+  ctx.fillRect(cx-14, cy+10, 4, 6);
+  ctx.fillRect(cx+10, cy+10, 4, 6);
+  // Body lying on bench
+  px(ctx,cx-8,cy-2,16,8,pal.shirt);
+  // Legs hanging off bench
+  px(ctx,cx+8,cy+2,4,8,pal.pants);
+  px(ctx,cx+12,cy+4,4,8,pal.pants);
+  px(ctx,cx+12,cy+12,5,3,'#1a1a2a');
+  px(ctx,cx+16,cy+12,5,3,'#1a1a2a');
+  // Head
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx-14,cy,6,5,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx-14,cy-2,6,4,0,-Math.PI,0); ctx.fill();
+  // Arms pushing barbell up
+  const armY = cy - 8 - push;
+  px(ctx,cx-8,armY+4,4,Math.abs(cy-2-armY-4),pal.skin);
+  px(ctx,cx+4,armY+4,4,Math.abs(cy-2-armY-4),pal.skin);
+  // Barbell
+  ctx.fillStyle='#808090';
+  ctx.fillRect(cx-18, armY, 36, 2);
+  // Weight plates
+  ctx.fillStyle='#404050';
+  ctx.beginPath(); ctx.ellipse(cx-18,armY+1,3,5,0,0,Math.PI*2); ctx.fill();
+  ctx.beginPath(); ctx.ellipse(cx+18,armY+1,3,5,0,0,Math.PI*2); ctx.fill();
+  // Effort face
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(cx-17,cy-1,3,2); ctx.fillRect(cx-13,cy-1,3,2);
+  // Sweat
+  ctx.fillStyle='#88ccff80';
+  ctx.beginPath(); ctx.ellipse(cx-20,cy-2,1,2,0,0,Math.PI*2); ctx.fill();
+}
+
+// ── boxing — punching forward alternating left/right ───────────────
+function drawBoxing(ctx, cx, cy, pal, t) {
+  const punch = t * Math.PI * 2;
+  const leftPunch = Math.max(0, Math.sin(punch)) * 14;
+  const rightPunch = Math.max(0, Math.sin(punch + Math.PI)) * 14;
+  const bob = Math.abs(Math.sin(punch)) * 2;
+  const jy = cy - bob;
+  shd(ctx, cx, cy+16);
+  // Legs in stance
+  px(ctx,cx-5,jy+5,4,9,pal.pants);
+  px(ctx,cx+2,jy+5,4,9,pal.pants);
+  px(ctx,cx-6,jy+13,5,3,'#1a1a2a');
+  px(ctx,cx+2,jy+13,5,3,'#1a1a2a');
+  // Body
+  px(ctx,cx-6,jy-2,12,9,pal.shirt);
+  // Arms with boxing gloves
+  const lx = cx - 10 - leftPunch * 0.3;
+  const ly = jy - 2 + leftPunch * 0.1;
+  px(ctx,lx,ly,4,4,pal.skin);
+  ctx.fillStyle='#c04040'; ctx.beginPath(); ctx.arc(lx-2,ly+2,4,0,Math.PI*2); ctx.fill();
+  const rx = cx + 6 + rightPunch * 0.3;
+  const ry = jy - 4 - rightPunch * 0.1;
+  px(ctx,rx,ry,4,4,pal.skin);
+  ctx.fillStyle='#c04040'; ctx.beginPath(); ctx.arc(rx+6,ry+2,4,0,Math.PI*2); ctx.fill();
+  // Head
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx,jy-10,7,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,jy-13,7,6,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(cx-5,jy-12,4,3); ctx.fillRect(cx+1,jy-12,4,3);
+  // Impact stars on punch
+  if (leftPunch > 10) {
+    ctx.fillStyle='#ffff80';
+    ctx.font='8px serif';
+    ctx.fillText('*', lx-8, ly-2);
+  }
+  if (rightPunch > 10) {
+    ctx.fillStyle='#ffff80';
+    ctx.font='8px serif';
+    ctx.fillText('*', rx+10, ry);
+  }
+}
+
+// ── cycling — seated on exercise bike, legs pedaling ───────────────
+function drawCycling(ctx, cx, cy, pal, t) {
+  const pedal = t * Math.PI * 2;
+  const legLY = Math.sin(pedal) * 6;
+  const legRY = Math.sin(pedal + Math.PI) * 6;
+  shd(ctx, cx, cy+16);
+  // Legs pedaling
+  px(ctx,cx-4,cy+2+legLY,4,8-legLY*0.3,pal.pants);
+  px(ctx,cx+1,cy+2+legRY,4,8-legRY*0.3,pal.pants);
+  px(ctx,cx-5,cy+10+legLY,5,3,'#1a1a2a');
+  px(ctx,cx+1,cy+10+legRY,5,3,'#1a1a2a');
+  // Body leaning forward
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(-0.12);
+  ctx.translate(-cx, -cy);
+  px(ctx,cx-6,cy-4,12,8,pal.shirt);
+  // Arms gripping handlebars
+  px(ctx,cx-9,cy-6,4,6,pal.skin);
+  px(ctx,cx+5,cy-6,4,6,pal.skin);
+  // Head
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx,cy-12,7,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-15,7,6,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(cx-5,cy-14,4,3); ctx.fillRect(cx+1,cy-14,4,3);
+  ctx.restore();
+  // Sweat
+  ctx.fillStyle='#88ccff80';
+  ctx.beginPath(); ctx.ellipse(cx+9,cy-8,1.5,2.5,0.3,0,Math.PI*2); ctx.fill();
+}
+
+// ── lifting_weights — standing dumbbell curl ───────────────────────
+function drawLiftingWeights(ctx, cx, cy, pal, t) {
+  const curl = Math.sin(t * Math.PI * 2);
+  const armLift = Math.max(0, curl) * 12;
+  const armLiftR = Math.max(0, -curl) * 12;
+  shd(ctx, cx, cy+16);
+  // Legs
+  px(ctx,cx-4,cy+5,4,9,pal.pants);
+  px(ctx,cx+1,cy+5,4,9,pal.pants);
+  px(ctx,cx-5,cy+13,5,3,'#1a1a2a');
+  px(ctx,cx+1,cy+13,5,3,'#1a1a2a');
+  // Body
+  px(ctx,cx-6,cy-2,12,9,pal.shirt);
+  // Left arm curling
+  px(ctx,cx-10,cy-armLift,4,6+armLift*0.3,pal.skin);
+  // Left dumbbell
+  ctx.fillStyle='#606070';
+  ctx.fillRect(cx-14,cy-2-armLift,4,4);
+  ctx.fillRect(cx-12,cy-armLift,8,2);
+  ctx.fillStyle='#404050';
+  ctx.fillRect(cx-6,cy-2-armLift,4,4);
+  // Right arm curling
+  px(ctx,cx+6,cy-armLiftR,4,6+armLiftR*0.3,pal.skin);
+  // Right dumbbell
+  ctx.fillStyle='#606070';
+  ctx.fillRect(cx+10,cy-2-armLiftR,4,4);
+  ctx.fillRect(cx+4,cy-armLiftR,8,2);
+  ctx.fillStyle='#404050';
+  ctx.fillRect(cx+2,cy-2-armLiftR,4,4);
+  // Head
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx,cy-10,7,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-13,7,6,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(cx-5,cy-13,4,3); ctx.fillRect(cx+1,cy-13,4,3);
+  // Effort expression
+  ctx.fillStyle='#c89060'; ctx.fillRect(cx-3,cy-7,6,2);
+  // Sweat
+  ctx.fillStyle='#88ccff80';
+  ctx.beginPath(); ctx.ellipse(cx+9,cy-6,1,2,0.3,0,Math.PI*2); ctx.fill();
+}
+
 // ── ping_pong_l — swing synced to ball arriving on left side ──────
 function drawPingPongL(ctx, cx, cy, pal, t) {
   // Hit when ball is near left side (ppBall.t < 0.15)
@@ -2608,6 +2761,10 @@ const CHAR_DRAW = {
   gossiping_r:  drawGossipingR,
   gaming:       drawGaming,
   treadmill:    drawTreadmill,
+  bench_press:    drawBenchPress,
+  boxing:         drawBoxing,
+  cycling:        drawCycling,
+  lifting_weights:drawLiftingWeights,
   ping_pong_l:  drawPingPongL,
   ping_pong_r:  drawPingPongR,
   petting_cat:  drawPettingCat,
@@ -2811,6 +2968,10 @@ function generateLayout(n) {
   IDLE_SPOTS.push({ tx:gymX+0.8, ty:gymY+3,   anim:'yoga',       type:'gym', w:6, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+0.8-_gymDefTx, _offsetY:gymY+3-_gymDefTy });
   IDLE_SPOTS.push({ tx:gymX+3,   ty:gymY+3,   anim:'stretching', type:'gym', w:5, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+3-_gymDefTx, _offsetY:gymY+3-_gymDefTy });
   IDLE_SPOTS.push({ tx:gymX+5.5, ty:gymY+1.5, anim:'headphones', type:'gym', w:4, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+5.5-_gymDefTx, _offsetY:gymY+1.5-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+3.5, ty:gymY+2.5, anim:'bench_press',     type:'gym', w:6, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+3.5-_gymDefTx, _offsetY:gymY+2.5-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+6,   ty:gymY+0.5, anim:'boxing',          type:'gym', w:4, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+6-_gymDefTx, _offsetY:gymY+0.5-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+6,   ty:gymY+2.5, anim:'cycling',         type:'gym', w:4, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+6-_gymDefTx, _offsetY:gymY+2.5-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+0.5, ty:gymY+2.5, anim:'lifting_weights', type:'gym', w:6, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+0.5-_gymDefTx, _offsetY:gymY+2.5-_gymDefTy });
 
   // ── Gaming/TV zone (center of activity area) ─────────────────────
   const tvX = 10, tvY = ACT_ZONE_Y + 1;
@@ -2864,14 +3025,6 @@ function generateLayout(n) {
   IDLE_SPOTS.push({ tx:rX+1.5, ty:9, anim:'window_gaze', type:'aquarium', w:8, _objId:'aquarium', _defObjTx:rX+0.3, _defObjTy:8, _offsetX:1.2, _offsetY:1 });
 
   // ══ Zone 1: RECREATION (ACT_ZONE+9, spread across full width) ══
-
-  // ── 5. Hammock (recreation, cols 1-3) ──────────────────────────
-  IDLE_SPOTS.push({ tx:2.5, ty:ACT_ZONE_Y+10, anim:'sleeping', type:'hammock', w:8,
-    _objId:'hammock', _defObjTx:1.5, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
-
-  // ── 6. Massage Chair (recreation, cols 4-6) ───────────────────
-  IDLE_SPOTS.push({ tx:5.5, ty:ACT_ZONE_Y+10, anim:'sleeping', type:'massage', w:6,
-    _objId:'massage_chair', _defObjTx:4.5, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
 
   // ── 7. Foosball Table (recreation, cols 8-10) ─────────────────
   const fb1 = IDLE_SPOTS.length;
@@ -3049,12 +3202,6 @@ function buildObstacleGrid() {
 
   // ── Zone 1: RECREATION obstacles (ACT_ZONE+9) ─────
   if (ACT_ZONE_Y > 0) {
-    const [hamObsTx,hamObsTy] = getAdminPos('hammock', 1.5, ACT_ZONE_Y+9);
-    markRect(hamObsTx, hamObsTy, 3, 1);
-
-    const [mcObsTx,mcObsTy] = getAdminPos('massage_chair', 4.5, ACT_ZONE_Y+9);
-    markRect(mcObsTx, mcObsTy, 2, 2);
-
     const [fbObsTx,fbObsTy] = getAdminPos('foosball', 8, ACT_ZONE_Y+9);
     markRect(fbObsTx, fbObsTy, 3, 2);
 
@@ -4305,31 +4452,6 @@ function buildBackground() {
     ctx.fillStyle='#606078'; ctx.font="4px 'Press Start 2P',monospace";
     ctx.textAlign='center'; ctx.fillText('3D', p3x+p3W/2, p3y+p3H+8); ctx.textAlign='left';
 
-    // ── Hammock (recreation, col 1.5) ───────────────────────────
-    const [_hamTx, _hamTy] = getAdminPos('hammock', 1.5, ACT_ZONE_Y+9);
-    const [hamx, hamy] = ts(_hamTx, _hamTy);
-    const hamW = T*3, hamH = T*1.2;
-    fillR(ctx, hamx, hamy-8, 6, hamH+16, '#6a5030');
-    fillR(ctx, hamx+hamW-6, hamy-8, 6, hamH+16, '#6a5030');
-    fillR(ctx, hamx-1, hamy-10, 8, 4, '#7a6040');
-    fillR(ctx, hamx+hamW-7, hamy-10, 8, 4, '#7a6040');
-    ctx.fillStyle='#4a7828';
-    ctx.beginPath();
-    ctx.moveTo(hamx+6, hamy+2);
-    ctx.quadraticCurveTo(hamx+hamW/2, hamy+hamH+8, hamx+hamW-6, hamy+2);
-    ctx.lineTo(hamx+hamW-6, hamy+6);
-    ctx.quadraticCurveTo(hamx+hamW/2, hamy+hamH+14, hamx+6, hamy+6);
-    ctx.closePath(); ctx.fill();
-    ctx.strokeStyle='#3a6020'; ctx.lineWidth=1;
-    for (let mi=1; mi<6; mi++) {
-      const mx2 = hamx + 6 + mi * (hamW-12)/6;
-      ctx.beginPath(); ctx.moveTo(mx2, hamy+2); ctx.lineTo(mx2, hamy+hamH+4); ctx.stroke();
-    }
-    ctx.fillStyle='#e8e0c8';
-    ctx.beginPath(); ctx.ellipse(hamx+16, hamy+6, 8, 5, -0.3, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle='#d8d0b8';
-    ctx.beginPath(); ctx.ellipse(hamx+16, hamy+6, 6, 3, -0.3, 0, Math.PI*2); ctx.fill();
-
     // ── Basketball Hoop (recreation, col 12) ───────────────────
     const [_bbTx, _bbTy] = getAdminPos('basketball', 12, ACT_ZONE_Y+9);
     const [bbx, bby] = ts(_bbTx, _bbTy);
@@ -4426,21 +4548,6 @@ function buildBackground() {
     ctx.fillStyle='#303040';
     ctx.beginPath(); ctx.arc(telx+T*0.5-12, tely+T*0.5+10, 3, 0, Math.PI*2); ctx.fill();
 
-    // ── Massage Chair (recreation, col 4.5) ─────────────────────
-    const [_mcTx, _mcTy] = getAdminPos('massage_chair', 4.5, ACT_ZONE_Y+9);
-    const [mcx, mcy] = ts(_mcTx, _mcTy);
-    const mcW = T*2, mcH = T*1.8;
-    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
-    fillR(ctx, mcx, mcy, mcW, mcH, '#2a2838'); ctx.restore();
-    fillR(ctx, mcx+4, mcy+mcH*0.3, mcW-8, mcH*0.5, '#38304a');
-    fillR(ctx, mcx+mcW*0.3, mcy, mcW*0.4, mcH*0.3, '#322a44');
-    ctx.fillStyle='#2a2238';
-    ctx.beginPath(); ctx.ellipse(mcx+mcW*0.5, mcy+4, mcW*0.15, 6, 0, 0, Math.PI*2); ctx.fill();
-    fillR(ctx, mcx, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
-    fillR(ctx, mcx+mcW-6, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
-    fillR(ctx, mcx+6, mcy+mcH-8, mcW-12, 8, '#38304a');
-    fillR(ctx, mcx+8, mcy+mcH-6, mcW-16, 4, '#403858');
-    fillR(ctx, mcx+mcW*0.35, mcy+mcH, mcW*0.3, 6, '#1a1828');
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
@@ -7333,8 +7440,6 @@ function buildAdminObjects() {
   // Entertainment objects (recreation / makers lab / cafe zones)
   if (ACT_ZONE_Y > 0) {
     // Zone 1: RECREATION (ACT_ZONE+9)
-    adminObjects.push({id:'hammock', label:'🛏 Hammock', tx:1.5, ty:ACT_ZONE_Y+9, w:3, h:1.2});
-    adminObjects.push({id:'massage_chair', label:'💆 Massage Chair', tx:4.5, ty:ACT_ZONE_Y+9, w:2, h:2});
     adminObjects.push({id:'foosball', label:'⚽ Foosball', tx:8, ty:ACT_ZONE_Y+9, w:3, h:1.5});
     adminObjects.push({id:'basketball', label:'🏀 Basketball', tx:12, ty:ACT_ZONE_Y+9, w:2, h:2});
     adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:16, ty:ACT_ZONE_Y+9, w:2, h:2.5});
@@ -7638,6 +7743,18 @@ const CLICK_OBJ_MAP = {
   'tv':              'tv',
   'pingpong':        'pingpong',
   'clock':           'clock',
+  'espresso_bar':    'espresso',
+  'arcade':          'arcade',
+  'dj_console':      'dj',
+  'server_rack':     'server',
+  'printer_3d':      'printer3d',
+  'foosball':        'foosball',
+  'basketball':      'basketball',
+  'telescope':       'telescope',
+  'kitchen_table':   'kitchen_table',
+  'bookshelf':       'bookshelf',
+  'conf_table':      'conf_table',
+  'gaming_sofa':     'gaming_sofa',
 };
 
 function findClickableAt(tx, ty) {
@@ -7654,6 +7771,18 @@ function findClickableAt(tx, ty) {
     {id:'tv', w:4, h:3},
     {id:'pingpong', w:6, h:3},
     {id:'clock', w:1.5, h:1.5},
+    {id:'espresso_bar', w:3, h:1.5},
+    {id:'arcade', w:2, h:2.5},
+    {id:'dj_console', w:2.5, h:1.2},
+    {id:'server_rack', w:2, h:2.2},
+    {id:'printer_3d', w:2, h:1.8},
+    {id:'foosball', w:3, h:1.5},
+    {id:'basketball', w:2, h:2},
+    {id:'telescope', w:1, h:2},
+    {id:'kitchen_table', w:4, h:3},
+    {id:'bookshelf', w:4.5, h:3.5},
+    {id:'conf_table', w:6, h:3},
+    {id:'gaming_sofa', w:4, h:1.5},
   ];
   for (const c of checks) {
     const s = saved[c.id]; const d = defs[c.id];
@@ -7760,6 +7889,36 @@ function initClickParticles(type, cx, cy) {
       p.push({x: cx, y: cy + 10, vx: 1.5, vy: -2, size: 3, col: '#ffffff'});
       break;
     case 'clock':
+      break;
+    case 'espresso':
+      for (let i = 0; i < 5; i++) p.push({x: cx + (Math.random()-0.5)*10, y: cy - 6, vx: (Math.random()-0.5)*0.6, vy: -0.6 - Math.random()*0.6, size: 2+Math.random()*2, col: i%2 ? '#ffffff' : '#d4a574'});
+      break;
+    case 'arcade':
+      break;
+    case 'dj':
+      break;
+    case 'server':
+      break;
+    case 'printer3d':
+      break;
+    case 'foosball':
+      p.push({x: cx, y: cy, vx: 2+Math.random()*2, vy: -1.5-Math.random(), size: 3, col: '#ffffff'});
+      break;
+    case 'basketball':
+      p.push({x: cx, y: cy + 10, vx: 0, vy: -2.5, size: 4, col: '#e88030'});
+      break;
+    case 'telescope':
+      for (let i = 0; i < 6; i++) p.push({x: cx + (Math.random()-0.5)*20, y: cy - 10 - Math.random()*10, vx: (Math.random()-0.5)*1.5, vy: -0.3-Math.random()*0.5, size: 1+Math.random()*2, col: ['#ffee80','#ffffff','#80c0ff','#ff8080'][i%4]});
+      break;
+    case 'kitchen_table':
+      break;
+    case 'bookshelf':
+      p.push({x: cx + (Math.random()-0.5)*10, y: cy - 10, vx: 0.3, vy: 0.5, size: 0, col: ['#c04040','#4040c0','#40a040','#c0a040'][Math.floor(Math.random()*4)]});
+      break;
+    case 'conf_table':
+      for (let i = 0; i < 5; i++) p.push({x: cx + (Math.random()-0.5)*20, y: cy - 4, vx: (Math.random()-0.5)*3, vy: -1-Math.random()*1.5, size: 0, col: '#ffffff'});
+      break;
+    case 'gaming_sofa':
       break;
   }
   return p;
@@ -7995,6 +8154,269 @@ function drawClickAnims(ctx, tick) {
           const fx = a.cx + Math.sin(t*8+f*2) * 20;
           const fy = a.cy - t*30 - f*10;
           ctx.fillRect(fx, fy, 3, 2);
+        }
+        break;
+      }
+      case 'espresso': {
+        // Steam burst
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy -= 0.01;
+          ctx.fillStyle = p.col;
+          ctx.globalAlpha = alpha * (1 - t * 0.7);
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+        }
+        // Coffee cup sliding
+        if (t < 0.6) {
+          const slideX = a.x - 14 + t * 46;
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#f0e8d0';
+          ctx.fillRect(slideX, a.y + 2, 7, 6);
+          ctx.fillStyle = '#6a4a2a';
+          ctx.fillRect(slideX + 1, a.y + 1, 5, 3);
+          ctx.fillStyle = '#d0c8b0';
+          ctx.fillRect(slideX + 7, a.y + 4, 3, 3);
+        }
+        break;
+      }
+      case 'arcade': {
+        // Screen flash
+        const w = 16, h = 20;
+        if (t < 0.2) {
+          ctx.fillStyle = ['#ff4040','#40ff40','#4040ff','#ffff40'][tick % 4];
+          ctx.globalAlpha = alpha * (1 - t / 0.2) * 0.8;
+          ctx.fillRect(a.x - w/2, a.y - h/2 - 6, w, h);
+        } else if (t < 0.5) {
+          ctx.globalAlpha = alpha * 0.6;
+          const colors = ['#f7768e','#7aa2f7','#9ece6a','#bb9af7'];
+          ctx.fillStyle = colors[tick % colors.length];
+          ctx.fillRect(a.x - w/2, a.y - h/2 - 6, w, h);
+        }
+        // Joystick wiggle
+        const jw = Math.sin(tick * 0.8) * 4;
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = '#808090';
+        ctx.fillRect(a.x - 1 + jw, a.y + 10, 2, 8);
+        ctx.fillStyle = '#c04040';
+        ctx.beginPath(); ctx.arc(a.x + jw, a.y + 10, 3, 0, Math.PI*2); ctx.fill();
+        // INSERT COIN text
+        if (t > 0.25 && t < 0.75) {
+          ctx.fillStyle = '#e0af68';
+          ctx.font = "5px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * ((tick % 20 < 10) ? 1 : 0.3);
+          ctx.textAlign = 'center';
+          ctx.fillText('INSERT COIN', a.x, a.y - h/2 - 10);
+          ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'dj': {
+        // Vinyl scratch wave lines
+        ctx.strokeStyle = '#bb9af7';
+        ctx.lineWidth = 1.5;
+        ctx.globalAlpha = alpha * 0.7;
+        for (let i = 0; i < 3; i++) {
+          const wy = a.y - 14 - i * 8;
+          const amp = 4 + i * 2;
+          ctx.beginPath();
+          for (let wx = -18; wx <= 18; wx += 2) {
+            const wvy = wy + Math.sin((wx + tick * 3 + i * 2) * 0.3) * amp;
+            wx === -18 ? ctx.moveTo(a.x + wx, wvy) : ctx.lineTo(a.x + wx, wvy);
+          }
+          ctx.stroke();
+        }
+        // Turntable spin
+        ctx.globalAlpha = alpha;
+        const spinAngle = tick * 0.2;
+        ctx.strokeStyle = '#606080';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(a.x - 10, a.y + 4, 10, spinAngle, spinAngle + Math.PI * 1.5);
+        ctx.stroke();
+        ctx.beginPath();
+        ctx.arc(a.x + 10, a.y + 4, 10, spinAngle + Math.PI, spinAngle + Math.PI * 2.5);
+        ctx.stroke();
+        break;
+      }
+      case 'server': {
+        // LEDs blink rapidly
+        ctx.globalAlpha = alpha;
+        for (let li = 0; li < 6; li++) {
+          const lx = a.x - 6 + (li % 2) * 12;
+          const ly = a.y - 14 + Math.floor(li / 2) * 8;
+          ctx.fillStyle = (tick + li) % 3 === 0 ? '#9ece6a' : ((tick + li) % 3 === 1 ? '#f7768e' : '#7aa2f7');
+          ctx.fillRect(lx, ly, 3, 3);
+        }
+        // Spark flash
+        if (t < 0.3) {
+          ctx.fillStyle = '#ffff80';
+          ctx.globalAlpha = alpha * (1 - t / 0.3);
+          const sx = a.x + Math.sin(tick) * 8;
+          const sy = a.y - 4 + Math.cos(tick * 1.3) * 6;
+          ctx.fillRect(sx - 1, sy - 4, 2, 8);
+          ctx.fillRect(sx - 4, sy - 1, 8, 2);
+        }
+        // REBOOT text
+        if (t > 0.2 && t < 0.7) {
+          ctx.globalAlpha = alpha * ((tick % 12 < 6) ? 1 : 0.2);
+          ctx.fillStyle = '#f7768e';
+          ctx.font = "6px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('REBOOT', a.x, a.y - 22);
+          ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'printer3d': {
+        // Nozzle moves
+        ctx.globalAlpha = alpha;
+        const nozzleX = a.x - 8 + Math.sin(tick * 0.5) * 16;
+        ctx.fillStyle = '#808090';
+        ctx.fillRect(nozzleX - 2, a.y - 10, 4, 6);
+        // Layer builds up
+        const layers = Math.min(Math.floor(t * 8), 6);
+        for (let li = 0; li < layers; li++) {
+          ctx.fillStyle = li % 2 === 0 ? '#9ece6a' : '#7aa2f7';
+          ctx.globalAlpha = alpha * 0.8;
+          ctx.fillRect(a.x - 6, a.y + 4 - li * 3, 12, 2);
+        }
+        break;
+      }
+      case 'foosball': {
+        // Rod spins
+        ctx.globalAlpha = alpha;
+        ctx.strokeStyle = '#c0c0c0';
+        ctx.lineWidth = 2;
+        const rodY = a.y + Math.sin(tick * 0.6) * 6;
+        ctx.beginPath(); ctx.moveTo(a.x - 20, rodY); ctx.lineTo(a.x + 20, rodY); ctx.stroke();
+        // Players on rod
+        for (let pi = -1; pi <= 1; pi++) {
+          const rot = Math.sin(tick * 0.8 + pi) * Math.PI * 0.5;
+          ctx.fillStyle = '#e04040';
+          ctx.fillRect(a.x + pi * 12 - 3, rodY - 4 + Math.abs(rot) * 2, 6, 8 - Math.abs(rot) * 2);
+        }
+        // Ball bounces
+        const bp = a.particles[0];
+        if (t < 0.6) {
+          bp.x += bp.vx; bp.y += bp.vy; bp.vy += 0.1;
+          if (bp.y > a.y + 8) { bp.vy = -Math.abs(bp.vy) * 0.7; }
+        }
+        ctx.fillStyle = '#ffffff';
+        ctx.beginPath(); ctx.arc(Math.round(bp.x), Math.round(bp.y), bp.size, 0, Math.PI*2); ctx.fill();
+        break;
+      }
+      case 'basketball': {
+        // Ball bounces
+        const bbp = a.particles[0];
+        if (t < 0.5) {
+          bbp.y += bbp.vy; bbp.vy += 0.15;
+          if (bbp.y > a.y + 10) { bbp.vy = -Math.abs(bbp.vy) * 0.65; }
+        }
+        ctx.globalAlpha = alpha;
+        ctx.fillStyle = bbp.col;
+        ctx.beginPath(); ctx.arc(Math.round(a.x), Math.round(bbp.y), bbp.size, 0, Math.PI*2); ctx.fill();
+        ctx.strokeStyle = '#c06020'; ctx.lineWidth = 1;
+        ctx.beginPath(); ctx.arc(Math.round(a.x), Math.round(bbp.y), bbp.size, 0, Math.PI*2); ctx.stroke();
+        // Rim shakes
+        if (t > 0.3 && t < 0.6) {
+          const shake = Math.sin(tick * 3) * 3;
+          ctx.strokeStyle = '#e06020'; ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.ellipse(a.x + shake, a.y - 10, 8, 4, 0, 0, Math.PI*2); ctx.stroke();
+        }
+        break;
+      }
+      case 'telescope': {
+        // Star burst
+        ctx.globalAlpha = alpha;
+        for (const p of a.particles) {
+          p.x += p.vx * 0.5; p.y += p.vy * 0.5;
+          ctx.fillStyle = p.col;
+          ctx.globalAlpha = alpha * (1 - t * 0.6);
+          const sz = p.size * (1 + t);
+          ctx.fillRect(Math.round(p.x) - sz/2, Math.round(p.y), sz, sz);
+          // Cross sparkle
+          ctx.fillRect(Math.round(p.x) - 1, Math.round(p.y) - sz, 2, sz * 3);
+          ctx.fillRect(Math.round(p.x) - sz, Math.round(p.y), sz * 2, 2);
+        }
+        // WOW text
+        if (t > 0.15 && t < 0.6) {
+          ctx.globalAlpha = alpha * (t < 0.4 ? 1 : 1 - (t - 0.4) / 0.2);
+          ctx.fillStyle = '#ffee80';
+          ctx.font = "8px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('WOW', a.x, a.y - 28);
+          ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'kitchen_table': {
+        // Plates rattle
+        ctx.globalAlpha = alpha;
+        for (let pi = 0; pi < 3; pi++) {
+          const px = a.x - 12 + pi * 12;
+          const rattle = Math.sin(tick * 2 + pi * 2) * 2;
+          ctx.fillStyle = '#e0e0e0';
+          ctx.beginPath(); ctx.ellipse(px + rattle, a.y + rattle * 0.5, 5, 3, 0, 0, Math.PI*2); ctx.fill();
+          ctx.strokeStyle = '#b0b0b0'; ctx.lineWidth = 0.8;
+          ctx.beginPath(); ctx.ellipse(px + rattle, a.y + rattle * 0.5, 5, 3, 0, 0, Math.PI*2); ctx.stroke();
+        }
+        if (t > 0.2 && t < 0.6) {
+          ctx.fillStyle = '#a0a0a0';
+          ctx.font = "5px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * 0.6;
+          ctx.fillText('clatter', a.x - 16, a.y - 12);
+        }
+        break;
+      }
+      case 'bookshelf': {
+        // Book falls out
+        ctx.globalAlpha = alpha;
+        const bp2 = a.particles[0];
+        if (bp2) {
+          if (t < 0.5) { bp2.y += bp2.vy * 2; bp2.vy += 0.05; bp2.x += bp2.vx; }
+          ctx.fillStyle = bp2.col;
+          ctx.save();
+          ctx.translate(Math.round(bp2.x), Math.round(bp2.y));
+          ctx.rotate(t * 3);
+          ctx.fillRect(-4, -6, 8, 12);
+          ctx.fillStyle = '#ffffff40';
+          ctx.fillRect(-2, -4, 4, 8);
+          ctx.restore();
+        }
+        break;
+      }
+      case 'conf_table': {
+        // Papers scatter
+        ctx.globalAlpha = alpha;
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.03;
+          ctx.save();
+          ctx.translate(Math.round(p.x), Math.round(p.y));
+          ctx.rotate(t * 4 * (p.vx > 0 ? 1 : -1));
+          ctx.fillStyle = '#ffffff';
+          ctx.globalAlpha = alpha * (1 - t * 0.5);
+          ctx.fillRect(-4, -5, 8, 10);
+          ctx.fillStyle = '#888';
+          for (let li = 0; li < 3; li++) ctx.fillRect(-2, -3 + li * 3, 4, 1);
+          ctx.restore();
+        }
+        break;
+      }
+      case 'gaming_sofa': {
+        // Cushion bounces
+        ctx.globalAlpha = alpha;
+        const bounce = Math.abs(Math.sin(tick * 0.5)) * 6;
+        const squish = Math.sin(tick * 0.5) * 2;
+        ctx.fillStyle = '#4a3858';
+        ctx.fillRect(a.x - 10, a.y - bounce, 20 + squish, 10 - squish * 0.5);
+        ctx.fillStyle = '#5a4868';
+        ctx.fillRect(a.x - 8, a.y - bounce + 1, 16 + squish, 6 - squish * 0.5);
+        if (t > 0.2 && t < 0.5) {
+          ctx.fillStyle = '#a0a0c0';
+          ctx.font = "5px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * 0.6;
+          ctx.textAlign = 'center';
+          ctx.fillText('boing', a.x, a.y - 16);
+          ctx.textAlign = 'left';
         }
         break;
       }
