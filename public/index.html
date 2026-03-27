@@ -2306,6 +2306,272 @@ function drawStandingUp(ctx, cx, cy, pal, t) {
   drawWalking(ctx, cx, cy + (1-ease.inOut(t)) * 5, pal, t * 0.25);
 }
 
+// ── playing_arcade — standing at arcade cabinet ──────────────────
+function drawPlayingArcade(ctx, cx, cy, pal, t) {
+  const s = Math.sin(t * Math.PI * 2);
+  const bounce = Math.abs(Math.sin(t * Math.PI * 4)) * 2;
+  const lean = 3;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-4,cy+5-bounce,4,9+bounce,pal.pants);
+  px(ctx,cx+1,cy+5-bounce,4,9+bounce,pal.pants);
+  px(ctx,cx-5,cy+13,5,3,'#1a1a2a'); px(ctx,cx+1,cy+13,5,3,'#1a1a2a');
+  ctx.save(); ctx.translate(cx,cy-bounce); ctx.rotate(0.2);
+  px(ctx,-6,-2,12,9,pal.shirt);
+  ctx.restore();
+  px(ctx,cx-8+s*3,cy+2-bounce+lean,5,3,pal.skin);
+  px(ctx,cx-7+s*3,cy+5-bounce+lean,2,4,'#444');
+  px(ctx,cx-8+s*3,cy+9-bounce+lean,4,2,'#333');
+  const tap = Math.sin(t * Math.PI * 8) > 0 ? 1 : 0;
+  px(ctx,cx+5,cy+2-bounce+lean,5,3,pal.skin);
+  px(ctx,cx+8,cy+5-bounce+lean+tap,3,2,pal.skin);
+  px(ctx,cx+7,cy+7-bounce+lean,3,2,'#f7768e');
+  px(ctx,cx+11,cy+7-bounce+lean,3,2,'#9ece6a');
+  drawHeadFront(ctx, cx+lean, cy-12-bounce, pal, false);
+}
+
+// ── drinking_espresso — sitting at bar sipping ───────────────────
+function drawDrinkingEspresso(ctx, cx, cy, pal, t) {
+  const sip = Math.sin(t * Math.PI * 2);
+  const drinking = sip > 0.7;
+  const cupY = drinking ? -6 : 2;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-4,cy+6,4,7,pal.pants); px(ctx,cx+1,cy+6,4,7,pal.pants);
+  px(ctx,cx-5,cy+12,5,3,'#1a1a2a'); px(ctx,cx+1,cy+12,5,3,'#1a1a2a');
+  px(ctx,cx-8,cy+5,16,2,'#8a6040');
+  px(ctx,cx-2,cy+7,4,10,'#8a6040');
+  px(ctx,cx-6,cy-3,12,9,pal.shirt);
+  px(ctx,cx-9,cy+cupY,5,3,pal.skin);
+  px(ctx,cx-11,cy+cupY-1,5,4,'#6a4020');
+  px(ctx,cx-10,cy+cupY,3,2,'#f0e8d8');
+  if (!drinking) {
+    ctx.save(); ctx.globalAlpha=0.3;
+    const w1 = Math.sin(t*Math.PI*3)*2;
+    const w2 = Math.sin(t*Math.PI*3+1)*2;
+    ctx.strokeStyle='#ccc'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.moveTo(cx-10,cy+cupY-3); ctx.quadraticCurveTo(cx-10+w1,cy+cupY-7,cx-9,cy+cupY-10); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(cx-8,cy+cupY-3); ctx.quadraticCurveTo(cx-8+w2,cy+cupY-7,cx-7,cy+cupY-10); ctx.stroke();
+    ctx.restore();
+  }
+  px(ctx,cx+5,cy+1,6,3,pal.skin);
+  drawHeadFront(ctx, cx, cy-11, pal, drinking);
+}
+
+// ── djing — standing at DJ console ───────────────────────────────
+function drawDJing(ctx, cx, cy, pal, t) {
+  const bob = Math.sin(t * Math.PI * 6) * 2;
+  const nod = Math.sin(t * Math.PI * 6) * 0.1;
+  const discAngle = t * Math.PI * 2;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-6,cy+5-bob,4,9+bob,pal.pants);
+  px(ctx,cx+3,cy+5-bob,4,9+bob,pal.pants);
+  px(ctx,cx-7,cy+13,5,3,'#1a1a2a'); px(ctx,cx+3,cy+13,5,3,'#1a1a2a');
+  px(ctx,cx-6,cy-2-bob,12,9,pal.shirt);
+  const txOff = Math.cos(discAngle)*4;
+  const tyOff = Math.sin(discAngle)*2;
+  px(ctx,cx-10+txOff,cy+1-bob+tyOff,5,3,pal.skin);
+  const fader = Math.sin(t*Math.PI*4)*3;
+  px(ctx,cx+7,cy+1-bob,5,3,pal.skin);
+  px(ctx,cx+10,cy+2-bob+fader,3,2,pal.skin);
+  ctx.save(); ctx.translate(cx,cy-11-bob); ctx.rotate(nod);
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(0,0,7,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-2,7,6,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(-4,-2,4,3); ctx.fillRect(1,-2,4,3);
+  ctx.strokeStyle='#303040'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.arc(0,-4,9,Math.PI*1.1,Math.PI*1.9); ctx.stroke();
+  px(ctx,-9,-2,3,6,'#303040');
+  px(ctx,7,-2,3,6,'#303040');
+  ctx.restore();
+}
+
+// ── fixing_server — crouching at server rack ─────────────────────
+function drawFixingServer(ctx, cx, cy, pal, t) {
+  const reach = Math.sin(t * Math.PI * 2) * 3;
+  const spark = Math.sin(t * Math.PI * 8) > 0.9;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-5,cy+4,5,5,pal.pants); px(ctx,cx+1,cy+4,5,5,pal.pants);
+  px(ctx,cx-7,cy+8,5,6,pal.pants); px(ctx,cx+3,cy+8,5,6,pal.pants);
+  px(ctx,cx-8,cy+13,5,3,'#1a1a2a'); px(ctx,cx+3,cy+13,5,3,'#1a1a2a');
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(0.3);
+  px(ctx,-6,-3,12,8,pal.shirt);
+  ctx.restore();
+  px(ctx,cx+6,cy-2+reach,6,3,pal.skin);
+  px(ctx,cx+11,cy-1+reach,4,3,pal.skin);
+  if (spark) {
+    ctx.save(); ctx.globalAlpha=0.9;
+    px(ctx,cx+13,cy-2+reach,2,2,'#ffdd30');
+    px(ctx,cx+12,cy-3+reach,1,1,'#fff');
+    px(ctx,cx+15,cy-1+reach,1,1,'#fff');
+    ctx.restore();
+  }
+  px(ctx,cx-9,cy+1,5,3,pal.skin);
+  px(ctx,cx-12,cy,2,5,'#888');
+  px(ctx,cx-13,cy-1,1,2,'#cc4');
+  ctx.save(); ctx.translate(cx+2,cy-9); ctx.rotate(0.25);
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(0,0,7,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-2,7,5,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(-4,-1,3,3); ctx.fillRect(2,-1,3,3);
+  ctx.restore();
+}
+
+// ── watching_3dprint — leaning forward watching printer ───────────
+function drawWatching3DPrint(ctx, cx, cy, pal, t) {
+  const tilt = Math.sin(t * Math.PI * 2) * 0.15;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-4,cy+5,4,9,pal.pants); px(ctx,cx+1,cy+5,4,9,pal.pants);
+  px(ctx,cx-5,cy+13,5,3,'#1a1a2a'); px(ctx,cx+1,cy+13,5,3,'#1a1a2a');
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(0.25);
+  px(ctx,-6,-2,12,9,pal.shirt);
+  ctx.restore();
+  px(ctx,cx+4,cy+2,4,3,pal.shirt);
+  px(ctx,cx-9,cy-2,5,3,pal.skin);
+  px(ctx,cx-8,cy-5,4,4,pal.skin);
+  ctx.save(); ctx.translate(cx-2,cy-12); ctx.rotate(tilt);
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(0,0,7,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-2,7,6,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(-4,0,3,2); ctx.fillRect(2,0,3,2);
+  ctx.fillStyle='#c89060'; ctx.fillRect(-2,4,5,1);
+  ctx.restore();
+}
+
+// ── lying_hammock — horizontal body in hammock ───────────────────
+function drawLyingHammock(ctx, cx, cy, pal, t) {
+  const sway = Math.sin(t * Math.PI * 2) * 3;
+  shd(ctx, cx+sway, cy+14, 14, 3);
+  ctx.save();
+  ctx.translate(cx+sway, cy);
+  ctx.strokeStyle='#8a7050'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(-18,-2); ctx.quadraticCurveTo(0,8,18,-2); ctx.stroke();
+  ctx.strokeStyle='#8a705060'; ctx.lineWidth=1;
+  ctx.beginPath(); ctx.moveTo(-14,0); ctx.quadraticCurveTo(0,6,14,0); ctx.stroke();
+  px(ctx,6,0,10,4,pal.pants);
+  px(ctx,8,-1,10,3,pal.pants);
+  px(ctx,15,0,4,3,'#1a1a2a'); px(ctx,17,-1,4,3,'#1a1a2a');
+  px(ctx,-4,-1,12,5,pal.shirt);
+  px(ctx,2,3,3,5,pal.skin);
+  px(ctx,-12,-3,6,3,pal.skin);
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(-14,-2,7,6,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(-14,-4,7,5,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(-18,-3,3,1); ctx.fillRect(-13,-3,3,1);
+  ctx.fillStyle='#c89060'; ctx.fillRect(-17,0,4,1);
+  ctx.restore();
+}
+
+// ── shooting_basket — throwing basketball ────────────────────────
+function drawShootingBasket(ctx, cx, cy, pal, t) {
+  const phase = t < 0.4 ? 0 : t < 0.6 ? 1 : 2;
+  const lift = phase === 1 ? 2 : 0;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-4,cy+5+lift,4,9-lift,pal.pants);
+  px(ctx,cx+1,cy+5+lift,4,9-lift,pal.pants);
+  px(ctx,cx-5,cy+13,5,3,'#1a1a2a'); px(ctx,cx+1,cy+13,5,3,'#1a1a2a');
+  px(ctx,cx-6,cy-2-lift,12,9,pal.shirt);
+  if (phase === 0) {
+    px(ctx,cx-7,cy-8-lift,5,3,pal.skin);
+    px(ctx,cx+3,cy-8-lift,5,3,pal.skin);
+    ctx.fillStyle='#e88030'; ctx.beginPath(); ctx.arc(cx,cy-14-lift,4,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#c06020'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(cx,cy-14-lift,4,0,Math.PI*2); ctx.stroke();
+  } else if (phase === 1) {
+    const releaseT = (t - 0.4) / 0.2;
+    px(ctx,cx-5,cy-14-lift,4,3,pal.skin);
+    px(ctx,cx+2,cy-14-lift,4,3,pal.skin);
+    const ballY = cy - 18 - lift - releaseT * 14;
+    const ballX = cx + releaseT * 4;
+    ctx.fillStyle='#e88030'; ctx.beginPath(); ctx.arc(ballX,ballY,4,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#c06020'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(ballX,ballY,4,0,Math.PI*2); ctx.stroke();
+  } else {
+    px(ctx,cx-5,cy-14,4,3,pal.skin);
+    px(ctx,cx+2,cy-14,4,3,pal.skin);
+    const ftT = (t - 0.6) / 0.4;
+    const ballY = cy - 32 + ftT * 10;
+    const ballX = cx + 4 + ftT * 2;
+    ctx.fillStyle='#e88030'; ctx.beginPath(); ctx.arc(ballX,ballY,4,0,Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#c06020'; ctx.lineWidth=1;
+    ctx.beginPath(); ctx.arc(ballX,ballY,4,0,Math.PI*2); ctx.stroke();
+  }
+  drawHeadFront(ctx, cx, cy-11-lift, pal, false);
+}
+
+// ── playing_foosball — at foosball table side view ───────────────
+function drawPlayingFoosball(ctx, cx, cy, pal, t) {
+  const twist = Math.sin(t * Math.PI * 4) * 0.3;
+  const lean = Math.sin(t * Math.PI * 2) * 2;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-6,cy+5,4,9,pal.pants); px(ctx,cx+3,cy+5,4,9,pal.pants);
+  px(ctx,cx-7,cy+13,5,3,'#1a1a2a'); px(ctx,cx+3,cy+13,5,3,'#1a1a2a');
+  px(ctx,cx-6+lean,cy-2,12,9,pal.shirt);
+  px(ctx,cx-10+lean,cy+2,4,3,pal.skin);
+  px(ctx,cx+8+lean,cy+2,4,3,pal.skin);
+  ctx.strokeStyle='#888'; ctx.lineWidth=2;
+  ctx.beginPath(); ctx.moveTo(cx-14+lean,cy+3); ctx.lineTo(cx+14+lean,cy+3); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx-14+lean,cy+6); ctx.lineTo(cx+14+lean,cy+6); ctx.stroke();
+  ctx.save(); ctx.translate(cx+lean,cy+4); ctx.rotate(twist);
+  px(ctx,-2,-3,4,6,'#4060c0');
+  ctx.restore();
+  drawHeadFront(ctx, cx+lean, cy-11, pal, false);
+}
+
+// ── massage_recline — reclined in massage chair ──────────────────
+function drawMassageChair(ctx, cx, cy, pal, t) {
+  const jx = Math.round(Math.sin(t*Math.PI*12))*1;
+  const jy = Math.round(Math.cos(t*Math.PI*12))*1;
+  shd(ctx, cx, cy+16, 12, 3);
+  px(ctx,cx-8,cy-6,14,18,'#504068');
+  px(ctx,cx-6,cy-4,10,14,'#6050a0');
+  px(ctx,cx+4,cy+8+jy,12,4,pal.pants);
+  px(ctx,cx+14,cy+8+jy,5,3,'#1a1a2a');
+  px(ctx,cx+6,cy+11,12,2,'#504068');
+  ctx.save(); ctx.translate(cx+jx,cy+jy); ctx.rotate(-0.4);
+  px(ctx,-6,-2,12,8,pal.shirt);
+  ctx.restore();
+  px(ctx,cx-10+jx,cy+4+jy,5,3,pal.skin);
+  px(ctx,cx+6+jx,cy+4+jy,5,3,pal.skin);
+  px(ctx,cx-12,cy+3,5,2,'#504068');
+  px(ctx,cx+8,cy+3,5,2,'#504068');
+  ctx.save(); ctx.translate(cx-3+jx,cy-10+jy);
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(0,0,7,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-2,7,5,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(-4,-1,3,1); ctx.fillRect(2,-1,3,1);
+  ctx.fillStyle='#c89060'; ctx.fillRect(-2,3,5,1);
+  ctx.restore();
+  ctx.save(); ctx.globalAlpha=0.4+Math.sin(t*Math.PI*2)*0.2;
+  ctx.fillStyle='#a0a0c0'; ctx.font='7px monospace';
+  const zy = cy-18+Math.sin(t*Math.PI*2)*3;
+  ctx.fillText('z',cx+6,zy);
+  ctx.fillText('z',cx+10,zy-5);
+  ctx.restore();
+}
+
+// ── using_telescope — standing looking through telescope ─────────
+function drawUsingTelescope(ctx, cx, cy, pal, t) {
+  const adj = Math.sin(t * Math.PI * 2) * 2;
+  const mouthOpen = Math.sin(t * Math.PI * 2) > 0.8;
+  shd(ctx, cx, cy+16);
+  px(ctx,cx-4,cy+5,4,9,pal.pants); px(ctx,cx+1,cy+5,4,9,pal.pants);
+  px(ctx,cx-5,cy+13,5,3,'#1a1a2a'); px(ctx,cx+1,cy+13,5,3,'#1a1a2a');
+  ctx.save(); ctx.translate(cx,cy); ctx.rotate(0.2);
+  px(ctx,-6,-2,12,9,pal.shirt);
+  ctx.restore();
+  px(ctx,cx+6,cy-4+adj,5,3,pal.skin);
+  px(ctx,cx-9,cy-2,5,3,pal.skin);
+  ctx.strokeStyle='#606080'; ctx.lineWidth=3;
+  ctx.beginPath(); ctx.moveTo(cx-6,cy-6); ctx.lineTo(cx+12,cy-14+adj*0.5); ctx.stroke();
+  ctx.fillStyle='#404060'; ctx.beginPath(); ctx.arc(cx-6,cy-6,3,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle='#80a0d0'; ctx.beginPath(); ctx.arc(cx+12,cy-14+adj*0.5,2,0,Math.PI*2); ctx.fill();
+  ctx.save(); ctx.translate(cx-4,cy-12); ctx.rotate(0.15);
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(0,0,7,7,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-2,7,5,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(-4,-1,3,1);
+  ctx.fillRect(2,-1,3,3);
+  if (mouthOpen) {
+    ctx.fillStyle='#1a1b26'; ctx.beginPath(); ctx.ellipse(0,4,2,2,0,0,Math.PI*2); ctx.fill();
+  } else {
+    ctx.fillStyle='#c89060'; ctx.fillRect(-2,3,4,1);
+  }
+  ctx.restore();
+}
+
 // ── DISPATCH: state name → draw fn ───────────────────────────────
 const CHAR_DRAW = {
   walking:        drawWalking,
@@ -2346,6 +2612,16 @@ const CHAR_DRAW = {
   ping_pong_r:  drawPingPongR,
   petting_cat:  drawPettingCat,
   cleaning:     drawCleaning,
+  playing_arcade:    drawPlayingArcade,
+  drinking_espresso: drawDrinkingEspresso,
+  djing:             drawDJing,
+  fixing_server:     drawFixingServer,
+  watching_3dprint:  drawWatching3DPrint,
+  lying_hammock:     drawLyingHammock,
+  shooting_basket:   drawShootingBasket,
+  playing_foosball:  drawPlayingFoosball,
+  massage_recline:   drawMassageChair,
+  using_telescope:   drawUsingTelescope,
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -2765,6 +3041,64 @@ function buildObstacleGrid() {
   const [aqTx,aqTy] = getAdminPos('aquarium', rXobs+0.3, 8);
   markRect(aqTx, aqTy, 3, 2);
 
+  // ── Massage Chair ─────
+  const [mcObsTx,mcObsTy] = getAdminPos('massage_chair', rXobs+0.5, 11);
+  markRect(mcObsTx, mcObsTy, 2, 2);
+
+  // ── Arcade Machine ─────
+  if (ACT_ZONE_Y > 0) {
+    const [arcObsTx,arcObsTy] = getAdminPos('arcade', 2, ACT_ZONE_Y+13);
+    markRect(arcObsTx, arcObsTy, 2, 3);
+  }
+
+  // ── Espresso Bar ─────
+  if (ACT_ZONE_Y > 0) {
+    const [espObsTx,espObsTy] = getAdminPos('espresso_bar', 8, ACT_ZONE_Y+13);
+    markRect(espObsTx, espObsTy, 3, 2);
+  }
+
+  // ── Server Rack ─────
+  if (ACT_ZONE_Y > 0) {
+    const [srvObsTx,srvObsTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y+15);
+    markRect(srvObsTx, srvObsTy, 2, 2);
+  }
+
+  // ── 3D Printer ─────
+  if (ACT_ZONE_Y > 0) {
+    const [p3ObsTx,p3ObsTy] = getAdminPos('printer_3d', 8, ACT_ZONE_Y+15);
+    markRect(p3ObsTx, p3ObsTy, 2, 2);
+  }
+
+  // ── Hammock ─────
+  if (ACT_ZONE_Y > 0) {
+    const [hamObsTx,hamObsTy] = getAdminPos('hammock', 2, ACT_ZONE_Y+17);
+    markRect(hamObsTx, hamObsTy, 3, 1);
+  }
+
+  // ── Basketball Hoop ─────
+  if (ACT_ZONE_Y > 0) {
+    const [bbObsTx,bbObsTy] = getAdminPos('basketball', 8, ACT_ZONE_Y+17);
+    markRect(bbObsTx, bbObsTy, 2, 2);
+  }
+
+  // ── Foosball Table ─────
+  if (ACT_ZONE_Y > 0) {
+    const [fbObsTx,fbObsTy] = getAdminPos('foosball', 14, ACT_ZONE_Y+17);
+    markRect(fbObsTx, fbObsTy, 3, 2);
+  }
+
+  // ── DJ Console ─────
+  if (ACT_ZONE_Y > 0) {
+    const [djObsTx,djObsTy] = getAdminPos('dj_console', 2, ACT_ZONE_Y+19);
+    markRect(djObsTx, djObsTy, 3, 1);
+  }
+
+  // ── Telescope ─────
+  if (ACT_ZONE_Y > 0) {
+    const [telObsTx,telObsTy] = getAdminPos('telescope', 10, ACT_ZONE_Y+19);
+    markRect(telObsTx, telObsTy, 1, 2);
+  }
+
   // ── Printer ─────
   if (KITCHEN_WALL_COL > 0) {
     const [prTx,prTy] = getAdminPos('printer', KITCHEN_WALL_COL-3, KITCHEN_START_ROW-2);
@@ -3013,6 +3347,99 @@ function drawKanban(ctx) {
   ctx.textAlign = 'left';
 }
 
+// ── Dynamic windows — sky color changes with time of day ─────────
+function getTimeOfDay() {
+  const h = new Date().getHours();
+  const m = new Date().getMinutes();
+  const t = h + m / 60; // fractional hour
+  // 4 states: night (0-5), dawn (5-7), day (7-18), sunset (18-20), night (20-24)
+  if (t < 5) return { state:'night', blend:0 };
+  if (t < 7) return { state:'dawn', blend:(t-5)/2 }; // 0→1 over 2 hours
+  if (t < 18) return { state:'day', blend:1 };
+  if (t < 20) return { state:'sunset', blend:1-(t-18)/2 }; // 1→0 over 2 hours
+  return { state:'night', blend:0 };
+}
+
+function drawDynamicWindows(ctx) {
+  const tod = getTimeOfDay();
+
+  // Sky colors per state
+  const skies = {
+    night:  { top:'#0a0a20', bot:'#101830', stars:true, moon:true, shaft:0 },
+    dawn:   { top:'#2a1838', bot:'#e06848', stars:false, moon:false, shaft:0.03 },
+    day:    { top:'#4a90d0', bot:'#88c8f0', stars:false, moon:false, shaft:0.06 },
+    sunset: { top:'#1a1040', bot:'#d06030', stars:false, moon:false, shaft:0.03 },
+  };
+  const sky = skies[tod.state] || skies.day;
+
+  for (let i = 0; i < 4; i++) {
+    const wx = OX + (3 + i*6)*T + 4, wy = OY + 5;
+    const ww = T-12, wh = T-14;
+
+    // Sky gradient
+    const grad = ctx.createLinearGradient(wx+2, wy+2, wx+2, wy+2+wh);
+    grad.addColorStop(0, sky.top);
+    grad.addColorStop(1, sky.bot);
+    ctx.fillStyle = grad;
+    ctx.fillRect(wx+2, wy+2, ww, wh);
+
+    // Stars (night only)
+    if (sky.stars) {
+      ctx.fillStyle = '#ffffff';
+      const starSeed = i * 7;
+      for (let s = 0; s < 5; s++) {
+        const sx = wx + 4 + ((starSeed + s*13) % (ww-4));
+        const sy = wy + 4 + ((starSeed + s*17) % (wh-6));
+        const twinkle = Math.sin(Date.now()*0.003 + s*2) > 0.3 ? 1 : 0.3;
+        ctx.globalAlpha = twinkle;
+        ctx.fillRect(sx, sy, 1, 1);
+      }
+      ctx.globalAlpha = 1;
+    }
+
+    // Moon (night, top-right of first window)
+    if (sky.moon && i === 0) {
+      ctx.fillStyle = '#e8e0c0';
+      ctx.beginPath(); ctx.arc(wx+ww-4, wy+8, 4, 0, Math.PI*2); ctx.fill();
+      ctx.fillStyle = sky.top;
+      ctx.beginPath(); ctx.arc(wx+ww-2, wy+7, 3.5, 0, Math.PI*2); ctx.fill(); // crescent
+    }
+
+    // Dawn/sunset glow
+    if (tod.state === 'dawn' || tod.state === 'sunset') {
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      const glow = ctx.createRadialGradient(wx+ww/2, wy+wh, 0, wx+ww/2, wy+wh, wh);
+      glow.addColorStop(0, tod.state==='dawn' ? '#ffaa40' : '#ff6020');
+      glow.addColorStop(1, 'transparent');
+      ctx.fillStyle = glow;
+      ctx.fillRect(wx+2, wy+2, ww, wh);
+      ctx.restore();
+    }
+
+    // Clouds (day only, subtle)
+    if (tod.state === 'day') {
+      ctx.fillStyle = '#ffffff30';
+      const cx = wx + ((Date.now()*0.01 + i*20) % (ww+10)) - 5;
+      ctx.beginPath();
+      ctx.arc(cx, wy+8, 3, 0, Math.PI*2); ctx.fill();
+      ctx.arc(cx+4, wy+7, 4, 0, Math.PI*2); ctx.fill();
+      ctx.arc(cx+8, wy+8, 3, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Light shaft into room
+    if (sky.shaft > 0) {
+      ctx.save(); ctx.globalAlpha = sky.shaft;
+      ctx.fillStyle = tod.state==='dawn' ? '#ffcc6040' : tod.state==='sunset' ? '#ff804040' : '#ffe8a040';
+      ctx.beginPath();
+      ctx.moveTo(wx, wy+T-10); ctx.lineTo(wx+T-8, wy+T-10);
+      ctx.lineTo(wx+T, wy+T*2.5); ctx.lineTo(wx-8, wy+T*2.5);
+      ctx.closePath(); ctx.fill();
+      ctx.restore();
+    }
+  }
+}
+
 function drawWallClock(ctx) {
   const now = new Date();
   const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
@@ -3189,23 +3616,16 @@ function buildBackground() {
     ctx.textAlign='center'; ctx.fillText('ENTRANCE', edx+T/2, edy-6); ctx.textAlign='left';
   }
 
-  // Windows
+  // Windows — static frames only (sky color drawn dynamically)
   for (let i=0; i<4; i++) {
     const wx=OX+(3+i*6)*T+4, wy=OY+5;
-    fillR(ctx,wx,wy,T-8,T-10,'#1a2844');
-    fillR(ctx,wx+2,wy+2,T-12,T-14,'#4a80b060');
-    ctx.strokeStyle='#3a3860'; ctx.lineWidth=1;
+    fillR(ctx,wx,wy,T-8,T-10,'#0a0a14'); // dark placeholder
+    ctx.strokeStyle='#3a3860'; ctx.lineWidth=1.5;
     ctx.strokeRect(wx+.5,wy+.5,T-9,T-11);
     ctx.beginPath();
     ctx.moveTo(wx+(T-8)/2,wy); ctx.lineTo(wx+(T-8)/2,wy+T-10);
     ctx.moveTo(wx,wy+(T-10)/2); ctx.lineTo(wx+T-8,wy+(T-10)/2);
-    ctx.strokeStyle='#3a386060'; ctx.stroke();
-    // light shaft
-    ctx.save(); ctx.globalAlpha=0.055;
-    ctx.fillStyle='#ffe8a0';
-    ctx.beginPath(); ctx.moveTo(wx,wy+T-10); ctx.lineTo(wx+T-8,wy+T-10);
-    ctx.lineTo(wx+T,wy+T*2.5); ctx.lineTo(wx-8,wy+T*2.5); ctx.closePath(); ctx.fill();
-    ctx.restore();
+    ctx.strokeStyle='#3a386080'; ctx.stroke();
   }
 
   // Ceiling strip lights
@@ -3809,6 +4229,251 @@ function buildBackground() {
     ctx.beginPath(); ctx.moveTo(dartWallX,dartWallY-DR); ctx.lineTo(dartWallX,dartWallY+DR); ctx.stroke();
     // Bullseye
     ctx.fillStyle='#f0e8d0'; ctx.beginPath(); ctx.arc(dartWallX,dartWallY,1.5,0,Math.PI*2); ctx.fill();
+
+    // ── 4. Massage Chair (right zone, row 11) ─────────────────────
+    const [_mcTx, _mcTy] = getAdminPos('massage_chair', rX+0.5, 11);
+    const [mcx, mcy] = ts(_mcTx, _mcTy);
+    const mcW = T*2, mcH = T*1.8;
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
+    fillR(ctx, mcx, mcy, mcW, mcH, '#2a2838'); ctx.restore();
+    fillR(ctx, mcx+4, mcy+mcH*0.3, mcW-8, mcH*0.5, '#38304a');
+    fillR(ctx, mcx+mcW*0.3, mcy, mcW*0.4, mcH*0.3, '#322a44');
+    ctx.fillStyle='#2a2238';
+    ctx.beginPath(); ctx.ellipse(mcx+mcW*0.5, mcy+4, mcW*0.15, 6, 0, 0, Math.PI*2); ctx.fill();
+    fillR(ctx, mcx, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
+    fillR(ctx, mcx+mcW-6, mcy+mcH*0.25, 6, mcH*0.45, '#322a44');
+    fillR(ctx, mcx+6, mcy+mcH-8, mcW-12, 8, '#38304a');
+    fillR(ctx, mcx+8, mcy+mcH-6, mcW-16, 4, '#403858');
+    fillR(ctx, mcx+mcW*0.35, mcy+mcH, mcW*0.3, 6, '#1a1828');
+  }
+
+  // ── Social zone entertainment objects ─────────────────────────
+  if (ACT_ZONE_Y > 0) {
+
+    // ── 5. Arcade Machine (ACT_ZONE+13, col 2) ─────────────────
+    const [_arcTx, _arcTy] = getAdminPos('arcade', 2, ACT_ZONE_Y+13);
+    const [arcx, arcy] = ts(_arcTx, _arcTy);
+    const arcW = T*2, arcH = T*2.5;
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
+    fillR(ctx, arcx, arcy, arcW, arcH, '#1a1a30'); ctx.restore();
+    fillR(ctx, arcx+2, arcy+2, arcW-4, 12, '#c02040');
+    ctx.fillStyle='#ffcc00'; ctx.font="5px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('ARCADE', arcx+arcW/2, arcy+10); ctx.textAlign='left';
+    const marqueeCols = ['#ff0','#0ff','#f0f','#0f0','#ff0','#0ff'];
+    for (let li=0; li<6; li++) {
+      ctx.fillStyle=marqueeCols[li]; ctx.beginPath();
+      ctx.arc(arcx+6+li*9, arcy+1, 2, 0, Math.PI*2); ctx.fill();
+    }
+    fillR(ctx, arcx+4, arcy+16, arcW-8, arcH*0.4, '#0a1828');
+    fillR(ctx, arcx+6, arcy+18, arcW-12, arcH*0.4-4, '#102838');
+    fillR(ctx, arcx+10, arcy+22, 6, 6, '#f7768e');
+    fillR(ctx, arcx+arcW-18, arcy+24, 6, 6, '#9ece6a');
+    fillR(ctx, arcx+4, arcy+arcH*0.65, arcW-8, 14, '#282840');
+    fillR(ctx, arcx+10, arcy+arcH*0.65+2, 4, 8, '#808090');
+    ctx.fillStyle='#c04040'; ctx.beginPath();
+    ctx.arc(arcx+12, arcy+arcH*0.65+2, 4, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#e04040'; ctx.beginPath(); ctx.arc(arcx+arcW-16, arcy+arcH*0.65+6, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#40a0e0'; ctx.beginPath(); ctx.arc(arcx+arcW-8, arcy+arcH*0.65+6, 3, 0, Math.PI*2); ctx.fill();
+    fillR(ctx, arcx+arcW/2-3, arcy+arcH-10, 6, 3, '#404058');
+
+    // ── 6. Espresso Bar (ACT_ZONE+13, col 8) ───────────────────
+    const [_espTx, _espTy] = getAdminPos('espresso_bar', 8, ACT_ZONE_Y+13);
+    const [espx, espy] = ts(_espTx, _espTy);
+    const espW = T*3, espH = T*1.5;
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=6;
+    fillR(ctx, espx, espy, espW, espH, '#5a3c20'); ctx.restore();
+    fillR(ctx, espx+2, espy+2, espW-4, espH-4, '#6a4828');
+    fillR(ctx, espx, espy, espW, 4, '#7a5830');
+    fillR(ctx, espx+espW/2-8, espy-12, 16, 14, '#404050');
+    fillR(ctx, espx+espW/2-6, espy-10, 12, 8, '#505060');
+    fillR(ctx, espx+espW/2-2, espy-4, 4, 6, '#606070');
+    fillR(ctx, espx+espW/2+4, espy-8, 2, 4, '#808090');
+    ctx.fillStyle='#e0d8c8';
+    [espx+6, espx+16, espx+espW-18].forEach(cx2 => {
+      ctx.fillRect(cx2, espy-4, 6, 5);
+      ctx.fillStyle='#c0b8a8'; ctx.fillRect(cx2+1, espy-3, 4, 3); ctx.fillStyle='#e0d8c8';
+    });
+    const bottleCols = ['#802020','#208020','#a06020','#202080'];
+    bottleCols.forEach((bc, i) => {
+      fillR(ctx, espx+4+i*12, espy-22, 6, 10, bc);
+      fillR(ctx, espx+5+i*12, espy-26, 4, 5, bc);
+    });
+    for (let si=0; si<3; si++) {
+      const stx = espx + 8 + si * (espW-16)/2;
+      fillR(ctx, stx, espy+espH+2, 10, 4, '#404050');
+      fillR(ctx, stx+4, espy+espH+6, 3, 8, '#505060');
+      fillR(ctx, stx+1, espy+espH+14, 8, 2, '#404050');
+    }
+
+    // ── 8. Server Rack (ACT_ZONE+15, col 2) ────────────────────
+    const [_srvTx, _srvTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y+15);
+    const [srvx, srvy] = ts(_srvTx, _srvTy);
+    const srvW = T*2, srvH = T*2.2;
+    ctx.save(); ctx.shadowColor='#00000080'; ctx.shadowBlur=8;
+    fillR(ctx, srvx, srvy, srvW, srvH, '#101018'); ctx.restore();
+    fillR(ctx, srvx+2, srvy+2, srvW-4, srvH-4, '#181820');
+    for (let ru=0; ru<5; ru++) {
+      const ruy = srvy + 6 + ru * (srvH-12)/5;
+      fillR(ctx, srvx+4, ruy, srvW-8, (srvH-20)/5, '#202030');
+      fillR(ctx, srvx+5, ruy+1, srvW-10, 2, '#282838');
+      const ledCols = ['#40e040','#4080ff','#e0a020','#40e040','#4080ff'];
+      for (let li=0; li<4; li++) {
+        ctx.fillStyle=ledCols[(ru+li)%5];
+        ctx.beginPath(); ctx.arc(srvx+8+li*8, ruy+6, 1.5, 0, Math.PI*2); ctx.fill();
+      }
+    }
+    fillR(ctx, srvx+4, srvy+srvH-8, srvW-8, 6, '#0a0a12');
+    ctx.strokeStyle='#303040'; ctx.lineWidth=1;
+    for (let ci=0; ci<3; ci++) {
+      ctx.beginPath();
+      ctx.moveTo(srvx+8+ci*10, srvy+srvH-6);
+      ctx.quadraticCurveTo(srvx+8+ci*10+5, srvy+srvH+4, srvx+12+ci*10, srvy+srvH-2);
+      ctx.stroke();
+    }
+    ctx.fillStyle='#505068'; ctx.font="4px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('SERVER', srvx+srvW/2, srvy+srvH-2); ctx.textAlign='left';
+
+    // ── 9. 3D Printer (ACT_ZONE+15, col 8) ─────────────────────
+    const [_p3Tx, _p3Ty] = getAdminPos('printer_3d', 8, ACT_ZONE_Y+15);
+    const [p3x, p3y] = ts(_p3Tx, _p3Ty);
+    const p3W = T*2, p3H = T*1.8;
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
+    fillR(ctx, p3x, p3y, p3W, p3H, '#303040'); ctx.restore();
+    fillR(ctx, p3x+3, p3y+3, p3W-6, p3H-6, '#40405060');
+    fillR(ctx, p3x, p3y, 4, p3H, '#303040');
+    fillR(ctx, p3x+p3W-4, p3y, 4, p3H, '#303040');
+    fillR(ctx, p3x, p3y, p3W, 4, '#303040');
+    fillR(ctx, p3x, p3y+p3H-4, p3W, 4, '#303040');
+    fillR(ctx, p3x+6, p3y+p3H-12, p3W-12, 6, '#505060');
+    fillR(ctx, p3x+8, p3y+p3H-14, p3W-16, 2, '#606070');
+    fillR(ctx, p3x+6, p3y+6, p3W-12, 3, '#404050');
+    fillR(ctx, p3x+p3W/2-3, p3y+6, 6, 10, '#606070');
+    fillR(ctx, p3x+p3W/2-1, p3y+16, 2, 4, '#808090');
+    fillR(ctx, p3x+p3W/2-4, p3y+p3H-18, 8, 6, '#9ece6a');
+    fillR(ctx, p3x+p3W/2-2, p3y+p3H-22, 4, 4, '#7aa2f7');
+    ctx.fillStyle='#606078'; ctx.font="4px 'Press Start 2P',monospace";
+    ctx.textAlign='center'; ctx.fillText('3D', p3x+p3W/2, p3y+p3H+8); ctx.textAlign='left';
+
+    // ── 10. Hammock (ACT_ZONE+17, col 2) ────────────────────────
+    const [_hamTx, _hamTy] = getAdminPos('hammock', 2, ACT_ZONE_Y+17);
+    const [hamx, hamy] = ts(_hamTx, _hamTy);
+    const hamW = T*3, hamH = T*1.2;
+    fillR(ctx, hamx, hamy-8, 6, hamH+16, '#6a5030');
+    fillR(ctx, hamx+hamW-6, hamy-8, 6, hamH+16, '#6a5030');
+    fillR(ctx, hamx-1, hamy-10, 8, 4, '#7a6040');
+    fillR(ctx, hamx+hamW-7, hamy-10, 8, 4, '#7a6040');
+    ctx.fillStyle='#4a7828';
+    ctx.beginPath();
+    ctx.moveTo(hamx+6, hamy+2);
+    ctx.quadraticCurveTo(hamx+hamW/2, hamy+hamH+8, hamx+hamW-6, hamy+2);
+    ctx.lineTo(hamx+hamW-6, hamy+6);
+    ctx.quadraticCurveTo(hamx+hamW/2, hamy+hamH+14, hamx+6, hamy+6);
+    ctx.closePath(); ctx.fill();
+    ctx.strokeStyle='#3a6020'; ctx.lineWidth=1;
+    for (let mi=1; mi<6; mi++) {
+      const mx2 = hamx + 6 + mi * (hamW-12)/6;
+      ctx.beginPath(); ctx.moveTo(mx2, hamy+2); ctx.lineTo(mx2, hamy+hamH+4); ctx.stroke();
+    }
+    ctx.fillStyle='#e8e0c8';
+    ctx.beginPath(); ctx.ellipse(hamx+16, hamy+6, 8, 5, -0.3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#d8d0b8';
+    ctx.beginPath(); ctx.ellipse(hamx+16, hamy+6, 6, 3, -0.3, 0, Math.PI*2); ctx.fill();
+
+    // ── 11. Basketball Hoop (ACT_ZONE+17, col 8) ───────────────
+    const [_bbTx, _bbTy] = getAdminPos('basketball', 8, ACT_ZONE_Y+17);
+    const [bbx, bby] = ts(_bbTx, _bbTy);
+    fillR(ctx, bbx+T-2, bby+T*0.4, 4, T*1.8, '#606070');
+    fillR(ctx, bbx+4, bby, T*1.8, T*1.0, '#e8e0d0');
+    fillR(ctx, bbx+6, bby+2, T*1.8-4, T*1.0-4, '#d8d0c0');
+    ctx.strokeStyle='#c04020'; ctx.lineWidth=2;
+    ctx.strokeRect(bbx+T*0.6, bby+T*0.2, T*0.6, T*0.5);
+    ctx.strokeStyle='#e06020'; ctx.lineWidth=2.5;
+    ctx.beginPath(); ctx.ellipse(bbx+T*0.9, bby+T*1.0+2, 8, 4, 0, 0, Math.PI*2); ctx.stroke();
+    ctx.strokeStyle='#ffffff80'; ctx.lineWidth=0.8;
+    for (let ni=0; ni<5; ni++) {
+      const nx = bbx+T*0.9 - 6 + ni*3;
+      ctx.beginPath();
+      ctx.moveTo(nx, bby+T*1.0+4);
+      ctx.quadraticCurveTo(nx+(ni-2)*0.5, bby+T*1.3, bbx+T*0.9, bby+T*1.5);
+      ctx.stroke();
+    }
+
+    // ── 12. Foosball Table (ACT_ZONE+17, col 14) ───────────────
+    const [_fbTx, _fbTy] = getAdminPos('foosball', 14, ACT_ZONE_Y+17);
+    const [fbx, fby] = ts(_fbTx, _fbTy);
+    const fbW = T*3, fbH = T*1.5;
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=6;
+    fillR(ctx, fbx, fby, fbW, fbH, '#1a5030'); ctx.restore();
+    fillR(ctx, fbx+2, fby+2, fbW-4, fbH-4, '#206038');
+    fillR(ctx, fbx, fby, fbW, 3, '#2a6840');
+    fillR(ctx, fbx, fby+fbH-3, fbW, 3, '#103020');
+    fillR(ctx, fbx, fby, 3, fbH, '#2a6840');
+    fillR(ctx, fbx+fbW-3, fby, 3, fbH, '#103020');
+    ctx.strokeStyle='#c0c0c0'; ctx.lineWidth=2;
+    for (let ri=0; ri<4; ri++) {
+      const ry = fby + 8 + ri * (fbH-16)/3;
+      ctx.beginPath(); ctx.moveTo(fbx-4, ry); ctx.lineTo(fbx+fbW+4, ry); ctx.stroke();
+      const playerCount = ri%2===0 ? 3 : 2;
+      const teamCol = ri < 2 ? '#e04040' : '#4040e0';
+      for (let pi=0; pi<playerCount; pi++) {
+        const px = fbx + 10 + pi * (fbW-20)/(playerCount);
+        fillR(ctx, px, ry-4, 6, 8, teamCol);
+        fillR(ctx, px+1, ry-6, 4, 3, '#f5c2a0');
+      }
+    }
+    fillR(ctx, fbx-2, fby+fbH*0.3, 4, fbH*0.4, '#404050');
+    fillR(ctx, fbx+fbW-2, fby+fbH*0.3, 4, fbH*0.4, '#404050');
+    fillR(ctx, fbx+4, fby+fbH, 4, 8, '#1a3020');
+    fillR(ctx, fbx+fbW-8, fby+fbH, 4, 8, '#1a3020');
+
+    // ── 7. DJ Console (ACT_ZONE+19, col 2) ─────────────────────
+    const [_djTx, _djTy] = getAdminPos('dj_console', 2, ACT_ZONE_Y+19);
+    const [djx, djy] = ts(_djTx, _djTy);
+    const djW = T*2.5, djH = T*1.2;
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
+    fillR(ctx, djx, djy, djW, djH, '#1a1a2a'); ctx.restore();
+    fillR(ctx, djx+2, djy+2, djW-4, djH-4, '#222234');
+    ctx.fillStyle='#303040'; ctx.beginPath();
+    ctx.arc(djx+djW*0.25, djy+djH*0.5, 12, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1a28'; ctx.beginPath();
+    ctx.arc(djx+djW*0.25, djy+djH*0.5, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#404050'; ctx.beginPath();
+    ctx.arc(djx+djW*0.25, djy+djH*0.5, 3, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#303040'; ctx.beginPath();
+    ctx.arc(djx+djW*0.75, djy+djH*0.5, 12, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#1a1a28'; ctx.beginPath();
+    ctx.arc(djx+djW*0.75, djy+djH*0.5, 10, 0, Math.PI*2); ctx.fill();
+    ctx.fillStyle='#404050'; ctx.beginPath();
+    ctx.arc(djx+djW*0.75, djy+djH*0.5, 3, 0, Math.PI*2); ctx.fill();
+    fillR(ctx, djx+djW*0.38, djy+4, djW*0.24, djH-8, '#2a2a3c');
+    fillR(ctx, djx+djW*0.42, djy+8, 3, djH-16, '#505060');
+    fillR(ctx, djx+djW*0.52, djy+10, 3, djH-20, '#505060');
+    ctx.fillStyle='#7080a0';
+    ctx.beginPath(); ctx.arc(djx+djW*0.43, djy+8, 2, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.arc(djx+djW*0.53, djy+10, 2, 0, Math.PI*2); ctx.fill();
+    ctx.strokeStyle='#606070'; ctx.lineWidth=2;
+    ctx.beginPath();
+    ctx.arc(djx-4, djy+djH*0.3, 6, -Math.PI*0.5, Math.PI*0.5); ctx.stroke();
+    ctx.fillStyle='#404050';
+    ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3-6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
+    ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3+6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
+
+    // ── 13. Telescope (ACT_ZONE+19, col 10) ────────────────────
+    const [_telTx, _telTy] = getAdminPos('telescope', 10, ACT_ZONE_Y+19);
+    const [telx, tely] = ts(_telTx, _telTy);
+    ctx.strokeStyle='#606070'; ctx.lineWidth=2;
+    ctx.beginPath(); ctx.moveTo(telx+T*0.5, tely+T*0.6); ctx.lineTo(telx+2, tely+T*1.6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(telx+T*0.5, tely+T*0.6); ctx.lineTo(telx+T-2, tely+T*1.6); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(telx+T*0.5, tely+T*0.6); ctx.lineTo(telx+T*0.5+8, tely+T*1.5); ctx.stroke();
+    ctx.save();
+    ctx.translate(telx+T*0.5, tely+T*0.5);
+    ctx.rotate(-Math.PI*0.25);
+    fillR(ctx, -16, -4, 32, 8, '#404050');
+    fillR(ctx, 14, -5, 6, 10, '#505060');
+    fillR(ctx, -18, -3, 4, 6, '#505060');
+    ctx.restore();
+    ctx.fillStyle='#303040';
+    ctx.beginPath(); ctx.arc(telx+T*0.5-12, tely+T*0.5+10, 3, 0, Math.PI*2); ctx.fill();
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
@@ -5811,6 +6476,9 @@ function loop(now) {
   // Kanban board (live tasks)
   drawKanban(ctx);
 
+  // Dynamic windows (sky based on time of day)
+  drawDynamicWindows(ctx);
+
   // Wall clock (dynamic hands)
   drawWallClock(ctx);
 
@@ -6186,6 +6854,22 @@ function buildAdminObjects() {
   // Gaming sofa (separate from TV)
   if (ACT_ZONE_Y > 0) {
     adminObjects.push({id:'gaming_sofa', label:'🛋 Gaming Sofa', tx:11, ty:ACT_ZONE_Y+3.7, w:4, h:1.5});
+  }
+
+  // Massage chair (right zone)
+  adminObjects.push({id:'massage_chair', label:'💆 Massage Chair', tx:rX+0.5, ty:11, w:2, h:2});
+
+  // Entertainment objects (social zone)
+  if (ACT_ZONE_Y > 0) {
+    adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:2, ty:ACT_ZONE_Y+13, w:2, h:2.5});
+    adminObjects.push({id:'espresso_bar', label:'☕ Espresso Bar', tx:8, ty:ACT_ZONE_Y+13, w:3, h:1.5});
+    adminObjects.push({id:'server_rack', label:'🖥 Server Rack', tx:2, ty:ACT_ZONE_Y+15, w:2, h:2.2});
+    adminObjects.push({id:'printer_3d', label:'🖨 3D Printer', tx:8, ty:ACT_ZONE_Y+15, w:2, h:1.8});
+    adminObjects.push({id:'hammock', label:'🛏 Hammock', tx:2, ty:ACT_ZONE_Y+17, w:3, h:1.2});
+    adminObjects.push({id:'basketball', label:'🏀 Basketball', tx:8, ty:ACT_ZONE_Y+17, w:2, h:2});
+    adminObjects.push({id:'foosball', label:'⚽ Foosball', tx:14, ty:ACT_ZONE_Y+17, w:3, h:1.5});
+    adminObjects.push({id:'dj_console', label:'🎧 DJ Console', tx:2, ty:ACT_ZONE_Y+19, w:2.5, h:1.2});
+    adminObjects.push({id:'telescope', label:'🔭 Telescope', tx:10, ty:ACT_ZONE_Y+19, w:1, h:2});
   }
 
   // Kanban board
