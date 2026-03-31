@@ -15,7 +15,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 ---
 
 ## Day 1 — Foundation Polish
-- [ ] Weather particles outside windows (rain drops, snow flakes, sun rays)
+- [x] Weather particles outside windows (rain drops, snow flakes, sun rays)
 - [ ] Office lighting tint changes with time (warm sunset, cool night, bright day)
 - [ ] Agent mood emoji above head (😊😐😤🔥) based on work/idle ratio
 - [ ] Speech bubbles ("need coffee...", "shipping!", "bug found", "nice code!")

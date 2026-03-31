@@ -3427,6 +3427,12 @@ function getTimeOfDay() {
   return { state:'night', blend:0 };
 }
 
+function getDailyWeather() {
+  const d = new Date();
+  const seed = d.getFullYear() * 365 + d.getMonth() * 31 + d.getDate();
+  return ['rain', 'snow', 'sun', 'rain', 'snow', 'sun', 'rain'][seed % 7];
+}
+
 function drawDynamicWindows(ctx) {
   const tod = getTimeOfDay();
 
@@ -3492,6 +3498,57 @@ function drawDynamicWindows(ctx) {
       ctx.arc(cx, wy+8, 3, 0, Math.PI*2); ctx.fill();
       ctx.arc(cx+4, wy+7, 4, 0, Math.PI*2); ctx.fill();
       ctx.arc(cx+8, wy+8, 3, 0, Math.PI*2); ctx.fill();
+    }
+
+    // Weather particles outside windows
+    { const wx2 = wx + 2, wy2 = wy + 2;
+      const weather = getDailyWeather();
+      const t = Date.now() * 0.001;
+      if (weather === 'rain') {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(wx2, wy2, ww, wh); ctx.clip();
+        ctx.strokeStyle = '#88b8e0'; ctx.lineWidth = 1;
+        for (let d = 0; d < 5; d++) {
+          const dropX = wx2 + ((d * 11 + i * 5) % ww);
+          const dropY = wy2 + ((t * 55 + d * 19) % (wh + 6));
+          if (dropY >= wy2 + wh) continue;
+          ctx.globalAlpha = 0.18 + (d % 3) * 0.08;
+          ctx.beginPath();
+          ctx.moveTo(dropX + 1, dropY - 3);
+          ctx.lineTo(dropX, dropY + 3);
+          ctx.stroke();
+        }
+        ctx.restore();
+      } else if (weather === 'snow') {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(wx2, wy2, ww, wh); ctx.clip();
+        ctx.fillStyle = '#ddeeff';
+        for (let d = 0; d < 5; d++) {
+          const fx = wx2 + Math.abs((d * 9 + i * 7 + Math.sin(t * 0.8 + d * 1.7) * 3) % ww);
+          const fy = wy2 + ((t * 12 + d * 22) % wh);
+          ctx.globalAlpha = 0.4 + (d % 2) * 0.2;
+          ctx.beginPath(); ctx.arc(fx, fy, 1, 0, Math.PI * 2); ctx.fill();
+        }
+        ctx.restore();
+      } else if (weather === 'sun' && tod.state !== 'night') {
+        ctx.save();
+        ctx.beginPath(); ctx.rect(wx2, wy2, ww, wh); ctx.clip();
+        const pulse = 0.04 + Math.sin(t * 0.4 + i) * 0.015;
+        const sunX = wx2 + ww / 2, sunY = wy2;
+        for (let r = 0; r < 6; r++) {
+          const a = (r / 6) * Math.PI + Math.sin(t * 0.5 + r) * 0.03;
+          const grad = ctx.createLinearGradient(sunX, sunY, sunX + Math.cos(a) * wh * 2, sunY + Math.sin(a) * wh * 2);
+          grad.addColorStop(0, '#ffe860cc');
+          grad.addColorStop(1, '#ffe86000');
+          ctx.fillStyle = grad; ctx.globalAlpha = pulse;
+          ctx.beginPath();
+          ctx.moveTo(sunX, sunY);
+          ctx.lineTo(sunX + Math.cos(a - 0.15) * wh * 2, sunY + Math.sin(a - 0.15) * wh * 2);
+          ctx.lineTo(sunX + Math.cos(a + 0.15) * wh * 2, sunY + Math.sin(a + 0.15) * wh * 2);
+          ctx.closePath(); ctx.fill();
+        }
+        ctx.restore();
+      }
     }
 
     // Light shaft into room
