@@ -3182,14 +3182,7 @@ function buildObstacleGrid() {
     markRect(vmTx, vmTy, 2, 3);
   }
 
-  // ── Zone divider wall (lounge→activity) with door gap ─────
-  if (ACT_ZONE_Y > 0) {
-    const doorL = Math.floor((COLS-2)*0.35)+1, doorR = Math.floor((COLS-2)*0.65)+1;
-    for (let c = 1; c < COLS-1; c++) {
-      if (c >= doorL && c <= doorR) continue; // door gap
-      mark(c, ACT_ZONE_Y);
-    }
-  }
+  // Zone divider wall removed from obstacle grid — purely visual, agents walk freely
 
   // ── Gaming sofa ─────
   if (ACT_ZONE_Y > 0) {
@@ -3735,9 +3728,6 @@ function buildBackground() {
     // Door handle
     ctx.fillStyle='#c0b060';
     ctx.beginPath(); ctx.arc(edx+10, edy+T*1.5, 3, 0, Math.PI*2); ctx.fill();
-    // "ENTER" label above
-    ctx.fillStyle='#8080a0'; ctx.font="4px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('ENTRANCE', edx+T/2, edy-6); ctx.textAlign='left';
   }
 
   // Windows — static frames only (sky color drawn dynamically)
@@ -4074,10 +4064,6 @@ function buildBackground() {
     ctx.fillStyle='#3a9040';
     ctx.beginPath(); ctx.ellipse(vx+1, vy-14, 3, 1.5, -0.4, 0, Math.PI*2); ctx.fill();
 
-    // Kitchen label (above doorway)
-    const [klx,kly] = ts(kitIntX+1, KITCHEN_START_ROW-0.3);
-    ctx.fillStyle='#6a6080'; ctx.font="5px 'Press Start 2P',monospace";
-    ctx.fillText('KITCHEN',klx,kly);
   }
 
 
@@ -4166,9 +4152,6 @@ function buildBackground() {
     fillR(ctx, prx + 4, pry + 6, T*1.6-4, 5, '#a0a0b0');
     // Output tray
     fillR(ctx, prx + 4, pry + T*0.9 + 2, T*1.6 - 4, 4, '#b0b0bc');
-    // Label
-    ctx.fillStyle = '#606070'; ctx.font = "4px 'Press Start 2P',monospace";
-    ctx.fillText('PRINT', prx + 8, pry + 14);
   }
 
   // ── Vending Machine (inside kitchen area) ────────────────────────
@@ -4218,11 +4201,6 @@ function buildBackground() {
       fillR(ctx, chx, cfy + ctH + 4, T*0.8, T*0.5, chairCol);
       fillR(ctx, chx+2, cfy + ctH + 6, T*0.8-4, T*0.5-4, CHAIR_SEAT);
     }
-    // Label
-    ctx.fillStyle='#8a6a30'; ctx.font="5px 'Press Start 2P',monospace";
-    ctx.textAlign='center';
-    ctx.fillText('CONF ROOM', cfx + ctW/2, cfy + ctH/2 + 3);
-    ctx.textAlign='left';
   }
 
   // ── Trash Can (static body drawn on background) ───────────────────
@@ -4268,9 +4246,6 @@ function buildBackground() {
     ctx.beginPath(); ctx.ellipse(wcx+T*0.75, wcy-2, 12, 14, 0, Math.PI, 0); ctx.stroke();
     // Drip tray
     fillR(ctx, wcx+4, wcy+T*2-5, T*1.5-8, 4, '#a0a8b0');
-    // Label
-    ctx.fillStyle='#5a6080'; ctx.font="5px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('WATER COOLER', wcx+T*0.75, wcy+T*2+10); ctx.textAlign='left';
 
     // ── 3. Aquarium (right zone, row 8) ─────────────────────────
     const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
@@ -4415,8 +4390,6 @@ function buildBackground() {
       ctx.quadraticCurveTo(srvx+8+ci*10+5, srvy+srvH+4, srvx+12+ci*10, srvy+srvH-2);
       ctx.stroke();
     }
-    ctx.fillStyle='#505068'; ctx.font="4px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('SERVER', srvx+srvW/2, srvy+srvH-2); ctx.textAlign='left';
 
     // ── 3D Printer (makers lab, col 7) ──────────────────────────
     const [_p3Tx, _p3Ty] = getAdminPos('printer_3d', 7, ACT_ZONE_Y+14);
@@ -4436,8 +4409,6 @@ function buildBackground() {
     fillR(ctx, p3x+p3W/2-1, p3y+16, 2, 4, '#808090');
     fillR(ctx, p3x+p3W/2-4, p3y+p3H-18, 8, 6, '#9ece6a');
     fillR(ctx, p3x+p3W/2-2, p3y+p3H-22, 4, 4, '#7aa2f7');
-    ctx.fillStyle='#606078'; ctx.font="4px 'Press Start 2P',monospace";
-    ctx.textAlign='center'; ctx.fillText('3D', p3x+p3W/2, p3y+p3H+8); ctx.textAlign='left';
 
     // ── Basketball Hoop (recreation, col 12) ───────────────────
     const [_bbTx, _bbTy] = getAdminPos('basketball', 12, ACT_ZONE_Y+9);
@@ -4543,27 +4514,17 @@ function buildBackground() {
     const [zx, zy] = ts(1, ACT_ZONE_Y);
     const zoneW = (COLS-2)*T;
     const doorStart = Math.floor(zoneW * 0.35), doorEnd = Math.floor(zoneW * 0.65);
-    // Left wall segment
-    fillR(ctx, zx, zy, doorStart, T, '#252344');
-    fillR(ctx, zx, zy, doorStart, 4, '#3a3860');
-    fillR(ctx, zx, zy+T-2, doorStart, 2, '#1e1c38');
-    // Right wall segment
-    fillR(ctx, zx+doorEnd, zy, zoneW-doorEnd, T, '#252344');
-    fillR(ctx, zx+doorEnd, zy, zoneW-doorEnd, 4, '#3a3860');
-    fillR(ctx, zx+doorEnd, zy+T-2, zoneW-doorEnd, 2, '#1e1c38');
-    // Door frame
-    fillR(ctx, zx+doorStart-2, zy, 4, T, '#4a4880');
-    fillR(ctx, zx+doorEnd-2, zy, 4, T, '#4a4880');
-    // Floor under door
-    fillR(ctx, zx+doorStart, zy, doorEnd-doorStart, T, '#d0caba');
+    // Left wall segment (thin floor divider)
+    fillR(ctx, zx, zy+Math.floor(T/2)-2, doorStart, 5, '#252344');
+    fillR(ctx, zx, zy+Math.floor(T/2)-2, doorStart, 2, '#3a3860');
+    // Right wall segment (thin floor divider)
+    fillR(ctx, zx+doorEnd, zy+Math.floor(T/2)-2, zoneW-doorEnd, 5, '#252344');
+    fillR(ctx, zx+doorEnd, zy+Math.floor(T/2)-2, zoneW-doorEnd, 2, '#3a3860');
 
     // ── GYM (left side) ──────────────────────────────────────────
     const [_gymTx,_gymTy] = getAdminPos('gym', 1, ACT_ZONE_Y+0.5);
     const [gx,gy] = ts(_gymTx, _gymTy);
 
-    // Gym label
-    ctx.fillStyle='#5a5070'; ctx.font="5px 'Press Start 2P',monospace";
-    ctx.fillText('GYM', gx, gy-4);
 
     // Treadmill 1
     const [t1x,t1y] = ts(_gymTx, _gymTy+0.3);
@@ -4718,9 +4679,6 @@ function buildBackground() {
     const [_tvATx,_tvATy] = getAdminPos('tv', 10, ACT_ZONE_Y+0.3);
     const [tvx,tvy] = ts(_tvATx, _tvATy);
 
-    // TV label
-    ctx.fillStyle='#5a5070'; ctx.font="5px 'Press Start 2P',monospace";
-    ctx.fillText('GAMING', tvx, tvy-4);
 
     // Big TV (wall-mounted look)
     ctx.save(); ctx.shadowColor='#0050ff30'; ctx.shadowBlur=20;
