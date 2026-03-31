@@ -15,6 +15,11 @@ const agentTasks = {}; // agentId -> { todos: [{id,content,status,priority}], up
 // Shared layout — synced to all clients when admin moves objects
 let sharedLayout = { positions: null, walls: null };
 
+// Telegram bot
+const TG_TOKEN = '8667690491:AAGUQheu2egg3ozI-ZpNsr3V_Fl7NKIFQKE';
+const TG_CHAT = '397649588';
+let lastTgFeedback = { action: null, text: null, timestamp: null };
+
 const TASKS_FILE = path.join(__dirname, 'tasks.json');
 
 // Load persisted tasks on startup
@@ -303,6 +308,34 @@ const server = http.createServer((req, res) => {
     return;
   }
 
+  // ── Telegram webhook — approve/reject/comment ──
+  if (req.url === '/api/tg-webhook' && req.method === 'POST') {
+    let body = '';
+    req.on('data', d => body += d);
+    req.on('end', () => {
+      try {
+        const update = JSON.parse(body);
+        if (update.callback_query) {
+          const cb = update.callback_query;
+          lastTgFeedback = { action: cb.data, text: null, timestamp: Date.now() };
+          fetch(`https://api.telegram.org/bot${TG_TOKEN}/answerCallbackQuery`, {
+            method: 'POST', headers: {'Content-Type':'application/json'},
+            body: JSON.stringify({ callback_query_id: cb.id, text: cb.data === 'approve' ? '✅ Approved!' : '❌ Rejected' })
+          });
+        } else if (update.message?.text) {
+          lastTgFeedback = { action: 'comment', text: update.message.text, timestamp: Date.now() };
+        }
+      } catch {}
+      res.writeHead(200); res.end('ok');
+    });
+    return;
+  }
+  if (req.url === '/api/tg-feedback' && req.method === 'GET') {
+    res.writeHead(200, {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'});
+    res.end(JSON.stringify(lastTgFeedback));
+    return;
+  }
+
   // ── API: GET /api/layout — get shared layout positions ──
   if (req.url === '/api/layout' && req.method === 'GET') {
     res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
@@ -547,3 +580,5 @@ server.listen(PORT, "0.0.0.0", async () => {
     broadcast({ type: "public_url", url: null });
   }
 });
+
+// (Telegram webhook handled in main request handler above)
