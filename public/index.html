@@ -2829,7 +2829,7 @@ function generateLayout(n) {
   const couchRows=Math.ceil(stableCount/COUCH_PER_ROW);
   const baseRows=LOUNGE_Y+couchRows*3+2;
   ACT_ZONE_Y = baseRows;
-  ROWS = baseRows + 24;  // 9 gym/gaming/pp + 15 for conference/bookshelf + entertainment zone
+  ROWS = Math.max(baseRows + 24, 45);  // min 45 rows to fit all BUILTIN objects
   CH=OY+ROWS*T+OY;
   const cv=document.getElementById('office');
   if (cv) cv.height=CH;
@@ -8816,10 +8816,16 @@ document.getElementById('admin-start-pos').onclick = () => {
 };
 
 document.getElementById('admin-reset').onclick = () => {
-  localStorage.setItem('admin_positions', JSON.stringify(BUILTIN_POSITIONS));
+  localStorage.removeItem('admin_positions');
   localStorage.removeItem('admin_walls');
   window._adminPos = Object.assign({}, BUILTIN_POSITIONS);
+  // Force canvas resize to fit all objects
+  ROWS = Math.max(ROWS, 45);
+  CH = OY + ROWS*T + OY;
+  canvas.height = CH; bgBuf.height = CH;
   applyWallPositions();
+  generateLayout(Math.max(12, Object.keys(agentsData).length));
+  applyCustomPositions();
   buildAdminObjects();
   syncIdleSpotsToAdmin();
   buildBackground();
