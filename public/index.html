@@ -3557,6 +3557,42 @@ function drawDynamicWindows(ctx) {
   }
 }
 
+// ── Office lighting tint — warm/cool overlay based on time of day ─
+function drawOfficeLighting(ctx) {
+  const tod = getTimeOfDay();
+  // rgba tint per state: [r,g,b,alpha]
+  const tints = {
+    night:  [20,  40, 120, 0.18],  // cool blue — artificial indoor light
+    dawn:   [255, 140,  60, 0.10], // warm peach — early morning sun creeping in
+    day:    [255, 240, 200, 0.00], // no tint — bright neutral daylight
+    sunset: [255, 110,  30, 0.14], // amber/orange — golden hour
+  };
+  const cur  = tints[tod.state] || tints.day;
+  // For dawn/sunset we interpolate between the adjacent states
+  let [r, g, b, a] = cur;
+  if (tod.state === 'dawn') {
+    // blend: 0 = full night, 1 = full day
+    const night = tints.night, day = tints.day;
+    r = night[0] + (cur[0] - night[0]) * tod.blend;
+    g = night[1] + (cur[1] - night[1]) * tod.blend;
+    b = night[2] + (cur[2] - night[2]) * tod.blend;
+    a = night[3] + (cur[3] - night[3]) * tod.blend;
+  } else if (tod.state === 'sunset') {
+    // blend: 1 = just turned sunset, 0 = night
+    const night = tints.night;
+    r = cur[0] + (night[0] - cur[0]) * (1 - tod.blend);
+    g = cur[1] + (night[1] - cur[1]) * (1 - tod.blend);
+    b = cur[2] + (night[2] - cur[2]) * (1 - tod.blend);
+    a = cur[3] + (night[3] - cur[3]) * (1 - tod.blend);
+  }
+  if (a < 0.005) return; // nothing to draw during bright day
+  ctx.save();
+  ctx.globalAlpha = a;
+  ctx.fillStyle = `rgb(${r|0},${g|0},${b|0})`;
+  ctx.fillRect(OX, OY, COLS * T, ROWS * T);
+  ctx.restore();
+}
+
 function drawWallClock(ctx) {
   const now = new Date();
   const h = now.getHours() % 12, m = now.getMinutes(), s = now.getSeconds();
@@ -7090,6 +7126,9 @@ function loop(now) {
   // Click animations on interactive objects
   drawClickAnims(ctx, globalTick);
 
+  // Office lighting tint — color shifts with time of day
+  drawOfficeLighting(ctx);
+
   // Admin editor overlay (on top of everything)
   drawAdminOverlay(ctx);
 
@@ -7469,7 +7508,69 @@ function applyWallPositions() {
 }
 
 // Default layout positions (exported from localhost admin editor)
-const BUILTIN_POSITIONS = {"clock":{"tx":18,"ty":0},"cooler":{"tx":25.5,"ty":34.5},"darts":{"tx":24.5,"ty":0},"aquarium":{"tx":23.5,"ty":7.5},"printer":{"tx":24.5,"ty":18},"trashcan":{"tx":26,"ty":32.5},"plant_0":{"tx":1.5,"ty":24},"plant_1":{"tx":25.5,"ty":20},"conf_table":{"tx":20,"ty":49},"bookshelf":{"tx":13,"ty":54},"desk_0":{"tx":1,"ty":1},"desk_1":{"tx":7,"ty":1},"desk_2":{"tx":7,"ty":13},"desk_3":{"tx":1,"ty":5},"desk_4":{"tx":4,"ty":1},"desk_5":{"tx":7,"ty":5},"desk_6":{"tx":1,"ty":9},"desk_7":{"tx":4,"ty":5},"desk_8":{"tx":4,"ty":13},"desk_9":{"tx":1,"ty":13},"desk_10":{"tx":4,"ty":9},"desk_11":{"tx":7,"ty":17},"desk_12":{"tx":1,"ty":17},"desk_13":{"tx":4,"ty":17},"desk_14":{"tx":7,"ty":9},"desk_15":{"tx":1,"ty":21},"desk_16":{"tx":8,"ty":21},"couch_0":{"tx":1.5,"ty":26},"couch_1":{"tx":6.7,"ty":26},"couch_2":{"tx":11.5,"ty":26},"couch_3":{"tx":11.5,"ty":42},"couch_4":{"tx":6.5,"ty":35},"couch_5":{"tx":1.5,"ty":29},"couch_6":{"tx":6.5,"ty":29},"couch_7":{"tx":11.5,"ty":29},"couch_8":{"tx":11.5,"ty":35},"couch_9":{"tx":11.5,"ty":38},"couch_10":{"tx":1.5,"ty":32},"couch_11":{"tx":6.5,"ty":32},"couch_12":{"tx":11.5,"ty":32},"couch_13":{"tx":1.5,"ty":38},"couch_14":{"tx":6.5,"ty":38},"couch_15":{"tx":1.5,"ty":35},"couch_16":{"tx":6.7,"ty":35},"pingpong":{"tx":19.5,"ty":41},"tv":{"tx":21.5,"ty":57},"gym":{"tx":1.5,"ty":54},"vending":{"tx":25.5,"ty":37.5},"kitchen_table":{"tx":20.5,"ty":32},"kitchen_counter":{"tx":18,"ty":24.5},"fridge":{"tx":26,"ty":25},"gaming_sofa":{"tx":9,"ty":64.5},"foosball":{"tx":20.5,"ty":45},"basketball":{"tx":6.5,"ty":52},"arcade":{"tx":18,"ty":60},"dj_console":{"tx":2,"ty":60.5},"server_rack":{"tx":6,"ty":47.5},"printer_3d":{"tx":8,"ty":48},"telescope":{"tx":20,"ty":1},"espresso_bar":{"tx":19.5,"ty":37.5},"kanban":{"tx":23.2,"ty":2.5}};
+const BUILTIN_POSITIONS = {
+  "clock": {"tx": 19, "ty": 0},
+  "darts": {"tx": 24.5, "ty": 0},
+  "kanban": {"tx": 23, "ty": 2},
+  "telescope": {"tx": 20, "ty": 1.5},
+  "aquarium": {"tx": 23.5, "ty": 5.5},
+  "printer": {"tx": 24, "ty": 9},
+  "plant_0": {"tx": 5, "ty": 0.5},
+  "plant_1": {"tx": 25, "ty": 8},
+  "trashcan": {"tx": 26, "ty": 14},
+  "cooler": {"tx": 24, "ty": 14},
+  "vending": {"tx": 22, "ty": 14},
+  "kitchen_counter": {"tx": 18, "ty": 11},
+  "kitchen_table": {"tx": 20, "ty": 12},
+  "fridge": {"tx": 26, "ty": 11},
+  "desk_0": {"tx": 1, "ty": 1},
+  "desk_1": {"tx": 5, "ty": 1},
+  "desk_2": {"tx": 9, "ty": 1},
+  "desk_3": {"tx": 1, "ty": 5},
+  "desk_4": {"tx": 5, "ty": 5},
+  "desk_5": {"tx": 9, "ty": 5},
+  "desk_6": {"tx": 1, "ty": 9},
+  "desk_7": {"tx": 5, "ty": 9},
+  "desk_8": {"tx": 9, "ty": 9},
+  "desk_9": {"tx": 1, "ty": 13},
+  "desk_10": {"tx": 5, "ty": 13},
+  "desk_11": {"tx": 9, "ty": 13},
+  "desk_12": {"tx": 1, "ty": 17},
+  "desk_13": {"tx": 5, "ty": 17},
+  "desk_14": {"tx": 9, "ty": 17},
+  "desk_15": {"tx": 13, "ty": 17},
+  "desk_16": {"tx": 13, "ty": 13},
+  "couch_0": {"tx": 1.5, "ty": 21},
+  "couch_1": {"tx": 5, "ty": 21},
+  "couch_2": {"tx": 8.5, "ty": 21},
+  "couch_3": {"tx": 12, "ty": 21},
+  "couch_4": {"tx": 15.5, "ty": 21},
+  "couch_5": {"tx": 1.5, "ty": 23},
+  "couch_6": {"tx": 5, "ty": 23},
+  "couch_7": {"tx": 8.5, "ty": 23},
+  "couch_8": {"tx": 12, "ty": 23},
+  "couch_9": {"tx": 15.5, "ty": 23},
+  "couch_10": {"tx": 1.5, "ty": 25},
+  "couch_11": {"tx": 5, "ty": 25},
+  "couch_12": {"tx": 8.5, "ty": 25},
+  "couch_13": {"tx": 12, "ty": 25},
+  "couch_14": {"tx": 15.5, "ty": 25},
+  "couch_15": {"tx": 19, "ty": 21},
+  "couch_16": {"tx": 19, "ty": 23},
+  "gym": {"tx": 1, "ty": 28},
+  "pingpong": {"tx": 18, "ty": 27},
+  "tv": {"tx": 8, "ty": 30},
+  "gaming_sofa": {"tx": 8, "ty": 33},
+  "foosball": {"tx": 18, "ty": 30},
+  "arcade": {"tx": 1, "ty": 34},
+  "dj_console": {"tx": 5, "ty": 34},
+  "basketball": {"tx": 9, "ty": 34},
+  "server_rack": {"tx": 14, "ty": 34},
+  "printer_3d": {"tx": 17, "ty": 34},
+  "espresso_bar": {"tx": 21, "ty": 34},
+  "conf_table": {"tx": 1, "ty": 37},
+  "bookshelf": {"tx": 12, "ty": 37}
+};
 
 // Apply custom positions to actual game objects
 function applyCustomPositions() {
