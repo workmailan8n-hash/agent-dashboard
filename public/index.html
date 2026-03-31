@@ -3060,9 +3060,10 @@ function buildObstacleGrid() {
     if (!isEntrance) obstacleGrid[r][COLS-1] = 1;
   }
 
-  // Kitchen partition wall — door is 3 rows tall for traffic flow
+  // Kitchen partition wall — limited height (not full office)
   if (KITCHEN_WALL_COL > 0) {
-    for (let r = KITCHEN_START_ROW; r < ROWS - 1; r++) {
+    const kitWallEnd = KITCHEN_START_ROW + 8; // kitchen is ~8 rows tall
+    for (let r = KITCHEN_START_ROW; r < kitWallEnd && r < ROWS - 1; r++) {
       const inDoor = r >= KITCHEN_DOOR_ROW && r <= KITCHEN_DOOR_ROW + 4;
       if (!inDoor) obstacleGrid[r][KITCHEN_WALL_COL] = 1;
     }
@@ -3707,8 +3708,9 @@ function buildBackground() {
     for (let col=0; col<COLS; col++) {
       const x=OX+col*T, y=OY+row*T;
       const wall=col===0||col===COLS-1||row===0||row===ROWS-1;
-      const inKitchen = KITCHEN_WALL_COL>0 && col>KITCHEN_WALL_COL && col<COLS-1 && row>=KITCHEN_START_ROW && row<ROWS-1;
-      const isKitPartWall = KITCHEN_WALL_COL>0 && col===KITCHEN_WALL_COL && row>=KITCHEN_START_ROW && row<ROWS-1 && !(row>=KITCHEN_DOOR_ROW && row<=KITCHEN_DOOR_ROW+4);
+      const inKitchen = KITCHEN_WALL_COL>0 && col>KITCHEN_WALL_COL && col<COLS-1 && row>=KITCHEN_START_ROW && row<KITCHEN_START_ROW+8;
+      const kitWallEnd = KITCHEN_START_ROW + 8;
+      const isKitPartWall = KITCHEN_WALL_COL>0 && col===KITCHEN_WALL_COL && row>=KITCHEN_START_ROW && row<kitWallEnd && !(row>=KITCHEN_DOOR_ROW && row<=KITCHEN_DOOR_ROW+4);
       if (wall) {
         if (row===0) {
           fillR(ctx,x,y,T,T,'#16152e');
