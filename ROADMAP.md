@@ -21,7 +21,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Speech bubbles ("need coffee...", "shipping!", "bug found", "nice code!")
 
 ## Day 2 — Agent Personality
-- [ ] Persistent traits per agent (introvert prefers desk, extrovert prefers social spots)
+- [x] Persistent traits per agent (introvert prefers desk, extrovert prefers social spots)
 - [ ] Agents wave/nod when passing each other
 - [ ] High-five animation near desks when both working
 - [ ] Tired agent yawns, stretches, rubs eyes
