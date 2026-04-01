@@ -5096,6 +5096,10 @@ class AgentState {
     this.speechBubble    = '';  // current speech text
     this.speechBubbleLife = 0; // countdown seconds (>0 = visible)
     this._speechCooldown  = 15 + Math.random() * 20; // stagger initial delay per agent
+    // wave / nod when passing other agents
+    this.waveEmoji       = '';  // '👋' or '🙂' shown briefly above head
+    this.waveTimer       = 0;   // countdown seconds (>0 = visible)
+    this._greetCooldown  = {};  // agentId → remaining cooldown seconds
   }
 
   get depth() { return this.ty + this.tx * 0.001; }
@@ -5151,6 +5155,13 @@ class AgentState {
     // ── Spawn scale-in spring ─────────────────────────────────────
     if (this.spawnScale < 1) {
       this.spawnScale = Math.min(1, this.spawnScale + dt * 4);
+    }
+
+    // ── Wave / nod timer decay ────────────────────────────────────
+    if (this.waveTimer > 0) this.waveTimer -= dt;
+    for (const k of Object.keys(this._greetCooldown)) {
+      this._greetCooldown[k] -= dt;
+      if (this._greetCooldown[k] <= 0) delete this._greetCooldown[k];
     }
 
     // ── Label spring (k=180, d=16) ────────────────────────────────
@@ -5414,6 +5425,18 @@ class AgentState {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this._moodEmoji, this.sx, this.sy - 36 + bob);
+      ctx.restore();
+    }
+    // ── Wave / nod emoji (shown when passing another agent) ───────
+    if (this.waveTimer > 0 && this.labelScale > 0.1) {
+      const fadeAlpha = clamp(this.waveTimer / 0.5, 0, 1) * this.labelScale;
+      const waveOff   = Math.sin(this.waveTimer * 18) * 4; // wiggle
+      ctx.save();
+      ctx.globalAlpha = fadeAlpha;
+      ctx.font = '14px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this.waveEmoji, this.sx + 14, this.sy - 50 + waveOff);
       ctx.restore();
     }
   }
@@ -6949,6 +6972,31 @@ function loop(now) {
           // a is seated — push b away fully
           b.tx -= nx; b.ty -= ny;
         }
+      }
+    }
+  }
+
+  // ── Wave / nod when agents pass each other ─────────────────────
+  {
+    const list = Object.values(agentStates);
+    const WAVE_DIST2 = 2.2 * 2.2; // squared tile distance
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j];
+        // At least one agent must be walking (in transit)
+        if (a.arrived && b.arrived) continue;
+        // Skip if either is in greeting cooldown with the other
+        if (a._greetCooldown[b.id] || b._greetCooldown[a.id]) continue;
+        const dx = a.tx - b.tx, dy = a.ty - b.ty;
+        if (dx*dx + dy*dy > WAVE_DIST2) continue;
+        // Trigger wave — extroverts wave enthusiastically, introverts nod
+        a.waveEmoji = a.trait === 'extrovert' ? '👋' : '🙂';
+        b.waveEmoji = b.trait === 'extrovert' ? '👋' : '🙂';
+        a.waveTimer = 1.6;
+        b.waveTimer = 1.6;
+        const cooldown = 22 + Math.random() * 18;
+        a._greetCooldown[b.id] = cooldown;
+        b._greetCooldown[a.id] = cooldown;
       }
     }
   }
