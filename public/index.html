@@ -2784,24 +2784,33 @@ function drawSpeechBubble(ctx, cx, cy, text, alpha) {
   ctx.restore();
 }
 
-function drawLabel(ctx, cx, cy, name, scale, burnout) {
+function drawLabel(ctx, cx, cy, name, scale, burnout, trait) {
   if (scale < 0.05) return;
   const BURNOUT_ICONS = ['','😴','😰','🥵','💀'];
   const icon = (burnout >= 1 && burnout <= 4) ? BURNOUT_ICONS[burnout] : '';
+  const traitDot = trait === 'extrovert' ? '📣' : (trait === 'introvert' ? '🔇' : '');
   ctx.font = "bold 8px 'Press Start 2P', monospace";
   const tw = ctx.measureText(name).width;
-  const bw = tw + 14 + (icon ? 12 : 0), bh = 14, bx = cx - bw/2, by = cy + 22;
+  const extraW = (icon ? 12 : 0) + (traitDot ? 12 : 0);
+  const bw = tw + 14 + extraW, bh = 14, bx = cx - bw/2, by = cy + 22;
   ctx.save();
   ctx.translate(cx, by + bh/2); ctx.scale(scale, scale); ctx.translate(-cx, -(by + bh/2));
   ctx.fillStyle = 'rgba(3,4,14,0.97)';
   rrect(ctx, bx, by, bw, bh, 3); ctx.fill();
-  ctx.strokeStyle = '#5060a0'; ctx.lineWidth = 1.5;
+  ctx.strokeStyle = trait === 'extrovert' ? '#f7768e44' : (trait === 'introvert' ? '#7aa2f744' : '#5060a0');
+  ctx.lineWidth = 1.5;
   rrect(ctx, bx, by, bw, bh, 3); ctx.stroke();
   ctx.fillStyle = '#ffffff';
   ctx.fillText(name, bx+7, by+10);
+  let iconX = bx + tw + 9;
+  if (traitDot) {
+    ctx.font = "8px sans-serif";
+    ctx.fillText(traitDot, iconX, by + 11);
+    iconX += 12;
+  }
   if (icon) {
     ctx.font = "9px sans-serif";
-    ctx.fillText(icon, bx + tw + 9, by + 11);
+    ctx.fillText(icon, iconX, by + 11);
   }
   ctx.restore();
 }
@@ -5071,6 +5080,8 @@ class AgentState {
     // 4 кардинально разных поведения на диване
     const cs = Math.abs(h)%4;
     this.couchIdleState = ['sleeping','drinking_beer','phone','stretching'][cs];
+    // Persistent personality trait — introvert prefers solo/desk spots, extrovert prefers social spots
+    this.trait = Math.abs(h)%3===0 ? 'extrovert' : 'introvert'; // ~33% extrovert, ~67% introvert
     this.activityAnim = null;
     this.activityDur  = 0;
     this.flip        = Math.abs(h)%3===1; // зеркалит позу на диване
@@ -5230,17 +5241,22 @@ class AgentState {
           const holder=idleOccupied[i];
           if(holder !== undefined && holder !== this.id && !String(holder).startsWith('__reserved_')) continue; // taken by another (reserved = claimable)
           const sp=IDLE_SPOTS[i];
+          // Trait-based weight multiplier: extroverts love social, introverts love solo
+          const isGroup = sp.type==='group' || sp.type==='gaming';
+          const traitMult = isGroup
+            ? (this.trait==='extrovert' ? 3.5 : 0.12)
+            : (this.trait==='introvert' ? 2.2 : 1.0);
           if(sp.type==='group'){
             const pair=GROUP_PAIRS[sp.groupId];
             const otherIdx=pair[0]===i?pair[1]:pair[0];
             const otherHolder=idleOccupied[otherIdx];
             // Group: only join if partner already occupied by someone else
             if(otherHolder !== undefined && otherHolder !== this.id) {
-              avail.push({i,w:sp.w});
+              avail.push({i,w:sp.w*traitMult});
             }
             // Skip if partner is free — we don't go alone
           } else {
-            avail.push({i,w:sp.w});
+            avail.push({i,w:sp.w*traitMult});
           }
         }
         // If no solo slots available, try to INITIATE a group pair
@@ -5251,7 +5267,8 @@ class AgentState {
             if (idleOccupied[a] === undefined && idleOccupied[b] === undefined) {
               // Reserve the partner slot as 'waiting' so next agent picks it
               idleOccupied[b] = '__reserved_' + gid;
-              avail.push({i: a, w: IDLE_SPOTS[a].w * 2}); // boost weight
+              const groupInitMult = this.trait==='extrovert' ? 5.0 : 0.2;
+              avail.push({i: a, w: IDLE_SPOTS[a].w * 2 * groupInitMult}); // boost weight, scaled by trait
               break; // only one group initiation per tick
             }
           }
@@ -5377,7 +5394,7 @@ class AgentState {
   }
 
   drawOverlay(ctx, tick) {
-    drawLabel(ctx, this.sx, this.sy, getRole(this.lastAgentData || {slug: this.slug}), this.labelScale, this.burnout);
+    drawLabel(ctx, this.sx, this.sy, getRole(this.lastAgentData || {slug: this.slug}), this.labelScale, this.burnout, this.trait);
     const showThought = this.thought &&
       (this.state==='typing_normal'||this.state==='typing_furious'||this.state==='thinking');
     if (showThought) drawThoughtBubble(ctx, this.sx, this.sy-8, this.thought, tick);
