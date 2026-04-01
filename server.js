@@ -550,7 +550,7 @@ setInterval(() => {
     }
 
     // Fix: remove stale agents to prevent memory leak
-    const staleMs = agent.isSubagent ? 3600000 : 86400000 * 7; // 1h for subagents, 7d for sessions
+    const staleMs = agent.isSubagent ? 86400000 : 86400000 * 7; // 24h for subagents, 7d for sessions
     if (ageMs > staleMs) {
       delete agents[agent.id];
       broadcast({ type: "agent_remove", id: agent.id });
