@@ -22,7 +22,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 
 ## Day 2 — Agent Personality
 - [x] Persistent traits per agent (introvert prefers desk, extrovert prefers social spots)
-- [ ] Agents wave/nod when passing each other
+- [x] Agents wave/nod when passing each other
 - [ ] High-five animation near desks when both working
 - [ ] Tired agent yawns, stretches, rubs eyes
 
