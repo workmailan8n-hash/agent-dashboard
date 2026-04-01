@@ -5421,10 +5421,10 @@ class AgentState {
       const bob = Math.sin(tick * 0.06 + this.sx) * 1.5; // gentle float
       ctx.save();
       ctx.globalAlpha = clamp((this.totalTicks - 4) / 4, 0, 1) * this.labelScale;
-      ctx.font = '11px sans-serif';
+      ctx.font = '16px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(this._moodEmoji, this.sx, this.sy - 36 + bob);
+      ctx.fillText(this._moodEmoji, this.sx, this.sy - 40 + bob);
       ctx.restore();
     }
     // ── Wave / nod emoji (shown when passing another agent) ───────
@@ -6950,13 +6950,17 @@ function loop(now) {
   // ── Agent separation (soft collision) ──────────────────────────
   {
     const list = Object.values(agentStates);
-    const MIN = 0.7; // min distance in tiles — small enough to not block paths
-    const STRENGTH = 0.5; // gentle push
+    const MIN_WALK = 1.2;  // distance when both walking
+    const MIN_STAND = 0.6; // distance when one is standing (tighter is ok)
+    const STRENGTH = 0.6;
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         const a = list[i], b = list[j];
+        // Skip if both arrived at their spots (they're supposed to be near each other)
+        if (a.arrived && b.arrived) continue;
         const dx = a.tx - b.tx, dy = a.ty - b.ty;
         const d2 = dx*dx + dy*dy;
+        const MIN = (!a.arrived && !b.arrived) ? MIN_WALK : MIN_STAND;
         if (d2 > MIN*MIN || d2 < 0.0001) continue;
         const d = Math.sqrt(d2);
         const overlap = (MIN - d) / d * STRENGTH;
