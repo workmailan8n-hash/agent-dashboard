@@ -5043,6 +5043,10 @@ class AgentState {
     this.prevStatus  = '';
     this.waypoints   = [];  // A* path waypoints
     this.facing      = 'S'; // direction: N,NE,E,SE,S,SW,W,NW,IDLE
+    // mood tracking
+    this.workTicks   = 0;   // accumulated seconds in working state
+    this.totalTicks  = 0;   // total accumulated seconds alive
+    this._moodEmoji  = '';  // cached mood emoji
   }
 
   get depth() { return this.ty + this.tx * 0.001; }
@@ -5120,6 +5124,17 @@ class AgentState {
     this._wasWorking = working;
     this.prevStatus = agentData.status;
     this.lastAgentData = agentData;
+    // ── Mood tracking (rolling 60s window) ───────────────────────
+    this.totalTicks += dt;
+    if (working) this.workTicks += dt;
+    // Keep only last 60s worth of history by clamping totals
+    if (this.totalTicks > 60) {
+      const excess = this.totalTicks - 60;
+      this.totalTicks = 60;
+      this.workTicks = Math.max(0, this.workTicks - excess);
+    }
+    const ratio = this.totalTicks > 2 ? this.workTicks / this.totalTicks : 0;
+    this._moodEmoji = ratio >= 0.7 ? '🔥' : ratio >= 0.4 ? '😊' : ratio >= 0.1 ? '😐' : '😤';
     if (this.celebrating) {
       this.celebrateTimer -= dt;
       if (this.celebrateTimer <= 0) this.celebrating = false;
@@ -5310,6 +5325,17 @@ class AgentState {
     const showThought = this.thought &&
       (this.state==='typing_normal'||this.state==='typing_furious'||this.state==='thinking');
     if (showThought) drawThoughtBubble(ctx, this.sx, this.sy-8, this.thought, tick);
+    // ── Mood emoji above head ─────────────────────────────────────
+    if (this._moodEmoji && this.totalTicks > 4 && this.labelScale > 0.1) {
+      const bob = Math.sin(tick * 0.06 + this.sx) * 1.5; // gentle float
+      ctx.save();
+      ctx.globalAlpha = clamp((this.totalTicks - 4) / 4, 0, 1) * this.labelScale;
+      ctx.font = '11px sans-serif';
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText(this._moodEmoji, this.sx, this.sy - 36 + bob);
+      ctx.restore();
+    }
   }
 }
 
