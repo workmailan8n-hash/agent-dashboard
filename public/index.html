@@ -2750,6 +2750,40 @@ function drawThoughtBubble(ctx, cx, cy, text, tick) {
   ctx.fillText(text, bx+10, by+14);
 
 }
+// Speech bubble — classic talk bubble with a tail, distinct from thought bubble
+const SPEECH_PHRASES = {
+  working:  ["shipping!", "git push!", "almost!", "nice code!", "tests pass!", "lgtm!", "one more fix", "let's go!", "prod ready?", "refactor time"],
+  furious:  ["SHIP IT!", "no sleep!", "prod is down!", "debug mode", "stack trace...", "WHY?!", "it compiled!", "send it!", "rip logs", "deploy!"],
+  thinking: ["bug found!", "wait...", "i see it", "oh no", "hmm...", "uh oh", "classic", "interesting", "hold on", "analyzing"],
+  idle:     ["need coffee...", "brb...", "lunch?", "anyone here?", "bored.jpg", "slack me", "tea time", "nap soon", ":zzz:", "hey!"],
+};
+function drawSpeechBubble(ctx, cx, cy, text, alpha) {
+  if (!text || alpha <= 0) return;
+  ctx.save();
+  ctx.globalAlpha = alpha;
+  ctx.font = "bold 7px 'Press Start 2P', monospace";
+  const tw = ctx.measureText(text).width;
+  const pad = 9, bw = tw + pad*2, bh = 18;
+  const bx = cx - bw/2 + 8, by = cy - 78;
+  // bubble body
+  ctx.fillStyle = 'rgba(6,8,20,0.96)';
+  ctx.strokeStyle = '#7aa2f7';
+  ctx.lineWidth = 1.5;
+  rrect(ctx, bx, by, bw, bh, 4);
+  ctx.fill(); ctx.stroke();
+  // tail (triangle pointing down-left toward agent head)
+  const tx_ = bx + 10, tailY = by + bh;
+  ctx.fillStyle = 'rgba(6,8,20,0.96)';
+  ctx.beginPath(); ctx.moveTo(tx_-4, tailY); ctx.lineTo(tx_+4, tailY); ctx.lineTo(cx, cy-55); ctx.closePath(); ctx.fill();
+  ctx.strokeStyle = '#7aa2f7'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(tx_-4, tailY-1); ctx.lineTo(cx, cy-56); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(tx_+4, tailY-1); ctx.lineTo(cx, cy-56); ctx.stroke();
+  // text
+  ctx.fillStyle = '#c8d3f5';
+  ctx.fillText(text, bx + pad, by + 12);
+  ctx.restore();
+}
+
 function drawLabel(ctx, cx, cy, name, scale, burnout) {
   if (scale < 0.05) return;
   const BURNOUT_ICONS = ['','😴','😰','🥵','💀'];
@@ -5047,6 +5081,10 @@ class AgentState {
     this.workTicks   = 0;   // accumulated seconds in working state
     this.totalTicks  = 0;   // total accumulated seconds alive
     this._moodEmoji  = '';  // cached mood emoji
+    // speech bubbles
+    this.speechBubble    = '';  // current speech text
+    this.speechBubbleLife = 0; // countdown seconds (>0 = visible)
+    this._speechCooldown  = 15 + Math.random() * 20; // stagger initial delay per agent
   }
 
   get depth() { return this.ty + this.tx * 0.001; }
@@ -5135,6 +5173,24 @@ class AgentState {
     }
     const ratio = this.totalTicks > 2 ? this.workTicks / this.totalTicks : 0;
     this._moodEmoji = ratio >= 0.7 ? '🔥' : ratio >= 0.4 ? '😊' : ratio >= 0.1 ? '😐' : '😤';
+    // ── Speech bubble timer ───────────────────────────────────────
+    if (this.speechBubbleLife > 0) {
+      this.speechBubbleLife -= dt;
+      if (this.speechBubbleLife <= 0) { this.speechBubble = ''; this.speechBubbleLife = 0; }
+    }
+    if (this._speechCooldown > 0) {
+      this._speechCooldown -= dt;
+    } else if (this.speechBubbleLife <= 0 && this.totalTicks > 6) {
+      // pick a pool based on current state
+      let pool;
+      if (this.state === 'typing_furious') pool = SPEECH_PHRASES.furious;
+      else if (working) pool = SPEECH_PHRASES.working;
+      else if (this.state === 'thinking') pool = SPEECH_PHRASES.thinking;
+      else pool = SPEECH_PHRASES.idle;
+      this.speechBubble = pool[Math.floor(Math.random() * pool.length)];
+      this.speechBubbleLife = 3.5 + Math.random() * 1.5;
+      this._speechCooldown = 18 + Math.random() * 22;
+    }
     if (this.celebrating) {
       this.celebrateTimer -= dt;
       if (this.celebrateTimer <= 0) this.celebrating = false;
@@ -5325,6 +5381,13 @@ class AgentState {
     const showThought = this.thought &&
       (this.state==='typing_normal'||this.state==='typing_furious'||this.state==='thinking');
     if (showThought) drawThoughtBubble(ctx, this.sx, this.sy-8, this.thought, tick);
+    // ── Speech bubble ─────────────────────────────────────────────
+    if (this.speechBubble && this.speechBubbleLife > 0 && !showThought) {
+      const fadeIn  = clamp(1 - (this.speechBubbleLife - (this.speechBubbleLife > 3.5 ? this.speechBubbleLife - 0.4 : 0)) / 0.4, 0, 1);
+      const fadeOut = clamp(this.speechBubbleLife / 0.6, 0, 1);
+      const alpha   = Math.min(fadeIn, fadeOut) * this.labelScale;
+      drawSpeechBubble(ctx, this.sx, this.sy, this.speechBubble, alpha);
+    }
     // ── Mood emoji above head ─────────────────────────────────────
     if (this._moodEmoji && this.totalTicks > 4 && this.labelScale > 0.1) {
       const bob = Math.sin(tick * 0.06 + this.sx) * 1.5; // gentle float
