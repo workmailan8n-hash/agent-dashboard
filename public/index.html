@@ -5100,6 +5100,9 @@ class AgentState {
     this.waveEmoji       = '';  // '👋' or '🙂' shown briefly above head
     this.waveTimer       = 0;   // countdown seconds (>0 = visible)
     this._greetCooldown  = {};  // agentId → remaining cooldown seconds
+    // high-five when both working at nearby desks
+    this.highFiveTimer   = 0;   // countdown seconds (>0 = visible)
+    this._highFiveCooldown = {}; // agentId → remaining cooldown seconds
   }
 
   get depth() { return this.ty + this.tx * 0.001; }
@@ -5162,6 +5165,12 @@ class AgentState {
     for (const k of Object.keys(this._greetCooldown)) {
       this._greetCooldown[k] -= dt;
       if (this._greetCooldown[k] <= 0) delete this._greetCooldown[k];
+    }
+    // ── High-five timer decay ─────────────────────────────────────
+    if (this.highFiveTimer > 0) this.highFiveTimer -= dt;
+    for (const k of Object.keys(this._highFiveCooldown)) {
+      this._highFiveCooldown[k] -= dt;
+      if (this._highFiveCooldown[k] <= 0) delete this._highFiveCooldown[k];
     }
 
     // ── Label spring (k=180, d=16) ────────────────────────────────
@@ -5437,6 +5446,20 @@ class AgentState {
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
       ctx.fillText(this.waveEmoji, this.sx + 14, this.sy - 50 + waveOff);
+      ctx.restore();
+    }
+    // ── High-five emoji (shown when both at desk working nearby) ──
+    if (this.highFiveTimer > 0 && this.labelScale > 0.1) {
+      const progress  = 1 - this.highFiveTimer / 2.2; // 0→1 over lifetime
+      const fadeAlpha = clamp(this.highFiveTimer / 0.5, 0, 1) * this.labelScale;
+      const riseOff   = -progress * 14; // float upward as it fades
+      const scale     = 1 + Math.sin(progress * Math.PI) * 0.4; // pop then shrink
+      ctx.save();
+      ctx.globalAlpha = fadeAlpha;
+      ctx.font = `${Math.round(14 * scale)}px sans-serif`;
+      ctx.textAlign = 'center';
+      ctx.textBaseline = 'middle';
+      ctx.fillText('🤝', this.sx, this.sy - 56 + riseOff);
       ctx.restore();
     }
   }
@@ -7001,6 +7024,46 @@ function loop(now) {
         const cooldown = 22 + Math.random() * 18;
         a._greetCooldown[b.id] = cooldown;
         b._greetCooldown[a.id] = cooldown;
+      }
+    }
+  }
+
+  // ── High-five when both agents working at nearby desks ─────────
+  {
+    const list = Object.values(agentStates);
+    const HIGHFIVE_DIST2 = 3.5 * 3.5; // tiles — desks can be a row apart
+    for (let i = 0; i < list.length; i++) {
+      for (let j = i + 1; j < list.length; j++) {
+        const a = list[i], b = list[j];
+        // Both must be working AND settled at their desk
+        if (!a.isWorking || !b.isWorking) continue;
+        if (!a.arrived  || !b.arrived)  continue;
+        // Skip if on cooldown with each other
+        if (a._highFiveCooldown[b.id] || b._highFiveCooldown[a.id]) continue;
+        // Check desk proximity
+        const da = DESK_SLOTS[Math.min(a.slotIdx, DESK_SLOTS.length - 1)];
+        const db = DESK_SLOTS[Math.min(b.slotIdx, DESK_SLOTS.length - 1)];
+        if (!da || !db) continue;
+        const dx = da.tx - db.tx, dy = da.ty - db.ty;
+        if (dx*dx + dy*dy > HIGHFIVE_DIST2) continue;
+        // Trigger high-five
+        a.highFiveTimer = 2.2;
+        b.highFiveTimer = 2.2;
+        // Burst particles at midpoint between the two agents
+        const mx = (a.sx + b.sx) / 2, my = (a.sy + b.sy) / 2 - 20;
+        PS.emit(mx, my, 10, {
+          vx: 0, vy: -40, spread: 80, gravity: 120,
+          life: 0.7, size: 3,
+          color: a.palette?.accent ?? '#7aa2f7',
+        });
+        PS.emit(mx, my, 10, {
+          vx: 0, vy: -40, spread: 80, gravity: 120,
+          life: 0.7, size: 3,
+          color: b.palette?.accent ?? '#9ece6a',
+        });
+        const cooldown = 40 + Math.random() * 30;
+        a._highFiveCooldown[b.id] = cooldown;
+        b._highFiveCooldown[a.id] = cooldown;
       }
     }
   }
