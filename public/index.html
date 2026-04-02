@@ -473,6 +473,7 @@ const ANIM = {
   yoga:           { frames: 6,  fps: 4,  loop: true,  spriteRow: 20 },
   reading:        { frames: 4,  fps: 3,  loop: true,  spriteRow: 21 },
   desk_nap:       { frames: 4,  fps: 3,  loop: true,  spriteRow: 22 },
+  desk_yawn:      { frames: 12, fps: 4,  loop: false, spriteRow: 35 },
   doodling:       { frames: 6,  fps: 5,  loop: true,  spriteRow: 23 },
   plant_care:     { frames: 6,  fps: 4,  loop: true,  spriteRow: 24 },
   // ── Group ────────────────────────────────────────────────────────
@@ -1700,6 +1701,84 @@ function drawDeskNap(ctx, cx, cy, pal, t) {
   if(Math.random()<0.05) PS.zzz(cx+10, cy-12+br);
 }
 
+// ── desk_yawn (seated, yawn + stretch + rub eyes) ─────────────────
+function drawDeskYawn(ctx, cx, cy, pal, t) {
+  // t=0..1 (one-shot): 0-0.35 rise, 0.35-0.6 peak yawn, 0.6-0.8 rub eyes, 0.8-1 settle
+  const stretchT  = Math.sin(Math.min(t, 0.8) * Math.PI / 0.8); // 0->1->0 rise & fall
+  const yawnMouth = Math.max(0, Math.sin(t * Math.PI * 1.1));    // mouth open bell
+  const rubT      = (t > 0.58 && t < 0.88) ? Math.sin((t - 0.58) / 0.3 * Math.PI) : 0;
+  const armRaise  = stretchT * 14;
+  shd(ctx, cx, cy+16);
+  // legs seated
+  px(ctx,cx-5,cy+5,5,9,pal.pants); px(ctx,cx+1,cy+5,5,9,pal.pants);
+  px(ctx,cx-6,cy+13,6,3,'#1a1a2a'); px(ctx,cx+1,cy+13,6,3,'#1a1a2a');
+  // body
+  px(ctx,cx-6,cy-3,13,9,pal.shirt);
+  px(ctx,cx-1,cy-2,2,7,'#ffffff18');
+  px(ctx,cx-8,cy-1,3,4,pal.shirt); px(ctx,cx+5,cy-1,3,4,pal.shirt);
+  // arms: raise for stretch, then hands near face for rub
+  if (rubT > 0.25) {
+    // rubbing eyes — forearms up, fists near face
+    px(ctx,cx-12,cy-5,8,3,pal.skin); px(ctx,cx-10,cy-8,5,3,pal.skin);
+    px(ctx,cx+4,cy-5,8,3,pal.skin);  px(ctx,cx+5,cy-8,5,3,pal.skin);
+  } else {
+    // stretch — arms raised wide
+    const aY = -armRaise|0;
+    px(ctx,cx-13,cy-1+aY,7,3,pal.skin); px(ctx,cx-11,cy-4+aY,4,9,pal.skin);
+    px(ctx,cx+6,cy-1+aY,7,3,pal.skin);  px(ctx,cx+7,cy-4+aY,4,9,pal.skin);
+  }
+  // head tilts back a little during yawn
+  const headTilt = stretchT * 0.18;
+  ctx.save(); ctx.translate(cx, cy-12); ctx.rotate(headTilt);
+  // skull
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(0,0,7,8,0,0,Math.PI*2); ctx.fill();
+  // ears
+  px(ctx,-8,-3,3,5,pal.skin); px(ctx,5,-3,3,5,pal.skin);
+  // hair
+  if (pal.bun) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-12,5,5,0,0,Math.PI*2); ctx.fill();
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-8,7,5,0,-Math.PI,0); ctx.fill();
+    px(ctx,-7,-9,14,5,pal.hair);
+  } else if (pal.hat) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-8,7,5,0,-Math.PI,0); ctx.fill();
+    px(ctx,-9,-12,18,4,pal.accent+'cc'); px(ctx,-7,-16,14,6,pal.accent);
+  } else if (!pal.robot && !pal.alien) {
+    ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(0,-6,7,5,0,-Math.PI,0); ctx.fill();
+    px(ctx,-7,-8,4,5,pal.hair); px(ctx,3,-8,4,5,pal.hair);
+  }
+  // eyes: squint during yawn, rub motion when rubbing
+  if (rubT > 0.25) {
+    ctx.fillStyle='#2a1820'; // tight squint lines
+    ctx.fillRect(-4,-4,4,1); ctx.fillRect(1,-4,4,1);
+    // fist overlay on eyes
+    ctx.fillStyle=pal.skin+'cc';
+    ctx.fillRect(-6,-6,5,5); ctx.fillRect(1,-6,5,5);
+  } else {
+    const lidH = Math.max(1, yawnMouth * 3.5)|0;
+    ctx.fillStyle='#1a1b26';
+    ctx.fillRect(-4,-4,4,lidH); ctx.fillRect(1,-4,4,lidH);
+    if (yawnMouth < 0.5) { ctx.fillStyle='#ffffff80'; ctx.fillRect(-4,-4,2,2); ctx.fillRect(1,-4,2,2); }
+    if (pal.fatigue) { ctx.fillStyle='#80405060'; ctx.fillRect(-4,-1,4,1); ctx.fillRect(1,-1,4,1); }
+  }
+  // mouth: open wide for yawn
+  const mW = Math.max(2, yawnMouth * 9)|0;
+  const mH = Math.max(1, yawnMouth * 6)|0;
+  if (yawnMouth > 0.15) {
+    ctx.fillStyle='#601020'; ctx.beginPath(); ctx.ellipse(0,1,mW/2,mH/2,0,0,Math.PI*2); ctx.fill();
+    if (mW > 4) { ctx.fillStyle='#ffffff80'; ctx.fillRect(-mW/2+1,0,mW-2,1); } // teeth
+  } else {
+    ctx.fillStyle='#c8906090'; ctx.fillRect(-3,1,6,2);
+  }
+  ctx.restore();
+  // yawn particle: tiny stars floating up
+  if (yawnMouth > 0.4 && Math.random() < 0.06) {
+    PS.emit(cx + (Math.random()-0.5)*8, cy-24, 1, {
+      vx:(Math.random()-0.5)*12, vy:-18-Math.random()*10,
+      spread:2, gravity:-3, life:1.1, size:3+Math.random()*2, color:'#c8d3f5aa',
+    });
+  }
+}
+
 // ── doodling (drawing at desk) ────────────────────────────────────
 function drawDoodling(ctx, cx, cy, pal, t) {
   const ph = t * Math.PI * 2;
@@ -2692,6 +2771,7 @@ const CHAR_DRAW = {
   yoga:         drawYoga,
   reading:      drawReading,
   desk_nap:     drawDeskNap,
+  desk_yawn:    drawDeskYawn,
   doodling:     drawDoodling,
   plant_care:   drawPlantCare,
   chatting_l:   drawChattingL,
@@ -5464,6 +5544,10 @@ class AgentState {
         // Idle variety: coffee every ~30s
         if (this.idleTimer > 30 && this.state==='typing_normal') {
           this.setAnim('drinking_desk','typing_normal'); this.idleTimer=0;
+        }
+        // Idle variety: yawn+stretch if tired (~45s after last break, burnout >= 1)
+        if (this.idleTimer > 45 && this.burnout >= 1 && this.state==='typing_normal') {
+          this.setAnim('desk_yawn','typing_normal'); this.idleTimer=0;
         }
         // Idle variety: spin every ~60s
         if (this.idleTimer > 60 && this.state==='typing_normal') {
