@@ -240,7 +240,7 @@
   <a id="public-url" class="loading" href="#" target="_blank">⏳ tunnel...</a>
 </header>
 
-<canvas id="office" width="1200" height="600"></canvas>
+<canvas id="office" width="1400" height="600"></canvas>
 
 <div id="grid"></div>
 
@@ -288,11 +288,11 @@
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
 // ════════════════════════════════════════════════════════════════
-let   CW   = 1200;
+let   CW   = 1400;
 const T    = 32;        // tile size px
-const OX   = 140;       // canvas left margin
+const OX   = 150;       // canvas left margin
 const OY   = 12;        // canvas top margin
-let   COLS = 28;        // room width in tiles (mutable for wall editor)
+let   COLS = 35;        // room width in tiles (mutable for wall editor)
 let   ROWS = 14;
 let   CH   = OY + ROWS * T + OY;
 // цвета объявляем сразу — используются в draw-функциях ниже
@@ -2872,7 +2872,7 @@ function generateLayout(n) {
   const couchRows=Math.ceil(stableCount/COUCH_PER_ROW);
   const baseRows=LOUNGE_Y+couchRows*3+2;
   ACT_ZONE_Y = baseRows;
-  ROWS = Math.max(baseRows + 24, 45);  // min 45 rows to fit all BUILTIN objects
+  ROWS = Math.max(baseRows + 24, 70);  // min 70 rows to fit all BUILTIN objects
   CH=OY+ROWS*T+OY;
   const cv=document.getElementById('office');
   if (cv) cv.height=CH;
@@ -3110,6 +3110,35 @@ function buildObstacleGrid() {
       const inDoor = r >= KITCHEN_DOOR_ROW && r <= KITCHEN_DOOR_ROW + 4;
       if (!inDoor) obstacleGrid[r][KITCHEN_WALL_COL] = 1;
     }
+  }
+
+  // Room walls as obstacles
+  // Lounge wall (row 21)
+  const loungeDoorL = Math.floor(COLS*0.3), loungeDoorR = Math.floor(COLS*0.5);
+  for (let c = 1; c < COLS-1; c++) {
+    if (c >= loungeDoorL && c <= loungeDoorR) continue;
+    mark(c, 21);
+  }
+  // Activity wall (row 35)
+  const actDoorL = Math.floor(COLS*0.35), actDoorR = Math.floor(COLS*0.65);
+  for (let c = 1; c < COLS-1; c++) {
+    if (c >= actDoorL && c <= actDoorR) continue;
+    mark(c, 35);
+  }
+  // Sports wall (row 45)
+  for (let c = 1; c < COLS-1; c++) {
+    if (c >= actDoorL && c <= actDoorR) continue;
+    mark(c, 45);
+  }
+  // Gym/Gaming divider (col 17, rows 36-44)
+  for (let r = 36; r <= 44; r++) {
+    if (r >= 39 && r <= 41) continue;
+    mark(17, r);
+  }
+  // Sports/Social divider (col 17, rows 46-54)
+  for (let r = 46; r <= 54; r++) {
+    if (r >= 49 && r <= 51) continue;
+    mark(17, r);
   }
 
   const rXobs = PER_ROW * STEP_X + 2;
@@ -4147,6 +4176,71 @@ function buildBackground() {
 
   }
 
+  // ═══ ROOM WALLS WITH DOORS ═══════════════════════════════════
+  // Helper: draw a horizontal wall segment with optional door
+  function drawHWall(y, x1, x2, doorStart, doorEnd) {
+    for (let c = x1; c <= x2; c++) {
+      const wx = OX + c*T, wy = OY + y*T;
+      const inDoor = doorStart !== undefined && c >= doorStart && c <= doorEnd;
+      if (inDoor) {
+        // Door opening — lighter floor
+        fillR(ctx, wx, wy, T, T, '#d0caba');
+        // Door frame edges
+        if (c === doorStart) fillR(ctx, wx-2, wy, 4, T, '#6a5090');
+        if (c === doorEnd) fillR(ctx, wx+T-2, wy, 4, T, '#6a5090');
+      } else {
+        fillR(ctx, wx, wy, T, T, '#252344');
+        fillR(ctx, wx, wy, T, 4, '#3a3860'); // top highlight
+        fillR(ctx, wx, wy+T-2, T, 2, '#1e1c38'); // bottom shadow
+      }
+    }
+  }
+
+  // Helper: draw a vertical wall segment with optional door
+  function drawVWall(x, y1, y2, doorStart, doorEnd) {
+    for (let r = y1; r <= y2; r++) {
+      const wx = OX + x*T, wy = OY + r*T;
+      const inDoor = doorStart !== undefined && r >= doorStart && r <= doorEnd;
+      if (inDoor) {
+        fillR(ctx, wx, wy, T, T, '#d0caba');
+        if (r === doorStart) fillR(ctx, wx, wy-2, T, 4, '#6a5090');
+        if (r === doorEnd) fillR(ctx, wx, wy+T-2, T, 4, '#6a5090');
+      } else {
+        fillR(ctx, wx, wy, T, T, '#252344');
+        fillR(ctx, wx, wy, 4, T, '#1e1c38'); // left shadow
+        fillR(ctx, wx+T-4, wy, 4, T, '#3a3860'); // right highlight
+      }
+    }
+  }
+
+  // ── Lounge wall (horizontal, row 21, door in center) ──
+  drawHWall(21, 1, COLS-2, Math.floor(COLS*0.3), Math.floor(COLS*0.5));
+
+  // ── Activity zone wall (horizontal, row 35, wide door) ──
+  drawHWall(35, 1, COLS-2, Math.floor(COLS*0.35), Math.floor(COLS*0.65));
+
+  // ── Gym/Gaming divider (vertical, col 17, rows 35-44, door at 39-41) ──
+  drawVWall(17, 36, 44, 39, 41);
+
+  // ── Sports/Social divider (vertical, col 17, rows 46-54, door at 49-51) ──
+  drawVWall(17, 46, 54, 49, 51);
+
+  // ── Sports wall (horizontal, row 45, door in center) ──
+  drawHWall(45, 1, COLS-2, Math.floor(COLS*0.35), Math.floor(COLS*0.65));
+
+  // ── Room labels (small, subtle) ──
+  ctx.fillStyle = '#4a4870'; ctx.font = "5px 'Press Start 2P',monospace";
+  const roomLabels = [
+    [2, 21.5, 'LOUNGE'],
+    [2, 35.5, 'GYM'],
+    [19, 35.5, 'GAMING'],
+    [2, 45.5, 'SPORTS'],
+    [19, 45.5, 'SOCIAL'],
+  ];
+  for (const [lx, ly, label] of roomLabels) {
+    const [rlx, rly] = ts(lx, ly);
+    ctx.fillText(label, rlx, rly + T/2);
+  }
 
   // Nameplate
   const npX=OX+Math.floor((COLS-10)/2)*T, npY=OY+6;
@@ -5046,14 +5140,16 @@ class AgentState {
   constructor(id, slug) {
     this.id   = id;
     this.slug = slug;
-    // Spawn at right entrance (kitchen door area) — agent walks in from the door
-    const doorY = KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW + 2 : Math.floor(ROWS * 0.4);
-    this.tx = COLS - 2;
-    this.ty = doorY + (Math.random() - 0.5) * 2;
+    // Spawn on a random couch in the lounge (then walk to activity)
+    const couchPositions = COUCH_SLOTS.length > 0 ? COUCH_SLOTS : [{tx: 5, ty: 24}, {tx: 10, ty: 24}];
+    const spawnCouch = couchPositions[Math.floor(Math.random() * couchPositions.length)];
+    this.tx = spawnCouch.tx + (Math.random() - 0.5) * 0.5;
+    this.ty = spawnCouch.ty + (Math.random() - 0.5) * 0.5;
     this.targetTx = this.tx; this.targetTy = this.ty;
     this.palette  = getPalette(slug);
     // state machine
-    this.state      = 'walking';
+    this.state      = 'sitting_couch';  // start sitting on couch
+    this._spawnSitTimer = 2 + Math.random() * 3; // sit for 2-5 seconds before moving
     this.nextState  = null;   // queued after non-loop anim finishes
     this.animTime   = 0;      // accumulated seconds in current state
     this.animT      = 0;      // normalized [0..1]
@@ -5230,6 +5326,17 @@ class AgentState {
     // ── Slot assignment ───────────────────────────────────────────
     // If cleaning, don't touch slot assignment — cleaning logic controls movement
     if (this.isCleaning) return;
+
+    // ── Spawn: sit on couch briefly before moving ─────────────────
+    if (this._spawnSitTimer > 0) {
+      this._spawnSitTimer -= dt;
+      this.state = 'sitting_couch';
+      if (this._spawnSitTimer <= 0) {
+        this.state = 'walking';
+        this._spawnSitTimer = 0;
+      }
+      return; // don't do anything else while spawning
+    }
 
     if (working !== this.isWorking) {
       // Release idle slot when transitioning away from idle
@@ -7732,67 +7839,82 @@ function applyWallPositions() {
 
 // Default layout positions (exported from localhost admin editor)
 const BUILTIN_POSITIONS = {
-  "clock": {"tx": 19, "ty": 0},
-  "darts": {"tx": 24.5, "ty": 0},
-  "kanban": {"tx": 23, "ty": 2},
-  "telescope": {"tx": 20, "ty": 1.5},
-  "aquarium": {"tx": 23.5, "ty": 5.5},
-  "printer": {"tx": 24, "ty": 9},
-  "plant_0": {"tx": 5, "ty": 0.5},
-  "plant_1": {"tx": 25, "ty": 8},
-  "trashcan": {"tx": 26, "ty": 14},
-  "cooler": {"tx": 24, "ty": 14},
-  "vending": {"tx": 22, "ty": 14},
-  "kitchen_counter": {"tx": 18, "ty": 11},
-  "kitchen_table": {"tx": 20, "ty": 12},
-  "fridge": {"tx": 26, "ty": 11},
+  // ═══ WORK ZONE (rows 1-20, cols 1-22) ═══
   "desk_0": {"tx": 1, "ty": 1},
-  "desk_1": {"tx": 5, "ty": 1},
-  "desk_2": {"tx": 9, "ty": 1},
-  "desk_3": {"tx": 1, "ty": 5},
-  "desk_4": {"tx": 5, "ty": 5},
-  "desk_5": {"tx": 9, "ty": 5},
-  "desk_6": {"tx": 1, "ty": 9},
-  "desk_7": {"tx": 5, "ty": 9},
-  "desk_8": {"tx": 9, "ty": 9},
-  "desk_9": {"tx": 1, "ty": 13},
-  "desk_10": {"tx": 5, "ty": 13},
-  "desk_11": {"tx": 9, "ty": 13},
-  "desk_12": {"tx": 1, "ty": 17},
-  "desk_13": {"tx": 5, "ty": 17},
-  "desk_14": {"tx": 9, "ty": 17},
-  "desk_15": {"tx": 13, "ty": 17},
-  "desk_16": {"tx": 13, "ty": 13},
-  "couch_0": {"tx": 1.5, "ty": 21},
-  "couch_1": {"tx": 5, "ty": 21},
-  "couch_2": {"tx": 8.5, "ty": 21},
-  "couch_3": {"tx": 12, "ty": 21},
-  "couch_4": {"tx": 15.5, "ty": 21},
-  "couch_5": {"tx": 1.5, "ty": 23},
-  "couch_6": {"tx": 5, "ty": 23},
-  "couch_7": {"tx": 8.5, "ty": 23},
-  "couch_8": {"tx": 12, "ty": 23},
-  "couch_9": {"tx": 15.5, "ty": 23},
-  "couch_10": {"tx": 1.5, "ty": 25},
-  "couch_11": {"tx": 5, "ty": 25},
-  "couch_12": {"tx": 8.5, "ty": 25},
-  "couch_13": {"tx": 12, "ty": 25},
-  "couch_14": {"tx": 15.5, "ty": 25},
-  "couch_15": {"tx": 19, "ty": 21},
-  "couch_16": {"tx": 19, "ty": 23},
-  "gym": {"tx": 1, "ty": 28},
-  "pingpong": {"tx": 18, "ty": 27},
-  "tv": {"tx": 8, "ty": 30},
-  "gaming_sofa": {"tx": 8, "ty": 33},
-  "foosball": {"tx": 18, "ty": 30},
-  "arcade": {"tx": 1, "ty": 34},
-  "dj_console": {"tx": 5, "ty": 34},
-  "basketball": {"tx": 9, "ty": 34},
-  "server_rack": {"tx": 14, "ty": 34},
-  "printer_3d": {"tx": 17, "ty": 34},
-  "espresso_bar": {"tx": 21, "ty": 34},
-  "conf_table": {"tx": 1, "ty": 37},
-  "bookshelf": {"tx": 12, "ty": 37}
+  "desk_1": {"tx": 6, "ty": 1},
+  "desk_2": {"tx": 11, "ty": 1},
+  "desk_3": {"tx": 16, "ty": 1},
+  "desk_4": {"tx": 1, "ty": 5},
+  "desk_5": {"tx": 6, "ty": 5},
+  "desk_6": {"tx": 11, "ty": 5},
+  "desk_7": {"tx": 16, "ty": 5},
+  "desk_8": {"tx": 1, "ty": 9},
+  "desk_9": {"tx": 6, "ty": 9},
+  "desk_10": {"tx": 11, "ty": 9},
+  "desk_11": {"tx": 16, "ty": 9},
+  "desk_12": {"tx": 1, "ty": 13},
+  "desk_13": {"tx": 6, "ty": 13},
+  "desk_14": {"tx": 11, "ty": 13},
+  "desk_15": {"tx": 16, "ty": 13},
+  "desk_16": {"tx": 1, "ty": 17},
+
+  // ═══ RIGHT PANEL (cols 24-34) ═══
+  "clock": {"tx": 24, "ty": 0},
+  "darts": {"tx": 30, "ty": 0},
+  "kanban": {"tx": 24, "ty": 2},
+  "telescope": {"tx": 30, "ty": 3},
+  "aquarium": {"tx": 24, "ty": 7},
+  "printer": {"tx": 30, "ty": 9},
+  "plant_0": {"tx": 5, "ty": 0.5},
+  "plant_1": {"tx": 28, "ty": 8},
+
+  // ═══ KITCHEN (rows 10-19, cols 24-34) ═══
+  "kitchen_counter": {"tx": 24, "ty": 12},
+  "kitchen_table": {"tx": 26, "ty": 14},
+  "fridge": {"tx": 33, "ty": 12},
+  "trashcan": {"tx": 33, "ty": 16},
+  "cooler": {"tx": 30, "ty": 16},
+  "vending": {"tx": 27, "ty": 17},
+
+  // ═══ LOUNGE (rows 22-34) ═══
+  "couch_0": {"tx": 2, "ty": 23},
+  "couch_1": {"tx": 7, "ty": 23},
+  "couch_2": {"tx": 12, "ty": 23},
+  "couch_3": {"tx": 17, "ty": 23},
+  "couch_4": {"tx": 22, "ty": 23},
+  "couch_5": {"tx": 2, "ty": 26},
+  "couch_6": {"tx": 7, "ty": 26},
+  "couch_7": {"tx": 12, "ty": 26},
+  "couch_8": {"tx": 17, "ty": 26},
+  "couch_9": {"tx": 22, "ty": 26},
+  "couch_10": {"tx": 2, "ty": 29},
+  "couch_11": {"tx": 7, "ty": 29},
+  "couch_12": {"tx": 12, "ty": 29},
+  "couch_13": {"tx": 17, "ty": 29},
+  "couch_14": {"tx": 22, "ty": 29},
+  "couch_15": {"tx": 27, "ty": 23},
+  "couch_16": {"tx": 27, "ty": 26},
+
+  // ═══ GYM ROOM (rows 36-44, cols 1-16) ═══
+  "gym": {"tx": 2, "ty": 37},
+
+  // ═══ GAMING ROOM (rows 36-44, cols 18-34) ═══
+  "tv": {"tx": 20, "ty": 37},
+  "gaming_sofa": {"tx": 20, "ty": 41},
+  "arcade": {"tx": 28, "ty": 37},
+  "dj_console": {"tx": 28, "ty": 40},
+
+  // ═══ SPORTS ROOM (rows 46-54, cols 1-16) ═══
+  "pingpong": {"tx": 2, "ty": 47},
+  "foosball": {"tx": 10, "ty": 47},
+  "basketball": {"tx": 2, "ty": 51},
+
+  // ═══ SOCIAL ROOM (rows 46-54, cols 18-34) ═══
+  "conf_table": {"tx": 20, "ty": 47},
+  "espresso_bar": {"tx": 28, "ty": 47},
+  "bookshelf": {"tx": 20, "ty": 51},
+  "server_rack": {"tx": 26, "ty": 51},
+  "printer_3d": {"tx": 30, "ty": 51}
 };
 
 // Apply custom positions to actual game objects
@@ -9027,7 +9149,7 @@ document.getElementById('admin-start-pos').onclick = () => {
     localStorage.removeItem('admin_walls');
     window._adminPos = Object.assign({}, BUILTIN_POSITIONS);
     // Reset walls to default sizes
-    COLS = 28; CW = OX + COLS*T + OX;
+    COLS = 35; CW = OX + COLS*T + OX;
     canvas.width = CW; bgBuf.width = CW;
     generateLayout(Math.max(12, Object.keys(agentsData).length));
     applyCustomPositions();
