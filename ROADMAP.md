@@ -24,7 +24,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Persistent traits per agent (introvert prefers desk, extrovert prefers social spots)
 - [x] Agents wave/nod when passing each other
 - [x] High-five animation near desks when both working
-- [ ] Tired agent yawns, stretches, rubs eyes
+- [x] Tired agent yawns, stretches, rubs eyes
 
 ## Day 3 — Visual Effects
 - [ ] Confetti burst when agent finishes a task (tool = done)
