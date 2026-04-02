@@ -5095,7 +5095,7 @@ class AgentState {
     // speech bubbles
     this.speechBubble    = '';  // current speech text
     this.speechBubbleLife = 0; // countdown seconds (>0 = visible)
-    this._speechCooldown  = 15 + Math.random() * 20; // stagger initial delay per agent
+    this._speechCooldown  = 5 + Math.random() * 8; // speech bubbles appear faster
     // wave / nod when passing other agents
     this.waveEmoji       = '';  // '👋' or '🙂' shown briefly above head
     this.waveTimer       = 0;   // countdown seconds (>0 = visible)
@@ -5426,14 +5426,14 @@ class AgentState {
       drawSpeechBubble(ctx, this.sx, this.sy, this.speechBubble, alpha);
     }
     // ── Mood emoji above head ─────────────────────────────────────
-    if (this._moodEmoji && this.totalTicks > 4 && this.labelScale > 0.1) {
-      const bob = Math.sin(tick * 0.06 + this.sx) * 1.5; // gentle float
+    if (this._moodEmoji && this.totalTicks > 2 && this.labelScale > 0.1) {
+      const bob = Math.sin(tick * 0.06 + this.sx) * 2;
       ctx.save();
-      ctx.globalAlpha = clamp((this.totalTicks - 4) / 4, 0, 1) * this.labelScale;
-      ctx.font = '16px sans-serif';
+      ctx.globalAlpha = clamp((this.totalTicks - 2) / 2, 0, 1) * this.labelScale;
+      ctx.font = '20px sans-serif';
       ctx.textAlign = 'center';
       ctx.textBaseline = 'middle';
-      ctx.fillText(this._moodEmoji, this.sx, this.sy - 40 + bob);
+      ctx.fillText(this._moodEmoji, this.sx, this.sy - 44 + bob);
       ctx.restore();
     }
     // ── Wave / nod emoji (shown when passing another agent) ───────
