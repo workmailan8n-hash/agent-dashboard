@@ -3069,8 +3069,8 @@ function generateLayout(n) {
   // Cat bowl positions (preserve state across layout changes)
   const prevBowls = CAT_BOWLS;
   CAT_BOWLS = [
-    { tx: Math.floor(COLS / 2) - 1, ty: 2,               type: 'food',  hasFod: prevBowls[0]?.hasFod ?? true },
-    { tx: KITCHEN_WALL_COL - 1,     ty: KITCHEN_DOOR_ROW, type: 'water', hasFod: prevBowls[1]?.hasFod ?? true }
+    { tx: 25, ty: 18, type: 'food',  hasFod: prevBowls[0]?.hasFod ?? true },
+    { tx: 27, ty: 18, type: 'water', hasFod: prevBowls[1]?.hasFod ?? true }
   ];
 
   return true;
@@ -3095,21 +3095,17 @@ function buildObstacleGrid() {
 
   // Outer walls (with entrance door gap on right wall)
   for (let c = 0; c < COLS; c++) { obstacleGrid[0][c] = 1; obstacleGrid[ROWS-1][c] = 1; }
-  const entrDoorY = KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS*0.38);
+  // Entrance door on right wall at row 5-7 (work zone)
   for (let r = 0; r < ROWS; r++) {
     obstacleGrid[r][0] = 1;
-    // Right wall — open 3 tiles for entrance door
-    const isEntrance = r >= entrDoorY && r <= entrDoorY + 2;
+    const isEntrance = r >= 5 && r <= 7;
     if (!isEntrance) obstacleGrid[r][COLS-1] = 1;
   }
 
-  // Kitchen partition wall — limited height (not full office)
-  if (KITCHEN_WALL_COL > 0) {
-    const kitWallEnd = KITCHEN_START_ROW + 8; // kitchen is ~8 rows tall
-    for (let r = KITCHEN_START_ROW; r < kitWallEnd && r < ROWS - 1; r++) {
-      const inDoor = r >= KITCHEN_DOOR_ROW && r <= KITCHEN_DOOR_ROW + 4;
-      if (!inDoor) obstacleGrid[r][KITCHEN_WALL_COL] = 1;
-    }
+  // Kitchen partition wall (col 23, rows 10-19, door at 12-15)
+  for (let r = 10; r <= 19; r++) {
+    if (r >= 12 && r <= 15) continue; // door
+    mark(23, r);
   }
 
   // Room walls as obstacles
@@ -3382,8 +3378,8 @@ function drawKanban(ctx) {
   const [_kbTx, _kbTy] = getAdminPos('kanban', rX + 0.2, 2.5);
   const bx = OX + _kbTx * T;
   const by = OY + _kbTy * T;
-  const bw = (COLS - 1 - _kbTx - 0.3) * T;
-  const bh = T * 4;
+  const bw = Math.min((COLS - 1 - _kbTx - 0.3) * T, T * 6);
+  const bh = T * 3;
 
   if (bw < T * 2) return; // not enough space
 
@@ -3780,9 +3776,10 @@ function buildBackground() {
     for (let col=0; col<COLS; col++) {
       const x=OX+col*T, y=OY+row*T;
       const wall=col===0||col===COLS-1||row===0||row===ROWS-1;
-      const inKitchen = KITCHEN_WALL_COL>0 && col>KITCHEN_WALL_COL && col<COLS-1 && row>=KITCHEN_START_ROW && row<KITCHEN_START_ROW+8;
-      const kitWallEnd = KITCHEN_START_ROW + 8;
-      const isKitPartWall = KITCHEN_WALL_COL>0 && col===KITCHEN_WALL_COL && row>=KITCHEN_START_ROW && row<kitWallEnd && !(row>=KITCHEN_DOOR_ROW && row<=KITCHEN_DOOR_ROW+4);
+      // Kitchen area: cols 23-34, rows 10-19 (fixed position)
+      const KIT_ROW_START = 10, KIT_ROW_END = 19, KIT_COL = 23;
+      const inKitchen = col > KIT_COL && col < COLS-1 && row >= KIT_ROW_START && row <= KIT_ROW_END;
+      const isKitPartWall = col === KIT_COL && row >= KIT_ROW_START && row <= KIT_ROW_END && !(row >= KIT_ROW_START+2 && row <= KIT_ROW_START+5);
       if (wall) {
         if (row===0) {
           fillR(ctx,x,y,T,T,'#16152e');
@@ -3813,12 +3810,12 @@ function buildBackground() {
       }
     }
   }
-  // Kitchen partition door frame highlight
-  if (KITCHEN_WALL_COL>0) {
-    const dx=OX+KITCHEN_WALL_COL*T, dy=OY+KITCHEN_DOOR_ROW*T;
-    fillR(ctx,dx,dy,T,T*5,'#2e2c50');     // door opening — 5 tiles tall
-    fillR(ctx,dx,dy,4,T*5,'#4a4880');     // door frame left
-    fillR(ctx,dx+T-4,dy,4,T*5,'#4a4880'); // door frame right
+  // Kitchen partition door frame (fixed position col 23, rows 12-14)
+  {
+    const dx=OX+23*T, dy=OY+12*T;
+    fillR(ctx,dx,dy,T,T*4,'#2e2c50');
+    fillR(ctx,dx,dy,4,T*4,'#4a4880');
+    fillR(ctx,dx+T-4,dy,4,T*4,'#4a4880');
   }
 
   // ── Main entrance door (right wall) — agents spawn here ──────
@@ -5450,7 +5447,7 @@ class AgentState {
       } else if (!working) {
         // Timeout: give up on this slot after 5s and pick another
         this.walkTimer += dt;
-        if (this.walkTimer > 10) {
+        if (this.walkTimer > 6) {
           if (this.slotIdx >= 0 && idleOccupied[this.slotIdx] === this.id)
             delete idleOccupied[this.slotIdx];
           this.slotIdx = -1; this.activityDur = 0; this.walkTimer = 0;
