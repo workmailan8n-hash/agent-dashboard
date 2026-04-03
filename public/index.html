@@ -2313,6 +2313,91 @@ function drawAquariumFish(ctx, tick) {
   ctx.restore(); // remove clip
 }
 
+// ── Dust motes floating in window light shafts ──
+let dustMotes = [];
+function drawDustMotes(ctx, tick) {
+  const tod = getTimeOfDay();
+  if (tod.state === 'night') return; // no dust at night
+  // Init once
+  if (dustMotes.length === 0) {
+    for (let w = 0; w < 4; w++) {
+      for (let j = 0; j < 3; j++) {
+        const wx = OX + (3 + w*6)*T + 4;
+        dustMotes.push({
+          x: wx + Math.random() * (T-12),
+          y: OY + 10 + Math.random() * T * 2,
+          wy: OY + T,  // shaft top
+          wh: T * 2.5, // shaft height
+          wx: wx,
+          speed: 0.1 + Math.random() * 0.2,
+          phase: Math.random() * Math.PI * 2,
+          size: 1 + Math.random()
+        });
+      }
+    }
+  }
+  ctx.save();
+  for (const m of dustMotes) {
+    m.y += m.speed;
+    m.x = m.wx + (T-12)/2 + Math.sin(tick * 0.02 + m.phase) * 6;
+    if (m.y > m.wy + m.wh) { m.y = m.wy; m.x = m.wx + Math.random() * (T-12); }
+    ctx.globalAlpha = 0.25 + Math.sin(tick * 0.03 + m.phase) * 0.15;
+    ctx.fillStyle = '#ffe8a0';
+    ctx.beginPath(); ctx.arc(m.x, m.y, m.size, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
+// ── Fireflies outside windows at night ──
+let fireflies = [];
+function drawFireflies(ctx, tick) {
+  const tod = getTimeOfDay();
+  if (tod.state !== 'night') { return; }
+  if (fireflies.length === 0) {
+    for (let w = 0; w < 4; w++) {
+      for (let j = 0; j < 2; j++) {
+        const wx = OX + (3 + w*6)*T + 4;
+        fireflies.push({
+          x: wx + Math.random() * (T-12), y: OY + 6 + Math.random() * (T-14),
+          vx: (Math.random()-0.5)*0.3, vy: (Math.random()-0.5)*0.3,
+          wx: wx, phase: Math.random() * Math.PI * 2,
+          trail: []
+        });
+      }
+    }
+  }
+  ctx.save();
+  for (const f of fireflies) {
+    f.vx += (Math.random()-0.5)*0.05; f.vy += (Math.random()-0.5)*0.05;
+    f.vx *= 0.98; f.vy *= 0.98;
+    f.x += f.vx; f.y += f.vy;
+    // Clamp to window
+    if (f.x < f.wx + 2) f.vx = Math.abs(f.vx);
+    if (f.x > f.wx + T - 14) f.vx = -Math.abs(f.vx);
+    if (f.y < OY + 4) f.vy = Math.abs(f.vy);
+    if (f.y > OY + T - 12) f.vy = -Math.abs(f.vy);
+    // Trail
+    f.trail.push({x: f.x, y: f.y});
+    if (f.trail.length > 4) f.trail.shift();
+    const glow = 0.4 + Math.sin(tick * 0.08 + f.phase) * 0.3;
+    // Draw trail
+    for (let t = 0; t < f.trail.length; t++) {
+      ctx.globalAlpha = glow * (t / f.trail.length) * 0.4;
+      ctx.fillStyle = '#a0ff60';
+      ctx.beginPath(); ctx.arc(f.trail[t].x, f.trail[t].y, 1.5, 0, Math.PI*2); ctx.fill();
+    }
+    // Draw firefly
+    ctx.globalAlpha = glow;
+    ctx.fillStyle = '#c0ff40';
+    ctx.beginPath(); ctx.arc(f.x, f.y, 2, 0, Math.PI*2); ctx.fill();
+    // Glow halo
+    ctx.globalAlpha = glow * 0.2;
+    ctx.fillStyle = '#a0ff60';
+    ctx.beginPath(); ctx.arc(f.x, f.y, 5, 0, Math.PI*2); ctx.fill();
+  }
+  ctx.restore();
+}
+
 // ── Dart animation — darts fly toward board when agent is at darts spot ──
 let dartAnims = []; // {startTime, angle, progress}
 function drawDartAnimation(ctx, tick) {
@@ -7458,6 +7543,22 @@ function loop(now) {
 
   // Dynamic windows (sky based on time of day)
   drawDynamicWindows(ctx);
+  drawDustMotes(ctx, globalTick);
+  drawFireflies(ctx, globalTick);
+
+  // Screen glow on working agents' faces
+  for (const [id, sp] of Object.entries(agentStates)) {
+    if (!sp.isWorking || !sp.arrived) continue;
+    const glowAlpha = 0.08 + Math.sin(globalTick * 0.04) * 0.03;
+    ctx.save();
+    ctx.globalAlpha = glowAlpha;
+    const grad = ctx.createRadialGradient(sp.sx - 10, sp.sy - 5, 0, sp.sx - 10, sp.sy - 5, 25);
+    grad.addColorStop(0, '#6090ff');
+    grad.addColorStop(1, 'transparent');
+    ctx.fillStyle = grad;
+    ctx.fillRect(sp.sx - 35, sp.sy - 30, 50, 50);
+    ctx.restore();
+  }
 
   // Wall clock (dynamic hands)
   drawWallClock(ctx);
