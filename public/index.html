@@ -7804,41 +7804,15 @@ function loop(now) {
         ctx.restore();
       }
     }
-    if (simsMenuVisible && simsMenuItems.length > 0) {
+    // Selected agent — show "click object to send" hint
+    if (simsSelectedAgent && agentStates[simsSelectedAgent]) {
       ctx.save();
-      ctx.globalAlpha = 0.3;
-      ctx.fillStyle = '#000';
-      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.fillStyle = '#9ece6a';
+      ctx.font = "7px 'Press Start 2P',monospace";
+      ctx.textAlign = 'center';
+      const sp2 = agentStates[simsSelectedAgent];
+      ctx.fillText('CLICK OBJECT', sp2.sx, sp2.sy - 50);
       ctx.restore();
-      ctx.save();
-      ctx.globalAlpha = 0.85;
-      ctx.fillStyle = '#1a1a30';
-      ctx.beginPath();
-      ctx.arc(simsMenuX, simsMenuY, 70, 0, Math.PI*2);
-      ctx.fill();
-      ctx.strokeStyle = '#3a3860';
-      ctx.lineWidth = 2;
-      ctx.stroke();
-      ctx.restore();
-      for (const item of simsMenuItems) {
-        ctx.save();
-        ctx.fillStyle = '#2a2848';
-        ctx.beginPath();
-        ctx.arc(item.x, item.y, 18, 0, Math.PI*2);
-        ctx.fill();
-        ctx.strokeStyle = '#5a5888';
-        ctx.lineWidth = 1;
-        ctx.stroke();
-        ctx.restore();
-        ctx.font = '14px sans-serif';
-        ctx.textAlign = 'center';
-        ctx.textBaseline = 'middle';
-        ctx.fillText(item.icon, item.x, item.y);
-        ctx.fillStyle = '#c8d3f5';
-        ctx.font = "5px 'Press Start 2P',monospace";
-        ctx.fillText(item.label, item.x, item.y + 24);
-      }
-      ctx.textAlign = 'left';
     }
   }
 
@@ -8828,75 +8802,56 @@ canvas.addEventListener('click', e => {
   if (simsMode) {
     const {tx, ty} = mouseToTile(e);
 
-    // Check if clicking on radial menu item
-    if (simsMenuVisible) {
-      const mx = e.offsetX || (e.clientX - canvas.getBoundingClientRect().left);
-      const my = e.offsetY || (e.clientY - canvas.getBoundingClientRect().top);
-      const scaleX = canvas.width / canvas.getBoundingClientRect().width;
-      const scaleY = canvas.height / canvas.getBoundingClientRect().height;
-      const px = mx * scaleX, py = my * scaleY;
-
-      for (const item of simsMenuItems) {
-        const dx = px - item.x, dy = py - item.y;
-        if (dx*dx + dy*dy < 20*20) {
-          const sp = agentStates[simsSelectedAgent];
-          if (sp) {
-            sp._simsWaiting = false;
-            sp._simsTarget = item.slotType;
-            sp.arrived = false;
-            sp.activityDur = 30 + Math.random()*30;
-            const matching = [];
-            for (let i = 0; i < IDLE_SPOTS.length; i++) {
-              if (IDLE_SPOTS[i].type === item.slotType || IDLE_SPOTS[i].anim === item.anim) {
-                if (!idleOccupied[i] || idleOccupied[i] === sp.id) matching.push(i);
-              }
-            }
-            if (matching.length > 0) {
-              const idx = matching[Math.floor(Math.random() * matching.length)];
-              if (sp.slotIdx >= 0) delete idleOccupied[sp.slotIdx];
-              sp.slotIdx = idx;
-              idleOccupied[idx] = sp.id;
-              sp.activityAnim = IDLE_SPOTS[idx].anim;
-              sp.setTarget(IDLE_SPOTS[idx].tx, IDLE_SPOTS[idx].ty);
-            }
-          }
-          simsMenuVisible = false;
-          simsSelectedAgent = null;
+    // Step 1: If no agent selected — click on agent to select
+    if (!simsSelectedAgent) {
+      for (const [id, sp] of Object.entries(agentStates)) {
+        const dx = tx - sp.tx, dy = ty - sp.ty;
+        if (dx*dx + dy*dy < 2.5) {
+          simsSelectedAgent = id;
           return;
         }
       }
-      simsMenuVisible = false;
-      simsSelectedAgent = null;
       return;
     }
 
-    // Check if clicking on an agent
+    // Step 2: Agent selected — click on OBJECT to send agent there
+    // Check if clicked on another agent (switch selection)
     for (const [id, sp] of Object.entries(agentStates)) {
+      if (id === simsSelectedAgent) continue;
       const dx = tx - sp.tx, dy = ty - sp.ty;
-      if (dx*dx + dy*dy < 2) {
-        simsSelectedAgent = id;
-        simsMenuVisible = true;
-        simsMenuX = sp.sx;
-        simsMenuY = sp.sy - 30;
-        const activities = [
-          {icon:'💻', label:'Work', slotType:'desk', anim:'typing_normal'},
-          {icon:'☕', label:'Coffee', slotType:'kitchen', anim:'at_coffee'},
-          {icon:'🏋', label:'Gym', slotType:'gym', anim:'treadmill'},
-          {icon:'🕹', label:'Arcade', slotType:'arcade', anim:'playing_arcade'},
-          {icon:'🏓', label:'Ping Pong', slotType:'group', anim:'ping_pong_l'},
-          {icon:'📺', label:'TV', slotType:'gaming', anim:'gaming'},
-          {icon:'🎧', label:'DJ', slotType:'dj', anim:'djing'},
-          {icon:'📚', label:'Read', slotType:'shelf', anim:'reading'},
-          {icon:'🛋', label:'Rest', slotType:'couch', anim:'sleeping'},
-          {icon:'🔭', label:'Telescope', slotType:'telescope', anim:'using_telescope'},
-        ];
-        simsMenuItems = activities.map((a, i) => {
-          const angle = (i / activities.length) * Math.PI * 2 - Math.PI/2;
-          const radius = 55;
-          return { ...a, x: simsMenuX + Math.cos(angle)*radius, y: simsMenuY + Math.sin(angle)*radius };
-        });
+      if (dx*dx + dy*dy < 2.5) {
+        simsSelectedAgent = id; // switch to this agent
         return;
       }
+    }
+
+    // Find nearest IDLE_SPOT to click position
+    let bestSpot = -1, bestDist = Infinity;
+    for (let i = 0; i < IDLE_SPOTS.length; i++) {
+      if (idleOccupied[i] && idleOccupied[i] !== simsSelectedAgent) continue;
+      const dx = tx - IDLE_SPOTS[i].tx, dy = ty - IDLE_SPOTS[i].ty;
+      const d = dx*dx + dy*dy;
+      if (d < bestDist && d < 16) { bestDist = d; bestSpot = i; }
+    }
+
+    const sp = agentStates[simsSelectedAgent];
+    if (sp && bestSpot >= 0) {
+      // Send agent to this spot
+      sp._simsWaiting = false;
+      sp.arrived = false;
+      sp.activityDur = 30 + Math.random() * 30;
+      if (sp.slotIdx >= 0) delete idleOccupied[sp.slotIdx];
+      sp.slotIdx = bestSpot;
+      idleOccupied[bestSpot] = sp.id;
+      sp.activityAnim = IDLE_SPOTS[bestSpot].anim;
+      sp.setTarget(IDLE_SPOTS[bestSpot].tx, IDLE_SPOTS[bestSpot].ty);
+      simsSelectedAgent = null; // deselect after sending
+    } else if (sp) {
+      // No spot nearby — just walk to click position
+      sp._simsWaiting = false;
+      sp.arrived = false;
+      sp.setTarget(tx, ty);
+      simsSelectedAgent = null;
     }
     return;
   }
