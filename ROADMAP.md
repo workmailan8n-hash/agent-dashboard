@@ -27,7 +27,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Tired agent yawns, stretches, rubs eyes
 
 ## Day 3 — Visual Effects
-- [ ] Confetti burst when agent finishes a task (tool = done)
+- [x] Confetti burst when agent finishes a task (tool = done)
 - [ ] Dust particles floating in window light shafts
 - [ ] Fireflies outside windows at night
 - [ ] Screen glow on agent faces when at desk (colored light)
