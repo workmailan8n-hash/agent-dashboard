@@ -3971,6 +3971,56 @@ bgx.imageSmoothingEnabled=false;
 function ts(tx,ty) { return [OX+tx*T, OY+ty*T]; }
 function fillR(ctx,x,y,w,h,c) { if(!c)return; ctx.fillStyle=c; ctx.fillRect(x|0,y|0,w|0,h|0); }
 
+// ── Animated entrance door (drawn over static background each frame) ──────────
+function drawEntranceDoor(ctx) {
+  const edx = OX + (COLS - 1) * T;
+  const edy = OY + (KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS * 0.38)) * T;
+  const doorH = T * 3;
+  const o = ease.inOut(clamp(doorAnim.open, 0, 1)); // 0=closed, 1=fully open
+
+  // Repaint the door area (covers static bg door)
+  fillR(ctx, edx, edy, T, doorH, '#3a3050');          // dark void behind door
+  // Door frame (same as static bg)
+  fillR(ctx, edx,       edy,        4, doorH, '#6a5090');
+  fillR(ctx, edx+T-4,   edy,        4, doorH, '#6a5090');
+  fillR(ctx, edx,       edy-3,      T, 4,     '#6a5090'); // top
+  fillR(ctx, edx,       edy+doorH,  T, 4,     '#6a5090'); // bottom
+
+  // Door leaf — foreshorten as it swings inward (hinge on left side)
+  const maxW = T - 12;
+  const doorW = Math.round(maxW * (1 - o));
+  if (doorW > 1) {
+    fillR(ctx, edx + 4, edy + 2, doorW,     doorH - 4, '#5a4030');
+    fillR(ctx, edx + 6, edy + 4, doorW - 2, doorH - 8, '#6a4c38');
+    // Panel grooves
+    fillR(ctx, edx + 5, edy + T,     doorW - 2, 2, '#4a3028');
+    fillR(ctx, edx + 5, edy + T * 2, doorW - 2, 2, '#4a3028');
+    // Handle (disappears as door swings away)
+    if (o < 0.55) {
+      const hx = edx + 4 + Math.max(2, Math.round(doorW * 0.45));
+      ctx.fillStyle = '#c0b060';
+      ctx.beginPath(); ctx.arc(hx, edy + T * 1.5, 3 * (1 - o * 1.8), 0, Math.PI * 2); ctx.fill();
+    }
+  }
+
+  // Edge of door (visible when swinging)
+  if (o > 0.05 && o < 0.98) {
+    fillR(ctx, edx + 4 + doorW, edy + 2, 3, doorH - 4, '#3a2818');
+  }
+
+  // Light spill from outside when door is open
+  if (o > 0.08) {
+    ctx.save();
+    ctx.globalAlpha = o * 0.12;
+    const lg = ctx.createRadialGradient(edx + T * 0.5, edy + doorH * 0.5, 0, edx + T * 0.5, edy + doorH * 0.5, T * 3);
+    lg.addColorStop(0, '#ffffd0');
+    lg.addColorStop(1, 'transparent');
+    ctx.fillStyle = lg;
+    ctx.fillRect(edx - T * 2, edy - T, T * 5, doorH + T * 2);
+    ctx.restore();
+  }
+}
+
 function buildBackground() {
   const ctx=bgx;
   ctx.imageSmoothingEnabled=false;
@@ -7095,6 +7145,7 @@ ctx.imageSmoothingEnabled = false;
 const agentsData    = {};
 const agentStates   = {};
 const idleOccupied  = {}; // slotIdx → agentId  (persistent, exclusive slots)
+const doorAnim      = { open: 0, target: 0, timer: 0 }; // entrance door swing
 let   globalTick  = 0;
 let   lastTime    = 0;
 const startTime = Date.now();
@@ -7273,6 +7324,10 @@ function loop(now) {
   lastTime = now;
   globalTick++;
 
+  // ── Door animation ────────────────────────────────────────────
+  if (doorAnim.timer > 0) { doorAnim.timer -= dt; if (doorAnim.timer <= 0) doorAnim.target = 0; }
+  doorAnim.open = lerp(doorAnim.open, doorAnim.target, Math.min(1, dt * 4));
+
   // ── Sync ─────────────────────────────────────────────────────
   for (const id of Object.keys(agentStates)) {
     if (!agentsData[id]) {
@@ -7282,6 +7337,7 @@ function loop(now) {
       }
       PS.puff(agentStates[id].sx, agentStates[id].sy, agentStates[id].palette.accent);
       sndRemove();
+      doorAnim.target = 1; doorAnim.timer = 1.8; // door opens on departure
       delete agentStates[id];
     }
   }
@@ -7290,6 +7346,7 @@ function loop(now) {
       agentStates[id] = new AgentState(id, a.slug);
       PS.burst(agentStates[id].sx, agentStates[id].sy, getPalette(a.slug).accent);
       sndSpawn();
+      doorAnim.target = 1; doorAnim.timer = 1.8; // door opens on arrival
     }
   }
 
@@ -7592,6 +7649,7 @@ function loop(now) {
   // ── Draw ─────────────────────────────────────────────────────
   ctx.clearRect(0, 0, CW, canvas.height);
   ctx.drawImage(bgBuf, 0, 0);
+  drawEntranceDoor(ctx);
   drawLeftPanel(ctx, globalTick);
   drawRightPanel(ctx, globalTick);
   drawDynamicEffects(ctx, globalTick);
