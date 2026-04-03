@@ -5259,6 +5259,7 @@ class AgentState {
     this.activityDur  = 0;
     this.flip        = Math.abs(h)%3===1; // зеркалит позу на диване
     this.prevStatus  = '';
+    this.prevTool    = '';  // track tool completion
     this.waypoints   = [];  // A* path waypoints
     this.facing      = 'S'; // direction: N,NE,E,SE,S,SW,W,NW,IDLE
     // mood tracking
@@ -5359,6 +5360,14 @@ class AgentState {
       PS.confetti(this.sx, this.sy);
       sndState();
     }
+    // ── Detect tool completion → small confetti burst ─────────────
+    const curTool = agentData.currentTool || '';
+    if (this.prevTool && !curTool && working) {
+      PS.confetti(this.sx, this.sy - 16);
+      blip(880, .06, 'square', .03);
+      setTimeout(() => blip(1100, .05, 'square', .02), 80);
+    }
+    this.prevTool = curTool;
     // ── Burnout tracking ──────────────────────────────────────────
     if (this._wasWorking && !working) {
       this.burnout = Math.min(4, this.burnout + 1);
