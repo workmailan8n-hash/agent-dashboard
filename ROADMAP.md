@@ -33,7 +33,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Screen glow on agent faces when at desk (colored light)
 
 ## Day 4 — Smooth Transitions
-- [ ] Sit down / stand up animation (not teleport to chair)
+- [x] Sit down / stand up animation (not teleport to chair)
 - [ ] Door opens when agent enters, closes behind
 - [ ] Elevator or stairs to 2nd floor (expand office vertically)
 - [ ] Objects have idle animations (printer blinks, coffee steams, clock ticks)
