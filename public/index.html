@@ -1156,9 +1156,31 @@ const WALK_DIR_FN = {
   'IDLE': drawWalkIdle,
 };
 
-// ── sitting_down / sitting_couch (transition) ────────────────────
+// ── sitting_down (transition: stand → chair) ─────────────────────
 function drawSittingDown(ctx, cx, cy, pal, t) {
-  drawWalking(ctx, cx, cy + ease.inOut(t) * 5, pal, t * 0.25);
+  const e = ease.inOut(t);
+  const sinkY = e * 9;           // body sinks into chair
+  const legFold = e * 5;         // legs fold under
+  shd(ctx, cx, cy + 14);
+  // legs bending as agent lowers
+  px(ctx, cx-4, cy+6+sinkY,  4, Math.max(3, 8-legFold)|0, pal.pants);
+  px(ctx, cx+1, cy+6+sinkY,  4, Math.max(3, 8-legFold)|0, pal.pants);
+  // shoes fade under desk
+  if (e < 0.7) {
+    ctx.globalAlpha = 1 - e * 1.2;
+    px(ctx, cx-5, cy+13, 5, 3, '#1a1a2a');
+    px(ctx, cx+1, cy+13, 5, 3, '#1a1a2a');
+    ctx.globalAlpha = 1;
+  }
+  // torso sinking
+  px(ctx, cx-5, cy-2+sinkY, 11, 9, pal.shirt);
+  px(ctx, cx, cy-1+sinkY, 1, 7, '#ffffff18');
+  // arms settling onto desk
+  const armDrop = e * 4;
+  px(ctx, cx-11, cy+1+armDrop, 7, 3, pal.skin);
+  px(ctx, cx+4,  cy+1+armDrop, 7, 3, pal.skin);
+  // head follows body
+  drawHeadFront(ctx, cx, cy-12+sinkY*0.75, pal, false);
 }
 
 // ── typing_normal (back to viewer, slow bob) ──────────────────────
@@ -2613,9 +2635,27 @@ function drawCleaning(ctx, cx, cy, pal, t) {
   ctx.restore();
 }
 
-// ── standing_up ───────────────────────────────────────────────────
+// ── standing_up (transition: chair → walk) ───────────────────────
 function drawStandingUp(ctx, cx, cy, pal, t) {
-  drawWalking(ctx, cx, cy + (1-ease.inOut(t)) * 5, pal, t * 0.25);
+  const e = ease.inOut(t);
+  const sinkY = (1 - e) * 9;    // start sunk, rise to full height
+  const legFold = (1 - e) * 5;
+  shd(ctx, cx, cy + 14);
+  px(ctx, cx-4, cy+6+sinkY,  4, Math.max(3, 8-legFold)|0, pal.pants);
+  px(ctx, cx+1, cy+6+sinkY,  4, Math.max(3, 8-legFold)|0, pal.pants);
+  // shoes emerge as agent rises
+  if (e > 0.35) {
+    ctx.globalAlpha = (e - 0.35) / 0.65;
+    px(ctx, cx-5, cy+13, 5, 3, '#1a1a2a');
+    px(ctx, cx+1, cy+13, 5, 3, '#1a1a2a');
+    ctx.globalAlpha = 1;
+  }
+  px(ctx, cx-5, cy-2+sinkY, 11, 9, pal.shirt);
+  px(ctx, cx, cy-1+sinkY, 1, 7, '#ffffff18');
+  const armLift = (1 - e) * 4;
+  px(ctx, cx-11, cy+1+armLift, 7, 3, pal.skin);
+  px(ctx, cx+4,  cy+1+armLift, 7, 3, pal.skin);
+  drawHeadFront(ctx, cx, cy-12+sinkY*0.75, pal, false);
 }
 
 // ── playing_arcade — standing at arcade cabinet ──────────────────
@@ -5362,6 +5402,7 @@ class AgentState {
     // high-five when both working at nearby desks
     this.highFiveTimer   = 0;   // countdown seconds (>0 = visible)
     this._highFiveCooldown = {}; // agentId → remaining cooldown seconds
+    this._departingDesk = false; // true while playing standing_up before leaving desk
   }
 
   get depth() { return this.ty + this.tx * 0.001; }
@@ -5509,7 +5550,25 @@ class AgentState {
       return; // don't do anything else while spawning
     }
 
+    // ── Stand-up transition: agent rises from chair before walking ──
+    if (this._departingDesk) {
+      if (this.animT >= 0.99) {
+        // Animation done — now actually leave the desk
+        this._departingDesk = false;
+        this.isWorking = false; this.slotIdx = -1; this.arrived = false;
+        this.activityAnim = null; this.activityDur = 0;
+      }
+      return; // freeze slot logic while standing up
+    }
+
     if (working !== this.isWorking) {
+      // Agent stopped working while seated at desk → play standing_up first
+      const deskStates = ['typing_normal','typing_furious','thinking','drinking_desk','spinning_chair','desk_yawn','desk_nap','doodling'];
+      if (this.isWorking && this.arrived && deskStates.includes(this.state)) {
+        this._departingDesk = true;
+        this.setAnim('standing_up');
+        return;
+      }
       // Release idle slot when transitioning away from idle
       if (!this.isWorking && this.slotIdx >= 0 && idleOccupied[this.slotIdx] === this.id) {
         delete idleOccupied[this.slotIdx];
