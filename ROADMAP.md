@@ -44,7 +44,17 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [ ] "Office mood" meter in right panel
 - [ ] Daily timeline (who worked when)
 
-## Day 6 — Mini-Games
+## Day 6 — Sims Mode (Agent Control)
+- [ ] Click agent → radial menu appears with activity icons
+- [ ] "Sims mode" toggle button (🎮) — all agents sit on couches waiting
+- [ ] Send agent to any activity: desk, gym, kitchen, arcade, TV, etc.
+- [ ] Agent walks to chosen activity with pathfinding
+- [ ] Selected agent highlighted with glow ring
+- [ ] Cancel/recall agent back to couch
+- [ ] Multiple agents can be directed simultaneously
+- [ ] Activity queue — assign next task before current finishes
+
+## Day 7 — Mini-Games
 - [ ] Playable ping pong (click paddle to hit)
 - [ ] Snake on arcade machine (arrow keys)
 - [ ] Darts with scoring (click to aim + throw)
