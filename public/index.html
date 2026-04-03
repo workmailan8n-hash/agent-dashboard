@@ -5402,6 +5402,8 @@ class AgentState {
     // state machine
     this.state      = 'sitting_couch';  // start sitting on couch
     this._spawnSitTimer = 2 + Math.random() * 3; // sit for 2-5 seconds before moving
+    this._simsWaiting = false;
+    this._simsTarget = null;
     this.nextState  = null;   // queued after non-loop anim finishes
     this.animTime   = 0;      // accumulated seconds in current state
     this.animT      = 0;      // normalized [0..1]
@@ -5598,6 +5600,14 @@ class AgentState {
         this._spawnSitTimer = 0;
       }
       return; // don't do anything else while spawning
+    }
+
+    // ── Sims mode: wait on couch until user gives command ─────────
+    if (simsMode && this._simsWaiting && !this.isWorking) {
+      if (this.state !== 'sitting_couch' && this.arrived) {
+        this.state = 'sitting_couch';
+      }
+      return;
     }
 
     // ── Stand-up transition: agent rises from chair before walking ──
@@ -7767,6 +7777,71 @@ function loop(now) {
   // Office lighting tint — color shifts with time of day
   drawOfficeLighting(ctx);
 
+  // Sims mode overlay
+  if (simsMode) {
+    if (simsSelectedAgent && agentStates[simsSelectedAgent]) {
+      const sp = agentStates[simsSelectedAgent];
+      ctx.save();
+      ctx.strokeStyle = '#9ece6a';
+      ctx.lineWidth = 2;
+      ctx.shadowColor = '#9ece6a';
+      ctx.shadowBlur = 10;
+      ctx.beginPath();
+      ctx.ellipse(sp.sx, sp.sy + 16, 14, 6, 0, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.restore();
+    }
+    for (const sp of Object.values(agentStates)) {
+      if (sp._simsWaiting) {
+        ctx.save();
+        const pulse = 0.4 + Math.sin(globalTick * 0.08) * 0.2;
+        ctx.globalAlpha = pulse;
+        ctx.strokeStyle = '#7aa2f7';
+        ctx.lineWidth = 1.5;
+        ctx.beginPath();
+        ctx.ellipse(sp.sx, sp.sy + 16, 12, 5, 0, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.restore();
+      }
+    }
+    if (simsMenuVisible && simsMenuItems.length > 0) {
+      ctx.save();
+      ctx.globalAlpha = 0.3;
+      ctx.fillStyle = '#000';
+      ctx.fillRect(0, 0, canvas.width, canvas.height);
+      ctx.restore();
+      ctx.save();
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#1a1a30';
+      ctx.beginPath();
+      ctx.arc(simsMenuX, simsMenuY, 70, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#3a3860';
+      ctx.lineWidth = 2;
+      ctx.stroke();
+      ctx.restore();
+      for (const item of simsMenuItems) {
+        ctx.save();
+        ctx.fillStyle = '#2a2848';
+        ctx.beginPath();
+        ctx.arc(item.x, item.y, 18, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#5a5888';
+        ctx.lineWidth = 1;
+        ctx.stroke();
+        ctx.restore();
+        ctx.font = '14px sans-serif';
+        ctx.textAlign = 'center';
+        ctx.textBaseline = 'middle';
+        ctx.fillText(item.icon, item.x, item.y);
+        ctx.fillStyle = '#c8d3f5';
+        ctx.font = "5px 'Press Start 2P',monospace";
+        ctx.fillText(item.label, item.x, item.y + 24);
+      }
+      ctx.textAlign = 'left';
+    }
+  }
+
   // Admin editor overlay (on top of everything)
   drawAdminOverlay(ctx);
 
@@ -7996,6 +8071,11 @@ document.fonts.ready.then(() => {
 // ════════════════════════════════════════════════════════════════
 
 let adminMode = false;
+let simsMode = false;
+let simsSelectedAgent = null;
+let simsMenuVisible = false;
+let simsMenuX = 0, simsMenuY = 0;
+let simsMenuItems = [];
 let adminObjects = []; // {id, label, tx, ty, w, h} — tile coords
 let adminSelected = null;
 let adminDragging = false;
@@ -8342,6 +8422,33 @@ function enterAdminMode() {
   adminBtn.textContent = '✏️ EDITING';
   adminBtn.style.background = '#f7768e';
   adminPanel.style.display = 'flex';
+}
+
+function toggleSimsMode() {
+  simsMode = !simsMode;
+  simsMenuVisible = false;
+  simsSelectedAgent = null;
+  if (simsMode) {
+    simsBtn.textContent = '🎮 PLAYING';
+    simsBtn.style.background = '#9ece6a';
+    simsBtn.style.color = '#0a0a18';
+    for (const sp of Object.values(agentStates)) {
+      if (!sp.isWorking) {
+        sp.arrived = false;
+        sp.activityDur = 0;
+        sp.slotIdx = -1;
+        sp._simsWaiting = true;
+      }
+    }
+  } else {
+    simsBtn.textContent = '🎮 SIMS';
+    simsBtn.style.background = '#2a2848';
+    simsBtn.style.color = '#c8d3f5';
+    for (const sp of Object.values(agentStates)) {
+      sp._simsWaiting = false;
+      sp._simsTarget = null;
+    }
+  }
 }
 
 function toggleAdmin() {
@@ -8717,6 +8824,83 @@ function findClickableAt(tx, ty) {
 }
 
 canvas.addEventListener('click', e => {
+  // Sims mode: click agent → show radial menu
+  if (simsMode) {
+    const {tx, ty} = mouseToTile(e);
+
+    // Check if clicking on radial menu item
+    if (simsMenuVisible) {
+      const mx = e.offsetX || (e.clientX - canvas.getBoundingClientRect().left);
+      const my = e.offsetY || (e.clientY - canvas.getBoundingClientRect().top);
+      const scaleX = canvas.width / canvas.getBoundingClientRect().width;
+      const scaleY = canvas.height / canvas.getBoundingClientRect().height;
+      const px = mx * scaleX, py = my * scaleY;
+
+      for (const item of simsMenuItems) {
+        const dx = px - item.x, dy = py - item.y;
+        if (dx*dx + dy*dy < 20*20) {
+          const sp = agentStates[simsSelectedAgent];
+          if (sp) {
+            sp._simsWaiting = false;
+            sp._simsTarget = item.slotType;
+            sp.arrived = false;
+            sp.activityDur = 30 + Math.random()*30;
+            const matching = [];
+            for (let i = 0; i < IDLE_SPOTS.length; i++) {
+              if (IDLE_SPOTS[i].type === item.slotType || IDLE_SPOTS[i].anim === item.anim) {
+                if (!idleOccupied[i] || idleOccupied[i] === sp.id) matching.push(i);
+              }
+            }
+            if (matching.length > 0) {
+              const idx = matching[Math.floor(Math.random() * matching.length)];
+              if (sp.slotIdx >= 0) delete idleOccupied[sp.slotIdx];
+              sp.slotIdx = idx;
+              idleOccupied[idx] = sp.id;
+              sp.activityAnim = IDLE_SPOTS[idx].anim;
+              sp.setTarget(IDLE_SPOTS[idx].tx, IDLE_SPOTS[idx].ty);
+            }
+          }
+          simsMenuVisible = false;
+          simsSelectedAgent = null;
+          return;
+        }
+      }
+      simsMenuVisible = false;
+      simsSelectedAgent = null;
+      return;
+    }
+
+    // Check if clicking on an agent
+    for (const [id, sp] of Object.entries(agentStates)) {
+      const dx = tx - sp.tx, dy = ty - sp.ty;
+      if (dx*dx + dy*dy < 2) {
+        simsSelectedAgent = id;
+        simsMenuVisible = true;
+        simsMenuX = sp.sx;
+        simsMenuY = sp.sy - 30;
+        const activities = [
+          {icon:'💻', label:'Work', slotType:'desk', anim:'typing_normal'},
+          {icon:'☕', label:'Coffee', slotType:'kitchen', anim:'at_coffee'},
+          {icon:'🏋', label:'Gym', slotType:'gym', anim:'treadmill'},
+          {icon:'🕹', label:'Arcade', slotType:'arcade', anim:'playing_arcade'},
+          {icon:'🏓', label:'Ping Pong', slotType:'group', anim:'ping_pong_l'},
+          {icon:'📺', label:'TV', slotType:'gaming', anim:'gaming'},
+          {icon:'🎧', label:'DJ', slotType:'dj', anim:'djing'},
+          {icon:'📚', label:'Read', slotType:'shelf', anim:'reading'},
+          {icon:'🛋', label:'Rest', slotType:'couch', anim:'sleeping'},
+          {icon:'🔭', label:'Telescope', slotType:'telescope', anim:'using_telescope'},
+        ];
+        simsMenuItems = activities.map((a, i) => {
+          const angle = (i / activities.length) * Math.PI * 2 - Math.PI/2;
+          const radius = 55;
+          return { ...a, x: simsMenuX + Math.cos(angle)*radius, y: simsMenuY + Math.sin(angle)*radius };
+        });
+        return;
+      }
+    }
+    return;
+  }
+
   if (adminMode) return;
   const {tx, ty} = mouseToTile(e);
 
@@ -9418,6 +9602,12 @@ adminBtn.textContent = '✏️ EDIT';
 adminBtn.style.cssText = 'background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:4px 10px;font-family:inherit;font-size:7px;cursor:pointer;margin-left:8px;border-radius:4px;';
 adminBtn.onclick = toggleAdmin;
 document.querySelector('header .view-tabs').appendChild(adminBtn);
+
+const simsBtn = document.createElement('button');
+simsBtn.textContent = '🎮 SIMS';
+simsBtn.style.cssText = 'background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:4px 10px;font-family:inherit;font-size:7px;cursor:pointer;margin-left:4px;border-radius:4px;';
+simsBtn.onclick = toggleSimsMode;
+document.querySelector('header .view-tabs').appendChild(simsBtn);
 
 // Admin info panel
 const adminPanel = document.createElement('div');
