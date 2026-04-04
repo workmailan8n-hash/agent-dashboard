@@ -41,7 +41,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 ## Day 5 — Stats Dashboard
 - [x] Activity heatmap overlay (toggle with H key)
 - [x] Agent productivity chart (work% vs idle%)
-- [ ] "Office mood" meter in right panel
+- [x] "Office mood" meter in right panel
 - [ ] Daily timeline (who worked when)
 
 ## Day 6 — Sims Mode (Agent Control)
