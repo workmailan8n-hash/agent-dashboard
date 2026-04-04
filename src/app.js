@@ -2009,6 +2009,62 @@ function drawPingPongBall(ctx) {
   ctx.beginPath(); ctx.arc(bx - speed*3, by, 1.2, 0, Math.PI*2); ctx.fill();
 }
 
+// ── Rubber Duck ─────────────────────────────────────────────────
+function drawRubberDuck(ctx, x, y, tick) {
+  ctx.save();
+  // Base: water/tray (blue-ish platform)
+  ctx.fillStyle = '#1a3a5a';
+  ctx.fillRect(x + 2, y + T + 10, T - 4, 6);
+  ctx.fillStyle = '#1e5080';
+  ctx.fillRect(x + 3, y + T + 8, T - 6, 4);
+  // Water shimmer
+  const wShim = Math.sin(tick * 0.07) * 1.5;
+  ctx.fillStyle = '#2a90c040';
+  ctx.fillRect(x + 3, y + T + 8 + wShim, T - 6, 2);
+
+  // Duck body (yellow, slightly bobs)
+  const bob = Math.sin(tick * 0.05) * 1.2;
+  ctx.fillStyle = '#f7d060';
+  // Body oval
+  ctx.beginPath();
+  ctx.ellipse(x + T/2, y + T - 4 + bob, 9, 7, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Head
+  ctx.beginPath();
+  ctx.ellipse(x + T/2 + 3, y + T - 13 + bob, 6, 5.5, 0, 0, Math.PI*2);
+  ctx.fill();
+  // Beak (orange)
+  ctx.fillStyle = '#e07820';
+  ctx.beginPath();
+  ctx.moveTo(x + T/2 + 8, y + T - 12 + bob);
+  ctx.lineTo(x + T/2 + 12, y + T - 11 + bob);
+  ctx.lineTo(x + T/2 + 8,  y + T - 10 + bob);
+  ctx.closePath();
+  ctx.fill();
+  // Eye
+  ctx.fillStyle = '#1a1a28';
+  ctx.beginPath();
+  ctx.arc(x + T/2 + 5, y + T - 14 + bob, 1.5, 0, Math.PI*2);
+  ctx.fill();
+  // Eye shine
+  ctx.fillStyle = '#ffffffaa';
+  ctx.beginPath();
+  ctx.arc(x + T/2 + 5.5, y + T - 14.5 + bob, 0.8, 0, Math.PI*2);
+  ctx.fill();
+  // Wing
+  ctx.fillStyle = '#e8ba40';
+  ctx.beginPath();
+  ctx.ellipse(x + T/2 - 5, y + T - 4 + bob, 5, 3, -0.4, 0, Math.PI*2);
+  ctx.fill();
+  // Label under tray
+  ctx.fillStyle = '#e07820';
+  ctx.font = "4px 'Press Start 2P',monospace";
+  ctx.textAlign = 'center';
+  ctx.fillText('QUACK', x + T/2, y + T + 20);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
 // ── Aquarium fish animation ───────────────────────────────────────
 const aquariumFish = [
   { x:0.3, y:0.4, speed:0.012, color:'#ff6040', size:4, phase:0 },
@@ -2926,6 +2982,9 @@ function generateLayout(n) {
   // ── 4. Trophy Cabinet (solo — agent admires trophies) ──────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:13, anim:'window_gaze', type:'trophy_cabinet', w:6, _objId:'trophy_cabinet', _defObjTx:rX+0.3, _defObjTy:12, _offsetX:1.2, _offsetY:1 });
 
+  // ── 4b. Rubber Duck (right panel — agents visit for debugging inspiration) ──
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:11.5, anim:'window_gaze', type:'rubber_duck', w:5, _objId:'rubber_duck', _defObjTx:rX+0.3, _defObjTy:10.5, _offsetX:1.2, _offsetY:1 });
+
   // ── 5. Whiteboard (main office, top wall — agent doodles) ───────
   IDLE_SPOTS.push({ tx:15, ty:2, anim:'doodling', type:'whiteboard', w:7, _objId:'whiteboard', _defObjTx:14, _defObjTy:0, _offsetX:1, _offsetY:2 });
 
@@ -3138,6 +3197,10 @@ function buildObstacleGrid() {
   // ── Trophy Cabinet ─────
   const [tcbObsTx,tcbObsTy] = getAdminPos('trophy_cabinet', rXobs+0.3, 12);
   markRect(tcbObsTx, tcbObsTy, 2, 3);
+
+  // ── Rubber Duck ─────
+  const [rdObsTx,rdObsTy] = getAdminPos('rubber_duck', rXobs+0.3, 10.5);
+  markRect(rdObsTx, rdObsTy, 2, 2);
 
   // ── Whiteboard ─────
   const [wbObsTx,wbObsTy] = getAdminPos('whiteboard', 14, 0);
@@ -7694,6 +7757,10 @@ function loop(now) {
   drawRightPanel(ctx, globalTick);
   drawDynamicEffects(ctx, globalTick);
   drawAquariumFish(ctx, globalTick); // before agents so fish stay behind
+  // Rubber duck (animated — bobbing in tray)
+  { const [_rdTx, _rdTy] = getAdminPos('rubber_duck', (PER_ROW * STEP_X + 2)+0.3, 10.5);
+    const [rdx, rdy] = ts(_rdTx, _rdTy);
+    drawRubberDuck(ctx, rdx - T/2, rdy, globalTick); }
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -7850,6 +7917,8 @@ function loop(now) {
   if (heatmapVisible) drawHeatmap(ctx);
   // Productivity chart overlay
   if (productivityVisible) drawProductivityChart(ctx);
+  // Daily timeline overlay
+  if (timelineVisible) drawTimeline(ctx);
 
   // Admin editor overlay (on top of everything)
   drawAdminOverlay(ctx);
@@ -7978,6 +8047,119 @@ function drawProductivityChart(ctx) {
     ctx.fillText(`${pct}%`, barX + barW/2, y + rowH/2 + 3);
   });
   ctx.textAlign = 'left';
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  DAILY TIMELINE OVERLAY  (T key)
+// ════════════════════════════════════════════════════════════════
+function drawTimeline(ctx) {
+  const agents = Object.values(agentStates);
+  if (agents.length === 0) return;
+  ctx.save();
+
+  const now = Date.now();
+  const windowMs = TIMELINE_WINDOW;
+  const panW = Math.min(520, CW - OX - 20);
+  const rowH = 18;
+  const headerH = 36;
+  const labelW = 72;
+  const barW = panW - labelW - 16;
+  const footerH = 20;
+  const panH = headerH + agents.length * rowH + footerH;
+  const panX = OX + 4;
+  const panY = OY + 4;
+
+  // Panel background
+  ctx.fillStyle = '#0d1226ee';
+  ctx.fillRect(panX, panY, panW, panH);
+  ctx.strokeStyle = '#7aa2f750';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(panX + 0.5, panY + 0.5, panW - 1, panH - 1);
+
+  // Title
+  ctx.fillStyle = '#7aa2f7';
+  ctx.font = "7px 'Press Start 2P',monospace";
+  ctx.textAlign = 'left';
+  ctx.fillText('TIMELINE [T]', panX + 8, panY + 14);
+
+  // Time axis labels
+  ctx.fillStyle = '#565f89';
+  ctx.font = '5px monospace';
+  const timeLabels = ['-60m', '-45m', '-30m', '-15m', 'NOW'];
+  const bx = panX + labelW + 8;
+  timeLabels.forEach((lbl, i) => {
+    const lx = bx + (barW * i / 4) - (i === 4 ? 10 : 8);
+    ctx.fillText(lbl, lx, panY + headerH - 6);
+    // Tick mark
+    ctx.fillStyle = '#2a2c4e';
+    ctx.fillRect(bx + barW * i / 4, panY + headerH - 4, 1, panH - headerH - footerH + 2);
+    ctx.fillStyle = '#565f89';
+  });
+
+  // Divider
+  ctx.fillStyle = '#2a2c4e';
+  ctx.fillRect(panX + 6, panY + headerH - 4, panW - 12, 1);
+
+  // Per-agent rows
+  agents.forEach((sp, i) => {
+    const y = panY + headerH + i * rowH;
+    const accent = sp.palette?.accent || '#c8d3f5';
+    const name = (sp.slug || sp.id || '???').replace(/-/g,' ').slice(0,9).toUpperCase();
+    const log = timelineLog[sp.id] || [];
+
+    // Row bg (alternating)
+    if (i % 2 === 0) { ctx.fillStyle = '#ffffff05'; ctx.fillRect(panX + 2, y, panW - 4, rowH); }
+
+    // Agent name
+    ctx.fillStyle = accent;
+    ctx.font = '6px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(name, panX + 6, y + rowH/2 + 2);
+
+    // Bar background (idle = very dark)
+    ctx.fillStyle = '#111220';
+    ctx.fillRect(bx, y + 3, barW, rowH - 6);
+
+    // Draw each segment
+    for (const seg of log) {
+      const segStart = Math.max(seg.start, now - windowMs);
+      const segEnd = seg.end !== null ? seg.end : now;
+      if (segEnd < now - windowMs || segStart > now) continue;
+      if (!seg.working) continue; // only draw working segments; idle stays dark
+
+      const x1 = bx + ((segStart - (now - windowMs)) / windowMs) * barW;
+      const x2 = bx + ((segEnd   - (now - windowMs)) / windowMs) * barW;
+      const w = Math.max(1, x2 - x1);
+      ctx.fillStyle = accent + 'cc';
+      ctx.fillRect(Math.round(x1), y + 3, Math.round(w), rowH - 6);
+      // Shine
+      ctx.fillStyle = '#ffffff20';
+      ctx.fillRect(Math.round(x1), y + 3, Math.round(w), 3);
+    }
+
+    // Current status indicator (blinking dot)
+    if (sp.isWorking) {
+      const blink = Math.sin(Date.now() * 0.006) > 0;
+      if (blink) {
+        ctx.fillStyle = accent;
+        ctx.beginPath();
+        ctx.arc(bx + barW + 5, y + rowH/2, 2.5, 0, Math.PI*2);
+        ctx.fill();
+      }
+    }
+  });
+
+  // Bottom time axis — current time
+  const d = new Date();
+  const hh = String(d.getHours()).padStart(2,'0');
+  const mm = String(d.getMinutes()).padStart(2,'0');
+  ctx.fillStyle = '#7aa2f7';
+  ctx.font = "5px 'Press Start 2P',monospace";
+  ctx.textAlign = 'right';
+  ctx.fillText(`now ${hh}:${mm}`, panX + panW - 8, panY + panH - 6);
+  ctx.textAlign = 'left';
+
   ctx.restore();
 }
 
@@ -8167,10 +8349,10 @@ function connect() {
   ws.onopen  = () => { wsActive=true; led.className='led'; lbl.textContent='online'; };
   ws.onmessage = ({data}) => {
     let msg; try { msg=JSON.parse(data); } catch { return; }
-    if (msg.type==='init')         { for (const a of msg.agents) { agentsData[a.id]=a; renderCard(a); } updateUI(); }
-    if (msg.type==='agent_update') { agentsData[msg.agent.id]=msg.agent; renderCard(msg.agent); updateUI(); }
+    if (msg.type==='init') { for (const a of msg.agents) { agentsData[a.id]=a; renderCard(a); recordTimelineEvent(a.id, a.status==='working'||a.status==='thinking'); } updateUI(); }
+    if (msg.type==='agent_update') { agentsData[msg.agent.id]=msg.agent; renderCard(msg.agent); recordTimelineEvent(msg.agent.id, msg.agent.status==='working'||msg.agent.status==='thinking'); updateUI(); }
     if (msg.type==='mytasks_init' || msg.type==='mytasks_update') { myTasks = msg.tasks; renderTasks(); }
-    if (msg.type==='agent_remove') { delete agentsData[msg.id]; document.getElementById(`c-${msg.id}`)?.remove(); updateUI(); }
+    if (msg.type==='agent_remove') { if (timelineLog[msg.id]) { const _tl=timelineLog[msg.id]; if (_tl.length>0&&_tl[_tl.length-1].end===null) _tl[_tl.length-1].end=Date.now(); } delete agentsData[msg.id]; document.getElementById(`c-${msg.id}`)?.remove(); updateUI(); }
     if (msg.type==='layout_update' && msg.layout) {
       // Another admin moved objects — apply their layout
       if (msg.layout.positions && !adminMode) {
@@ -8249,6 +8431,26 @@ let simsMode = false;
 let heatmapVisible = false;
 // ── Productivity Chart ────────────────────────────────────────────
 let productivityVisible = false;
+// ── Daily Timeline ────────────────────────────────────────────────
+let timelineVisible = false;
+// agentId → [{start: epochMs, end: epochMs|null, working: bool}]
+const timelineLog = {};
+const TIMELINE_WINDOW = 3600000; // 1 hour in ms
+
+function recordTimelineEvent(id, working) {
+  if (!timelineLog[id]) timelineLog[id] = [];
+  const log = timelineLog[id];
+  const now = Date.now();
+  // Close previous segment
+  if (log.length > 0 && log[log.length-1].end === null) {
+    if (log[log.length-1].working === working) return; // no change
+    log[log.length-1].end = now;
+  }
+  log.push({start: now, end: null, working});
+  // Prune old entries (keep last 2 hours)
+  const cutoff = now - 7200000;
+  while (log.length > 1 && log[0].end !== null && log[0].end < cutoff) log.shift();
+}
 // Grid accumulates agent presence counts (decays over time)
 const HEAT_MAX_COLS = 80, HEAT_MAX_ROWS = 120;
 const heatGrid = new Float32Array(HEAT_MAX_COLS * HEAT_MAX_ROWS);
@@ -8278,6 +8480,7 @@ function buildAdminObjects() {
   adminObjects.push({id:'darts', label:'🎯 Darts', tx: rX+1.5, ty:0, w:2, h:1});
   adminObjects.push({id:'aquarium', label:'🐠 Aquarium', tx: rX+0.3, ty:8, w:2.5, h:2});
   adminObjects.push({id:'trophy_cabinet', label:'🏆 Trophies', tx: rX+0.3, ty:12, w:2, h:2.5});
+  adminObjects.push({id:'rubber_duck', label:'🦆 Rubber Duck', tx: rX+0.3, ty:10.5, w:2, h:2.5});
   adminObjects.push({id:'printer', label:'🖨 Printer', tx: KITCHEN_WALL_COL-3, ty:KITCHEN_START_ROW-2, w:2, h:1});
   adminObjects.push({id:'trashcan', label:'🗑 Trash', tx: KITCHEN_WALL_COL-2, ty:3, w:1, h:1});
 
@@ -8497,7 +8700,8 @@ const BUILTIN_POSITIONS = {
   "whiteboard": {"tx": 14, "ty": 0},
 
   // ═══ RIGHT ZONE ═══
-  "trophy_cabinet": {"tx": 23, "ty": 12}
+  "trophy_cabinet": {"tx": 23, "ty": 12},
+  "rubber_duck": {"tx": 23, "ty": 10}
 };
 
 // Apply custom positions to actual game objects
@@ -9229,6 +9433,10 @@ function initClickParticles(type, cx, cy) {
       // Chalk dust + marker caps burst
       for (let i=0;i<10;i++) p.push({x:cx+(Math.random()-0.5)*35, y:cy+(Math.random()-0.5)*18, vx:(Math.random()-0.5)*2.2, vy:-0.8-Math.random()*2, size:2+Math.random()*4, col:['#ffffff','#aaccff','#ffccaa','#aaffcc','#ffaacc','#ffffff','#e0e0f8'][Math.floor(Math.random()*7)]});
       break;
+    case 'rubber_duck':
+      // Lightbulb idea sparks
+      for (let i=0;i<8;i++) p.push({x:cx+(Math.random()-0.5)*24, y:cy+(Math.random()-0.5)*16, vx:(Math.random()-0.5)*2.5, vy:-1.5-Math.random()*2.5, size:2+Math.random()*3, col:['#f7e468','#ffe080','#fff4a0','#ffcc20','#f7d060','#ffffff','#ffd700'][Math.floor(Math.random()*7)]});
+      break;
   }
   return p;
 }
@@ -9819,6 +10027,29 @@ function drawClickAnims(ctx, tick) {
         }
         break;
       }
+      case 'rubber_duck': {
+        // Lightbulb / idea sparks
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy -= 0.03;
+          p.vx *= 0.96;
+          ctx.globalAlpha = alpha * (1 - t * 0.7);
+          ctx.fillStyle = p.col;
+          ctx.beginPath();
+          ctx.arc(Math.round(p.x), Math.round(p.y), p.size, 0, Math.PI*2);
+          ctx.fill();
+        }
+        if (t < 0.5) {
+          ctx.globalAlpha = alpha * (1 - t * 1.5);
+          ctx.fillStyle = '#f7e468';
+          ctx.font = "bold 9px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          const pulse = 1 + Math.sin(t * 15) * 0.08;
+          ctx.save(); ctx.scale(pulse, pulse);
+          ctx.fillText('💡 AHA!', (a.x) / pulse, (a.y - 30 - t * 15) / pulse);
+          ctx.restore();
+        }
+        break;
+      }
     }
     ctx.restore();
     return true;
@@ -9913,12 +10144,13 @@ document.getElementById('admin-export').onclick = () => {
   });
 };
 
-// Keyboard shortcut: E to toggle admin, H to toggle heatmap, P to toggle productivity chart
+// Keyboard shortcut: E to toggle admin, H to toggle heatmap, P to toggle productivity chart, T to toggle timeline
 document.addEventListener('keydown', e => {
   if (document.activeElement.tagName === 'INPUT') return;
   if (e.key === 'e' && !e.ctrlKey && !e.metaKey) toggleAdmin();
   if (e.key === 'h' || e.key === 'H') heatmapVisible = !heatmapVisible;
   if (e.key === 'p' || e.key === 'P') productivityVisible = !productivityVisible;
+  if (e.key === 't' || e.key === 'T') timelineVisible = !timelineVisible;
 });
 
 // ════════════════════════════════════════════════════════════════
