@@ -1,9 +1,19 @@
+require('dotenv').config();
 const http = require("http");
 const fs = require("fs");
 const path = require("path");
 const os = require("os");
 const { WebSocketServer } = require("ws");
 const chokidar = require("chokidar");
+
+const log = require('./src/server/logger');
+const { requireAuth } = require('./src/server/auth');
+const { handleGetAgents } = require('./src/server/handlers/agents');
+const { handleGetTasks, handleGetMyTasks, handlePostMyTask, handlePatchMyTask, handleDeleteMyTask } = require('./src/server/handlers/tasks');
+const { handleGetLayout, handlePostLayout } = require('./src/server/handlers/layout');
+const { handlePostSync, handleGetState } = require('./src/server/handlers/sync');
+const { handlePostDemo, handleDeleteDemo } = require('./src/server/handlers/demo');
+const { handleTgWebhook, handleGetTgFeedback } = require('./src/server/handlers/telegram');
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), ".claude", "projects");
 const PORT = process.env.PORT || 3737;
@@ -16,8 +26,9 @@ const agentTasks = {}; // agentId -> { todos: [{id,content,status,priority}], up
 let sharedLayout = { positions: null, walls: null };
 
 // Telegram bot
-const TG_TOKEN = '8667690491:AAGUQheu2egg3ozI-ZpNsr3V_Fl7NKIFQKE';
-const TG_CHAT = '397649588';
+const TG_TOKEN = process.env.TG_TOKEN || '';
+const TG_CHAT = process.env.TG_CHAT || '';
+if (!TG_TOKEN) log.warn('TG_TOKEN not set — Telegram functions disabled');
 let lastTgFeedback = { action: null, text: null, timestamp: null };
 
 const TASKS_FILE = path.join(__dirname, 'tasks.json');
@@ -26,10 +37,18 @@ const TASKS_FILE = path.join(__dirname, 'tasks.json');
 let myTasks = [];
 try {
   if (fs.existsSync(TASKS_FILE)) myTasks = JSON.parse(fs.readFileSync(TASKS_FILE, 'utf8'));
-} catch { myTasks = []; }
+} catch (e) { log.warn(e.message); myTasks = []; }
 
 function saveTasks() {
-  try { fs.writeFileSync(TASKS_FILE, JSON.stringify(myTasks, null, 2)); } catch {}
+  try { fs.writeFileSync(TASKS_FILE, JSON.stringify(myTasks, null, 2)); } catch (e) { log.warn(e.message); }
+}
+
+function setMyTasks(tasks) {
+  myTasks = tasks;
+}
+
+function getMyTasks() {
+  return myTasks;
 }
 
 // Track file read positions
@@ -67,7 +86,8 @@ function readSubagentMeta(filePath) {
   try {
     const meta = JSON.parse(fs.readFileSync(metaPath, "utf8"));
     return meta;
-  } catch {
+  } catch (e) {
+    log.debug('No meta for', filePath, e.message);
     return null;
   }
 }
@@ -88,7 +108,8 @@ function parseNewLines(filePath) {
   let stat;
   try {
     stat = fs.statSync(filePath);
-  } catch {
+  } catch (e) {
+    log.debug('stat failed', filePath, e.message);
     return;
   }
 
@@ -113,7 +134,8 @@ function parseNewLines(filePath) {
     let entry;
     try {
       entry = JSON.parse(line);
-    } catch {
+    } catch (e) {
+      log.debug('JSON parse error in', filePath, e.message);
       continue;
     }
 
@@ -205,9 +227,9 @@ function collectJsonlFiles(dir, results = [], depth = 0) {
         } else if (entry.endsWith(".jsonl")) {
           results.push(full);
         }
-      } catch {}
+      } catch (e) { log.debug('stat error', full, e.message); }
     }
-  } catch {}
+  } catch (e) { log.debug('readdir error', dir, e.message); }
   return results;
 }
 
@@ -218,7 +240,7 @@ function scanExistingFiles() {
 
   // Sort by modification time - parse oldest first
   allJsonl.sort((a, b) => {
-    try { return fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs; } catch { return 0; }
+    try { return fs.statSync(a).mtimeMs - fs.statSync(b).mtimeMs; } catch (e) { log.debug(e.message); return 0; }
   });
 
   for (const filePath of allJsonl) {
@@ -229,254 +251,90 @@ function scanExistingFiles() {
 
 // HTTP server
 const server = http.createServer((req, res) => {
+  const method = req.method;
+  const url = req.url;
+
   res.setHeader("Access-Control-Allow-Origin", "*");
+  res.setHeader("Access-Control-Allow-Headers", "Content-Type, X-Sync-Key, X-Admin-Token");
 
-  if (req.url === "/api/agents") {
-    res.writeHead(200, { "Content-Type": "application/json" });
-    res.end(JSON.stringify(Object.values(agents)));
-    return;
+  // Route dispatcher
+  if (method === 'GET' && url === '/api/agents') return handleGetAgents(req, res, agents);
+  if (method === 'GET' && url === '/api/tasks') return handleGetTasks(req, res, agentTasks);
+  if (method === 'GET' && url === '/api/mytasks') return handleGetMyTasks(req, res, myTasks);
+
+  if (method === 'POST' && url === '/api/mytasks') {
+    if (!requireAuth(req, res)) return;
+    return handlePostMyTask(req, res, myTasks, saveTasks, broadcast);
   }
 
-  if (req.url === '/api/tasks') {
+  if (method === 'PATCH' && url.startsWith('/api/mytasks/')) {
+    if (!requireAuth(req, res)) return;
+    const taskId = url.slice('/api/mytasks/'.length);
+    return handlePatchMyTask(req, res, myTasks, saveTasks, broadcast, taskId);
+  }
+
+  if (method === 'DELETE' && url.startsWith('/api/mytasks/')) {
+    if (!requireAuth(req, res)) return;
+    const taskId = url.slice('/api/mytasks/'.length);
+    return handleDeleteMyTask(req, res, myTasks, saveTasks, broadcast, taskId);
+  }
+
+  if (method === 'POST' && url === '/api/tg-webhook') return handleTgWebhook(req, res, TG_TOKEN, TG_CHAT, lastTgFeedback);
+  if (method === 'GET' && url === '/api/tg-feedback') return handleGetTgFeedback(req, res, lastTgFeedback);
+
+  if (method === 'GET' && url === '/api/layout') return handleGetLayout(req, res, sharedLayout);
+  if (method === 'POST' && url === '/api/layout') {
+    if (!requireAuth(req, res)) return;
+    return handlePostLayout(req, res, sharedLayout, broadcast);
+  }
+
+  if (method === 'GET' && url === '/api/state') return handleGetState(req, res, agents, agentTasks, getMyTasks);
+
+  if (method === 'POST' && url === '/api/sync') return handlePostSync(req, res, agents, agentTasks, getMyTasks, broadcast, setMyTasks);
+
+  if (method === 'POST' && url === '/api/demo') {
+    if (!requireAuth(req, res)) return;
+    return handlePostDemo(req, res, agents, broadcast);
+  }
+
+  if (method === 'DELETE' && url.startsWith('/api/demo/')) {
+    if (!requireAuth(req, res)) return;
+    const demoId = url.slice('/api/demo/'.length);
+    return handleDeleteDemo(req, res, agents, broadcast, demoId);
+  }
+
+  // Health check (used by Railway and monitoring)
+  if (method === 'GET' && url === '/api/health') {
+    const mem = process.memoryUsage();
     res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(agentTasks));
+    res.end(JSON.stringify({
+      status: 'ok',
+      version: '2.0.0',
+      uptime: process.uptime(),
+      agents: Object.keys(agents).length,
+      wsClients: clients.size,
+      tasks: Object.keys(agentTasks).length,
+      memMB: Math.round(mem.heapUsed / 1024 / 1024),
+    }));
     return;
   }
 
-  // Personal tasks — GET all
-  if (req.url === '/api/mytasks' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json' });
-    res.end(JSON.stringify(myTasks));
-    return;
-  }
-
-  // Personal tasks — POST create
-  if (req.url === '/api/mytasks' && req.method === 'POST') {
-    let body = '';
-    req.on('data', d => body += d);
-    req.on('end', () => {
-      try {
-        const t = JSON.parse(body);
-        const task = {
-          id: Date.now().toString(),
-          title: t.title || '',
-          assignee: t.assignee || 'me',
-          priority: t.priority || 'medium',
-          status: 'todo',
-          createdAt: new Date().toISOString(),
-          completedAt: null,
-        };
-        myTasks.unshift(task);
-        saveTasks();
-        broadcast({ type: 'mytasks_update', tasks: myTasks });
-        res.writeHead(201, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(task));
-      } catch { res.writeHead(400); res.end('bad'); }
-    });
-    return;
-  }
-
-  // Personal tasks — PATCH update (toggle done / change fields)
-  if (req.url.startsWith('/api/mytasks/') && req.method === 'PATCH') {
-    const id = req.url.slice('/api/mytasks/'.length);
-    let body = '';
-    req.on('data', d => body += d);
-    req.on('end', () => {
-      try {
-        const patch = JSON.parse(body);
-        const task = myTasks.find(t => t.id === id);
-        if (!task) { res.writeHead(404); res.end('not found'); return; }
-        Object.assign(task, patch);
-        if (patch.status === 'done' && !task.completedAt) task.completedAt = new Date().toISOString();
-        if (patch.status === 'todo') task.completedAt = null;
-        saveTasks();
-        broadcast({ type: 'mytasks_update', tasks: myTasks });
-        res.writeHead(200, { 'Content-Type': 'application/json' });
-        res.end(JSON.stringify(task));
-      } catch { res.writeHead(400); res.end('bad'); }
-    });
-    return;
-  }
-
-  // Personal tasks — DELETE
-  if (req.url.startsWith('/api/mytasks/') && req.method === 'DELETE') {
-    const id = req.url.slice('/api/mytasks/'.length);
-    myTasks = myTasks.filter(t => t.id !== id);
-    saveTasks();
-    broadcast({ type: 'mytasks_update', tasks: myTasks });
-    res.writeHead(200); res.end('ok');
-    return;
-  }
-
-  // ── Telegram webhook — approve/reject/comment ──
-  if (req.url === '/api/tg-webhook' && req.method === 'POST') {
-    let body = '';
-    req.on('data', d => body += d);
-    req.on('end', () => {
-      try {
-        const update = JSON.parse(body);
-        if (update.callback_query) {
-          const cb = update.callback_query;
-          const isApprove = cb.data === 'approve';
-          lastTgFeedback = { action: cb.data, text: null, timestamp: Date.now() };
-          // Answer callback popup
-          fetch(`https://api.telegram.org/bot${TG_TOKEN}/answerCallbackQuery`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ callback_query_id: cb.id, text: isApprove ? '\u2705 \u041F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043D\u043E!' : '\u274C \u0412\u0456\u0434\u0445\u0438\u043B\u0435\u043D\u043E!' })
-          });
-          // Edit original message — remove buttons, add status
-          const msgId = cb.message?.message_id;
-          const chatId = cb.message?.chat?.id || TG_CHAT;
-          const origText = cb.message?.text || '';
-          const statusText = isApprove
-            ? origText + '\n\n\u2705 \u041F\u0406\u0414\u0422\u0412\u0415\u0420\u0414\u0416\u0415\u041D\u041E'
-            : origText + '\n\n\u274C \u0412\u0406\u0414\u0425\u0418\u041B\u0415\u041D\u041E';
-          fetch(`https://api.telegram.org/bot${TG_TOKEN}/editMessageText`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ chat_id: chatId, message_id: msgId, text: statusText })
-          });
-          // Send confirmation message
-          const confirmText = isApprove
-            ? '\u2705 \u0414\u044F\u043A\u0443\u044E! \u0417\u043C\u0456\u043D\u0438 \u043F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043D\u043E. \u041D\u0430\u0441\u0442\u0443\u043F\u043D\u0438\u0439 \u0441\u043F\u0440\u0438\u043D\u0442 \u043F\u0440\u043E\u0434\u043E\u0432\u0436\u0438\u0442\u044C \u0440\u043E\u0431\u043E\u0442\u0443.'
-            : '\u274C \u0417\u043C\u0456\u043D\u0438 \u0432\u0456\u0434\u0445\u0438\u043B\u0435\u043D\u043E. \u041D\u0430\u0441\u0442\u0443\u043F\u043D\u0438\u0439 \u0441\u043F\u0440\u0438\u043D\u0442 \u0432\u0456\u0434\u043A\u043E\u0442\u0438\u0442\u044C \u0437\u043C\u0456\u043D\u0438.';
-          fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ chat_id: chatId, text: confirmText })
-          });
-        } else if (update.message?.text) {
-          lastTgFeedback = { action: 'comment', text: update.message.text, timestamp: Date.now() };
-          // Acknowledge comment
-          fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-            method: 'POST', headers: {'Content-Type':'application/json'},
-            body: JSON.stringify({ chat_id: update.message.chat.id, text: '\u{1F4DD} \u041A\u043E\u043C\u0435\u043D\u0442\u0430\u0440 \u043E\u0442\u0440\u0438\u043C\u0430\u043D\u043E! \u0411\u0443\u0434\u0435 \u0432\u0440\u0430\u0445\u043E\u0432\u0430\u043D\u043E \u0432 \u043D\u0430\u0441\u0442\u0443\u043F\u043D\u043E\u043C\u0443 \u0441\u043F\u0440\u0438\u043D\u0442\u0456.' })
-          });
-        }
-      } catch {}
-      res.writeHead(200); res.end('ok');
-    });
-    return;
-  }
-  if (req.url === '/api/tg-feedback' && req.method === 'GET') {
-    res.writeHead(200, {'Content-Type':'application/json','Access-Control-Allow-Origin':'*'});
-    res.end(JSON.stringify(lastTgFeedback));
-    return;
-  }
-
-  // ── API: GET /api/layout — get shared layout positions ──
-  if (req.url === '/api/layout' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify(sharedLayout));
-    return;
-  }
-
-  // ── API: POST /api/layout — save + broadcast layout to all clients ──
-  if (req.url === '/api/layout' && req.method === 'POST') {
-    let body = '';
-    req.on('data', d => body += d);
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        if (data.positions) sharedLayout.positions = data.positions;
-        if (data.walls) sharedLayout.walls = data.walls;
-        // Broadcast to all connected clients
-        broadcast({ type: 'layout_update', layout: sharedLayout });
-        res.writeHead(200); res.end('ok');
-      } catch { res.writeHead(400); res.end('bad'); }
-    });
-    return;
-  }
-
-  if (req.url === '/api/layout' && req.method === 'OPTIONS') {
-    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST', 'Access-Control-Allow-Headers': 'Content-Type' });
+  // CORS preflight
+  if (method === 'OPTIONS') {
+    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'GET,POST,PATCH,DELETE,OPTIONS', 'Access-Control-Allow-Headers': 'Content-Type, X-Sync-Key, X-Admin-Token' });
     res.end();
     return;
   }
 
-  // ── API: GET /api/state — full state snapshot for HTTP polling ──
-  if (req.url === '/api/state' && req.method === 'GET') {
-    res.writeHead(200, { 'Content-Type': 'application/json', 'Access-Control-Allow-Origin': '*' });
-    res.end(JSON.stringify({ agents: Object.values(agents), tasks: agentTasks, myTasks }));
-    return;
-  }
-
-  // ── API: POST /api/sync — receive full state push from local server ──
-  if (req.url === '/api/sync' && req.method === 'POST') {
-    let body = '';
-    req.on('data', d => body += d);
-    req.on('end', () => {
-      try {
-        const data = JSON.parse(body);
-        const key = req.headers['x-sync-key'] || '';
-        if (process.env.SYNC_KEY && key !== process.env.SYNC_KEY) {
-          res.writeHead(403); res.end('forbidden'); return;
-        }
-        // Replace agents state
-        if (data.agents) {
-          const incomingIds = new Set();
-          for (const a of data.agents) {
-            incomingIds.add(a.id);
-            agents[a.id] = a;
-          }
-          // Remove agents not in sync payload
-          for (const id of Object.keys(agents)) {
-            if (!incomingIds.has(id)) delete agents[id];
-          }
-        }
-        if (data.tasks) Object.assign(agentTasks, data.tasks);
-        if (data.myTasks) myTasks = data.myTasks;
-        // Broadcast to all connected WS clients
-        broadcast({ type: 'init', agents: Object.values(agents) });
-        broadcast({ type: 'tasks_init', tasks: agentTasks });
-        broadcast({ type: 'mytasks_init', tasks: myTasks });
-        res.writeHead(200); res.end('ok');
-      } catch { res.writeHead(400); res.end('bad'); }
-    });
-    return;
-  }
-
-  // CORS preflight for sync
-  if (req.url === '/api/sync' && req.method === 'OPTIONS') {
-    res.writeHead(204, { 'Access-Control-Allow-Origin': '*', 'Access-Control-Allow-Methods': 'POST', 'Access-Control-Allow-Headers': 'Content-Type, X-Sync-Key' });
-    res.end();
-    return;
-  }
-
-  // Demo injection: POST /api/demo  {"id","slug","status","currentTool","currentToolLabel"}
-  if (req.url === "/api/demo" && req.method === "POST") {
-    let body = "";
-    req.on("data", d => body += d);
-    req.on("end", () => {
-      try {
-        const a = JSON.parse(body);
-        if (!agents[a.id]) {
-          agents[a.id] = { id: a.id, slug: a.slug, cwd: "C:\\AI", version: "demo",
-            status: "idle", currentTool: null, currentToolLabel: null,
-            lastActivity: new Date().toISOString(), messageCount: 0,
-            toolHistory: [], startedAt: new Date().toISOString(),
-            isSubagent: false, agentType: null };
-        }
-        Object.assign(agents[a.id], a, { lastActivity: new Date().toISOString() });
-        broadcast({ type: "agent_update", agent: { ...agents[a.id] } });
-        res.writeHead(200); res.end("ok");
-      } catch { res.writeHead(400); res.end("bad"); }
-    });
-    return;
-  }
-
-  // Demo remove: DELETE /api/demo/:id
-  if (req.url.startsWith("/api/demo/") && req.method === "DELETE") {
-    const id = req.url.slice("/api/demo/".length);
-    delete agents[id];
-    broadcast({ type: "agent_remove", id });
-    res.writeHead(200); res.end("ok");
-    return;
-  }
-
-  const publicDir = path.join(__dirname, "public");
+  // Static files
+  const publicDir = fs.existsSync(path.join(__dirname, 'dist'))
+    ? path.join(__dirname, 'dist')
+    : path.join(__dirname, 'public');
   let decodedUrl;
   try {
-    decodedUrl = decodeURIComponent(req.url);
-  } catch {
+    decodedUrl = decodeURIComponent(url);
+  } catch (e) {
+    log.warn('Bad URL encoding:', e.message);
     res.writeHead(400); res.end("Bad Request"); return;
   }
   const filePath = decodedUrl === "/" ? path.join(publicDir, "index.html") : path.resolve(publicDir, "." + decodedUrl);
@@ -493,17 +351,17 @@ const server = http.createServer((req, res) => {
       return;
     }
     const ext = path.extname(filePath);
-    const mime = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css" }[ext] || "text/plain";
+    const mime = { ".html": "text/html", ".js": "text/javascript", ".css": "text/css", ".woff": "font/woff", ".woff2": "font/woff2", ".json": "application/json", ".ico": "image/x-icon", ".svg": "image/svg+xml", ".webp": "image/webp" }[ext] || "text/plain";
     res.writeHead(200, { "Content-Type": mime });
     res.end(data);
   });
 });
 
-server.on("error", (err) => console.error("HTTP server error:", err));
+server.on("error", (err) => log.error("HTTP server error:", err));
 
 // WebSocket server
 const wss = new WebSocketServer({ server });
-wss.on("error", (err) => console.error("WebSocket server error:", err));
+wss.on("error", (err) => log.error("WebSocket server error:", err));
 wss.on("connection", (ws) => {
   clients.add(ws);
   // Send current state
@@ -527,11 +385,10 @@ chokidar
     parseNewLines(filePath);
   })
   .on("unlink", (filePath) => {
-    // Fix: clean up filePositions to prevent memory leak
     delete filePositions[filePath];
   });
 } else {
-  console.log("⚠️  Claude projects dir not found, running in demo mode (no file watcher)");
+  log.info("Claude projects dir not found, running in demo mode (no file watcher)");
 }
 
 // Mark agents as idle after 30s of inactivity
@@ -559,14 +416,14 @@ setInterval(() => {
 }, 5000);
 
 server.listen(PORT, "0.0.0.0", async () => {
-  console.log(`\n🤖 Agent Dashboard запущен: http://localhost:${PORT}`);
-  console.log(`Слежу за: ${CLAUDE_PROJECTS_DIR}\n`);
+  log.info(`Agent Dashboard started: http://localhost:${PORT}`);
+  log.info(`Watching: ${CLAUDE_PROJECTS_DIR}`);
 
   // Get local network IP
   const nets = require("os").networkInterfaces();
   for (const iface of Object.values(nets).flat()) {
     if (iface.family === "IPv4" && !iface.internal) {
-      console.log(`📡 Локальная сеть: http://${iface.address}:${PORT}`);
+      log.info(`LAN: http://${iface.address}:${PORT}`);
     }
   }
 
@@ -587,7 +444,7 @@ server.listen(PORT, "0.0.0.0", async () => {
       if (match) {
         urlSent = true;
         const url = match[0].replace(/^http:/, "https:");
-        console.log(`\n🌐 Публичный URL: ${url}\n`);
+        log.info(`Public URL: ${url}`);
         broadcast({ type: "public_url", url });
         // Remove listeners once URL is captured
         ssh.stdout.off("data", onData);
@@ -596,7 +453,7 @@ server.listen(PORT, "0.0.0.0", async () => {
     };
     ssh.stdout.on("data", onData);
     ssh.stderr.on("data", onData);
-    ssh.on("exit", () => { console.log("Tunnel closed"); broadcast({ type: "public_url", url: null }); });
+    ssh.on("exit", () => { log.info("Tunnel closed"); broadcast({ type: "public_url", url: null }); });
     ssh.on("error", () => broadcast({ type: "public_url", url: null }));
 
     // Kill tunnel when server exits
@@ -606,5 +463,3 @@ server.listen(PORT, "0.0.0.0", async () => {
     broadcast({ type: "public_url", url: null });
   }
 });
-
-// (Telegram webhook handled in main request handler above)

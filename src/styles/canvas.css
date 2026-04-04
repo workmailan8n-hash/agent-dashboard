@@ -1,0 +1,8 @@
+canvas#office {
+  max-width: 1200px;
+  width: 100%;
+  image-rendering: pixelated;
+  border: 2px solid var(--color-border-alt);
+  display: block;
+  box-shadow: 0 0 40px #7aa2f710;
+}

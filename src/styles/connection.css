@@ -1,0 +1,4 @@
+/* ── Connection indicator ─────────────────────────────────── */
+.conn { position: fixed; bottom: 10px; right: 14px; font-size: var(--font-size-xs); color: var(--color-text-dimmer); display: flex; align-items: center; gap: 5px; }
+.led { width: 5px; height: 5px; border-radius: 50%; background: var(--color-success); box-shadow: 0 0 4px var(--color-success); animation: blink 2s step-end infinite; }
+.led.off { background: var(--color-danger); box-shadow: 0 0 4px var(--color-danger); animation: none; }

@@ -11,7 +11,9 @@
 - [Overview](#overview)
 - [Features](#features)
 - [Architecture](#architecture)
+- [Project Structure](#project-structure)
 - [Setup & Running](#setup--running)
+- [Environment Variables](#environment-variables)
 - [Cloud Deployment](#cloud-deployment)
 - [Admin Editor](#admin-editor)
 - [API Endpoints](#api-endpoints)
@@ -24,7 +26,7 @@
 
 Agent Dashboard monitors Claude Code sessions by watching `.jsonl` log files in `~/.claude/projects/`. Each active session appears as a pixel art character in an animated office — sitting at desks when working, wandering around the office during idle time, and interacting with 40+ objects in the environment.
 
-The frontend is a single-file Canvas 2D application (`public/index.html`, ~7200 lines) with no external JS dependencies. The backend is a lightweight Node.js server using only `ws` and `chokidar`.
+The frontend is built as **23 ES modules** bundled by Vite, with **12 CSS files** using design tokens. The backend is a lightweight Node.js server (`server.js` as a thin router) with handler modules split across `src/server/handlers/`.
 
 ---
 
@@ -82,6 +84,17 @@ All entertainment objects support **click animations** -- clicking on any object
 - **Kitchen walls** — partition separating the kitchen from the main office, with door opening
 - **Zone divider wall** — separates the lounge area from the activity/entertainment zone, with door gap for pathfinding
 
+### Settings Panel
+- Adjustable sound volume, animation speed, and display preferences
+- Persisted to `localStorage`
+
+### Loading Screen
+- Animated loading screen with progress indicator while assets initialize
+
+### Mobile Adaptation
+- Responsive layout that adjusts canvas size, card grid, and UI panels for smaller screens
+- Touch-friendly controls
+
 ### Office Cat
 - Autonomous cat with its own state machine: `sitting`, `walking`, `sleeping`, `eating`, `pooping`, plus 10 new behaviors:
   - **Playing** — bats at a toy with spinning animation
@@ -120,40 +133,90 @@ Below the canvas, each agent gets an info card showing:
 ## Architecture
 
 ```
-┌────────────────────────┐     ┌──────────────────────────┐
-│  ~/.claude/projects/   │     │  public/index.html       │
-│  *.jsonl log files     │     │  (Canvas 2D, ~7200 LOC)  │
-└──────────┬─────────────┘     └──────────▲───────────────┘
+┌────────────────────────┐     ┌──────────────────────────────────┐
+│  ~/.claude/projects/   │     │  src/ (23 ES modules)            │
+│  *.jsonl log files     │     │  Vite dev server (HMR) or dist/  │
+└──────────┬─────────────┘     └──────────▲───────────────────────┘
            │ chokidar watch                │ WebSocket / HTTP
            ▼                               │
-┌──────────────────────────────────────────┴──────────────┐
-│  server.js  (HTTP + WebSocket on port 3737)             │
-│  - Parses .jsonl files incrementally                    │
-│  - Tracks agent state (working/thinking/idle)           │
-│  - Broadcasts updates to all connected clients          │
-│  - Serves static files from public/                     │
-│  - Manages personal tasks (tasks.json)                  │
-│  - Opens Serveo tunnel for public access                │
-└──────────────────────────┬──────────────────────────────┘
-                           │ POST /api/sync
-                           ▼
-┌──────────────────────────────────────────────────────────┐
-│  sync-to-cloud.js  (optional)                            │
-│  - Fetches GET /api/state from local server              │
-│  - Pushes to remote server POST /api/sync                │
-│  - Runs every 2 seconds                                  │
-└──────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────┴──────────────────────┐
+│  server.js  (thin HTTP router + WebSocket on port 3737)         │
+│  ├─ src/server/logger.js     — structured logging               │
+│  ├─ src/server/auth.js       — X-Admin-Token middleware         │
+│  └─ src/server/handlers/     — 6 route handler modules          │
+│     ├─ agents.js   — agent state queries                        │
+│     ├─ tasks.js    — personal + agent task CRUD                 │
+│     ├─ layout.js   — shared admin layout sync                   │
+│     ├─ sync.js     — cloud sync push/pull                       │
+│     ├─ demo.js     — demo agent injection                       │
+│     └─ telegram.js — TG webhook + feedback                      │
+└──────────────────────────────────────────────────────────────────┘
 ```
 
-### Key Files
+---
 
-| File | Purpose |
-|------|---------|
-| `server.js` | HTTP/WebSocket server, file watcher, API endpoints, Serveo tunnel |
-| `public/index.html` | Single-file frontend (~7200 LOC): CSS, Canvas 2D rendering, all sprites, pathfinding, state machines |
-| `sync-to-cloud.js` | Syncs local dashboard state to a remote deployment |
-| `tasks.json` | Persisted personal task list (auto-created at runtime) |
-| `package.json` | Dependencies: `ws` (WebSocket) and `chokidar` (file watching) |
+## Project Structure
+
+```
+agent-dashboard/
+├── server.js              # Thin HTTP router + WS + chokidar
+├── src/
+│   ├── index.html         # Vite entry HTML
+│   ├── main.js            # Entry point + CSS imports
+│   ├── app.js             # Main application module
+│   ├── constants.js       # Shared constants
+│   ├── state.js           # Global state management
+│   ├── renderer.js        # Canvas rendering pipeline
+│   ├── background.js      # Floor, walls, grid drawing
+│   ├── layout.js          # Office layout builder
+│   ├── agentState.js      # Agent state machine
+│   ├── drawChars.js       # Character sprite drawing
+│   ├── palettes.js        # 18 character appearance palettes
+│   ├── animConfig.js      # Animation configuration
+│   ├── creatures.js       # Office cat state machine
+│   ├── particles.js       # Particle system (confetti, steam, etc.)
+│   ├── bubbles.js         # Speech/thought bubbles
+│   ├── effects.js         # Visual effects
+│   ├── clickAnims.js      # Click feedback animations
+│   ├── math.js            # Math utilities
+│   ├── audio.js           # Sound effects (Web Audio API)
+│   ├── tasks.js           # Task UI management
+│   ├── ui.js              # UI panels and overlays
+│   ├── websocket.js       # WebSocket client + polling fallback
+│   ├── admin.js           # Admin editor logic
+│   ├── adminPos.js        # Admin position syncing
+│   ├── styles/
+│   │   ├── tokens.css     # Design tokens (colors, spacing, fonts)
+│   │   ├── base.css       # Reset + body
+│   │   ├── header.css     # Header bar
+│   │   ├── canvas.css     # Canvas container
+│   │   ├── cards.css      # Agent info cards
+│   │   ├── tabs.css       # Tab navigation
+│   │   ├── tasks.css      # Task panel
+│   │   ├── connection.css # Connection indicator
+│   │   ├── admin.css      # Admin editor overlay
+│   │   ├── settings.css   # Settings panel
+│   │   ├── loading.css    # Loading screen
+│   │   └── mobile.css     # Mobile responsive styles
+│   └── server/
+│       ├── logger.js      # Structured logging
+│       ├── auth.js        # Auth middleware (X-Admin-Token)
+│       └── handlers/      # Route handlers (6 files)
+│           ├── agents.js
+│           ├── tasks.js
+│           ├── layout.js
+│           ├── sync.js
+│           ├── demo.js
+│           └── telegram.js
+├── public/
+│   └── index.html         # Legacy fallback
+├── dist/                  # Vite build output (gitignored)
+├── sync-to-cloud.js       # Cloud sync script
+├── vite.config.js         # Vite configuration
+├── .env.example           # Environment variable template
+├── tasks.json             # Persisted personal tasks (auto-created)
+└── package.json           # Dependencies: ws, chokidar, dotenv + Vite
+```
 
 ---
 
@@ -169,8 +232,16 @@ Below the canvas, each agent gets an info card showing:
 ```bash
 cd agent-dashboard
 npm install
-node server.js
+
+# Development (Vite HMR + backend in parallel):
+npm run dev
+
+# Production build:
+npm run build
+npm start
 ```
+
+In development mode, Vite serves the frontend with hot module replacement while `server.js` handles the API and WebSocket connections. In production, `npm run build` creates an optimized bundle in `dist/`, and `npm start` serves it via `server.js`.
 
 Open **http://localhost:3737** in your browser.
 
@@ -188,13 +259,34 @@ Inject a fake agent:
 ```bash
 curl -X POST http://localhost:3737/api/demo \
   -H "Content-Type: application/json" \
+  -H "X-Admin-Token: YOUR_TOKEN" \
   -d '{"id":"test-1","slug":"my-agent","status":"working","currentTool":"Read"}'
 ```
 
 Remove it:
 ```bash
-curl -X DELETE http://localhost:3737/api/demo/test-1
+curl -X DELETE http://localhost:3737/api/demo/test-1 \
+  -H "X-Admin-Token: YOUR_TOKEN"
 ```
+
+(If `ADMIN_TOKEN` is not set in `.env`, auth is disabled and the header can be omitted.)
+
+---
+
+## Environment Variables
+
+Copy `.env.example` to `.env` and fill in the values:
+
+```
+TG_TOKEN=              # Telegram bot token
+TG_CHAT=               # Telegram chat ID
+SYNC_KEY=              # Sync authentication key (for POST /api/sync)
+ADMIN_TOKEN=           # Admin token for write API endpoints (X-Admin-Token header)
+PORT=3737              # Server port
+LOG_LEVEL=info         # Logging level (debug|info|warn|error)
+```
+
+All variables are optional. If `ADMIN_TOKEN` is not set, write endpoints are unprotected. If `TG_TOKEN` is not set, Telegram functions are disabled.
 
 ---
 
@@ -207,6 +299,7 @@ curl -X DELETE http://localhost:3737/api/demo/test-1
 3. Set environment variables:
    - `PORT` — Railway assigns this automatically
    - `SYNC_KEY` — optional shared secret for sync authentication
+   - `ADMIN_TOKEN` — protects write endpoints
 4. Deploy. The server starts via `npm start`
 
 On Railway, WebSocket may be unavailable. The frontend automatically falls back to HTTP polling every 2 seconds.
@@ -271,13 +364,15 @@ When objects are repositioned via the admin editor, the `syncIdleSpotsToAdmin()`
 
 ### Persistence
 
-Positions are saved to `localStorage` in the browser. Agents automatically re-path to updated positions when the layout changes.
+Positions are saved to `localStorage` in the browser. Layout can also be synced to the server via `POST /api/layout` so all clients share the same layout.
 
 ---
 
 ## API Endpoints
 
 All endpoints accept and return JSON. CORS is enabled (`Access-Control-Allow-Origin: *`).
+
+Write endpoints (`POST`, `PATCH`, `DELETE`) require the `X-Admin-Token` header when `ADMIN_TOKEN` is set in the environment. Read endpoints (`GET`) are public.
 
 ### `GET /api/agents`
 
@@ -336,7 +431,7 @@ Receives a full state push from `sync-to-cloud.js`. Replaces all agent, task, an
 
 **Body:** Same shape as the `GET /api/state` response.
 
-### `POST /api/demo`
+### `POST /api/demo` (auth required)
 
 Injects or updates a demo agent. Useful for testing without active Claude Code sessions.
 
@@ -350,7 +445,7 @@ Injects or updates a demo agent. Useful for testing without active Claude Code s
 }
 ```
 
-### `DELETE /api/demo/:id`
+### `DELETE /api/demo/:id` (auth required)
 
 Removes a demo agent by ID.
 
@@ -372,7 +467,7 @@ Returns all personal tasks.
 ]
 ```
 
-### `POST /api/mytasks`
+### `POST /api/mytasks` (auth required)
 
 Creates a new personal task. Returns the created task with a generated `id`.
 
@@ -384,7 +479,7 @@ Creates a new personal task. Returns the created task with a generated `id`.
 }
 ```
 
-### `PATCH /api/mytasks/:id`
+### `PATCH /api/mytasks/:id` (auth required)
 
 Updates fields on a task. Setting `status` to `"done"` auto-sets `completedAt`. Setting it back to `"todo"` clears `completedAt`.
 
@@ -394,9 +489,29 @@ Updates fields on a task. Setting `status` to `"done"` auto-sets `completedAt`. 
 }
 ```
 
-### `DELETE /api/mytasks/:id`
+### `DELETE /api/mytasks/:id` (auth required)
 
 Deletes a task by ID.
+
+### `GET /api/layout`
+
+Returns the current shared admin layout.
+
+### `POST /api/layout` (auth required)
+
+Updates the shared layout. Broadcasts to all connected clients.
+
+### `POST /api/tg-webhook`
+
+Telegram bot webhook endpoint.
+
+### `GET /api/tg-feedback`
+
+Returns the last Telegram feedback action.
+
+### `GET /api/health`
+
+Health check endpoint. Returns `{ status: "ok", version: "2.0.0", uptime: ... }`.
 
 ---
 
@@ -438,7 +553,7 @@ Agents navigate around obstacles using A* search on the tile grid:
 
 ### Agent State Machine
 
-Each agent is an instance of the `AgentState` class:
+Each agent is an instance of the `AgentState` class (defined in `src/agentState.js`):
 
 | Field | Purpose |
 |-------|---------|
@@ -460,41 +575,9 @@ Each agent is an instance of the `AgentState` class:
 5. Backend silent for 20 seconds — agent marked idle server-side
 6. Stale cleanup: subagents removed after 1 hour; sessions after 7 days
 
-### IDLE_SPOTS System
-
-`IDLE_SPOTS` is a dynamically-built array of locations that idle agents choose from, with weighted random selection:
-
-```javascript
-{
-  tx: 5.5,              // tile X position
-  ty: 8.0,              // tile Y position
-  anim: 'gaming',       // animation to play at this spot
-  type: 'gaming',       // category (kitchen, gym, group, couch, darts, etc.)
-  w: 10,                // selection weight (higher = more likely chosen)
-  _objId: 'tv',         // links to admin editor object for position syncing
-}
-```
-
-Spots are regenerated during `buildLayout()` whenever the office size changes. Types include: `couch`, `window`, `plant`, `floor`, `kitchen`, `group`, `gym`, `gaming`, `darts`, `aquarium`, `shelf`, `printer`, `arcade`, `espresso`, `dj`, `server`, `hammock`, `basketball`, `foosball`, `telescope`, `massage`.
-
-### GROUP_PAIRS for Paired Activities
-
-Some activities require two agents to be present:
-
-| Group ID | Activity | Location |
-|----------|----------|----------|
-| 0-2 | Chatting / Arguing / Gossiping | Social floor area |
-| 10 | Ping Pong | Ping pong table |
-| 20 | Water Cooler chat | Water cooler |
-
-**Pairing logic:**
-- An agent only joins a group spot if the partner slot is already occupied by another agent
-- If few solo spots remain, an agent may initiate a group by claiming one slot and reserving the partner slot (marked with a `__reserved_` prefix) for the next idle agent
-- The ping pong ball only animates when both players are present
-
 ### Character Appearance
 
-Each agent gets a deterministic appearance based on a hash of their session ID/slug:
+Each agent gets a deterministic appearance based on a hash of their session ID/slug (see `src/palettes.js`):
 
 - **6 standard appearances** — blue, purple, green, orange, pink, cyan hair with light skin tones
 - **5 diverse skin tones** — medium brown to deep brown with natural hair colors
@@ -507,7 +590,7 @@ Human characters may also get hash-derived accessories: glasses, beard, hair bun
 
 ### Particle System
 
-A lightweight `ParticleSystem` class handles visual effects:
+A lightweight `ParticleSystem` class (in `src/particles.js`) handles visual effects:
 - **Confetti** — burst on task completion (celebration)
 - **Puff** — emitted when agents despawn
 - **Burst** — emitted when agents spawn
@@ -515,12 +598,13 @@ A lightweight `ParticleSystem` class handles visual effects:
 
 ### Sound
 
-Minimal audio via Web Audio API. A `blip()` function generates short square-wave tones on agent state transitions.
+Minimal audio via Web Audio API (see `src/audio.js`). A `blip()` function generates short square-wave tones on agent state transitions.
 
 ---
 
 ## Development Tips
 
+- **Hot reload** — `npm run dev` runs Vite with HMR; changes to any module in `src/` are reflected instantly
 - **No restart needed** — the frontend auto-reconnects when the server restarts (WebSocket reconnect + polling fallback)
 - **Add a new activity**: create a `drawMyActivity()` function, register it in the `CHAR_DRAW` map, push a new entry to `IDLE_SPOTS` in `buildLayout()`, and call `syncIdleSpotsToAdmin()` if the object should be movable
 - **Change office size**: adjust `COLS`, `KITCHEN_WALL_COL`, `PER_ROW`, `STEP_X`
@@ -544,15 +628,30 @@ The server maps Claude Code tool names to display labels:
 | `Agent` | Launches sub-agent |
 | `TodoWrite` | Updates tasks |
 
-### Global State Reference
+### Frontend Module Map
 
-```javascript
-agentStates   // agentId -> AgentState (position, animation, slot, flags)
-agentsData    // agentId -> raw agent data from server
-idleOccupied  // slotIdx -> agentId (exclusive slot ownership)
-myTasks       // [{id, title, status, priority, assignee, createdAt, completedAt}]
-cat           // CatState instance (tx, ty, state, messExists, eatTarget) — 15 states including playing, grooming, hunting, zoomies, etc.
-ppBall        // Ping pong ball state {t, dir, speed, active}
-trashLevel    // 0-10 fill level
-printerActive // Countdown timer when printing
-```
+| Module | Purpose |
+|--------|---------|
+| `main.js` | Entry point, imports all CSS |
+| `app.js` | Application init, main loop |
+| `constants.js` | Shared constants (tile size, grid dims) |
+| `state.js` | Global state (agents, tasks, cat) |
+| `renderer.js` | Canvas rendering pipeline |
+| `background.js` | Floor, walls, grid |
+| `layout.js` | Office layout builder, IDLE_SPOTS |
+| `agentState.js` | Agent state machine class |
+| `drawChars.js` | Character sprite drawing functions |
+| `palettes.js` | 18 character appearance palettes |
+| `animConfig.js` | Animation frame configs |
+| `creatures.js` | Cat state machine |
+| `particles.js` | Particle system |
+| `bubbles.js` | Speech/thought bubbles |
+| `effects.js` | Visual effects |
+| `clickAnims.js` | Object click animations |
+| `math.js` | A* pathfinding, geometry |
+| `audio.js` | Web Audio API sound |
+| `tasks.js` | Task UI |
+| `ui.js` | Panels, overlays |
+| `websocket.js` | WS client + polling |
+| `admin.js` | Admin editor |
+| `adminPos.js` | Admin position syncing |

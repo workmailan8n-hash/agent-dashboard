@@ -1,0 +1,43 @@
+@media (max-width: 600px) {
+  body { padding: 8px; gap: 8px; }
+
+  header {
+    flex-wrap: wrap;
+    gap: 8px;
+    padding-bottom: 8px;
+  }
+
+  .logo { font-size: 8px; }
+  #agent-count { font-size: 6px; }
+
+  #public-url {
+    font-size: 5px;
+    flex: 1;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
+    order: 10;
+  }
+
+  .view-tabs { display: none; }
+
+  canvas#office {
+    max-width: none;
+    border: none;
+  }
+
+  .canvas-wrapper {
+    width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    border: 2px solid var(--color-border);
+  }
+
+  #grid {
+    grid-template-columns: 1fr !important;
+  }
+
+  .tab-btn {
+    min-height: 44px;
+  }
+}

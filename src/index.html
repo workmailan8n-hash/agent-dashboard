@@ -1,0 +1,94 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Agent Office</title>
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link href="https://fonts.googleapis.com/css2?family=Press+Start+2P&display=swap" rel="stylesheet">
+</head>
+<body>
+
+<div id="loading-screen">
+  <div class="loading-logo">▶ AGENT OFFICE</div>
+  <div class="loading-text">LOADING...</div>
+  <div class="loading-bar-outer">
+    <div class="loading-bar-inner" id="loading-bar"></div>
+  </div>
+  <div class="loading-status">CONNECTING TO AGENT MATRIX...</div>
+</div>
+
+<div id="settings-backdrop"></div>
+<div id="settings-panel">
+  <div class="settings-header">
+    <span>⚙ SETTINGS</span>
+    <button class="settings-close" id="settings-close">×</button>
+  </div>
+  <div class="settings-body">
+    <div class="settings-row"><span>SOUND</span><div class="toggle on" data-key="sound"></div></div>
+    <div class="settings-row"><span>PARTICLES</span><div class="toggle on" data-key="particles"></div></div>
+    <div class="settings-row"><span>ANIMATIONS</span><div class="toggle on" data-key="animations"></div></div>
+  </div>
+</div>
+
+<header>
+  <span class="logo">▶ AGENT OFFICE <span class="blink">_</span></span>
+  <div class="view-tabs">
+    <button class="tab-btn active" id="tab-office" onclick="switchTab('office')">🖥 OFFICE</button>
+    <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">📋 TASKS</button>
+  </div>
+  <span id="agent-count">0 agents</span>
+  <button id="btn-settings">⚙ SET</button>
+  <a id="public-url" class="loading" href="#" target="_blank">⏳ tunnel...</a>
+</header>
+
+<div class="canvas-wrapper">
+  <canvas id="office" width="1400" height="600"></canvas>
+</div>
+
+<div id="grid"></div>
+
+<div id="task-view">
+  <!-- Add task form -->
+  <div class="task-add-form" id="task-add-form">
+    <input type="text" id="task-input" class="task-input" placeholder="Новая задача..." maxlength="120" />
+    <select id="task-assignee" class="task-select">
+      <option value="me">Я</option>
+      <option value="team">Команда</option>
+      <option value="claude">Claude</option>
+    </select>
+    <select id="task-priority" class="task-select">
+      <option value="high">🔴 Высокий</option>
+      <option value="medium" selected>🟡 Средний</option>
+      <option value="low">🟢 Низкий</option>
+    </select>
+    <button class="task-add-btn" onclick="addTask()">+ ДОБАВИТЬ</button>
+  </div>
+
+  <!-- Stats bar -->
+  <div id="task-summary">
+    <div>Всего: <span id="ts-total">0</span></div>
+    <div>В работе: <span id="ts-active">0</span></div>
+    <div>Готово: <span id="ts-done">0</span></div>
+  </div>
+
+  <!-- Two sections: current + done -->
+  <div class="task-section">
+    <div class="task-section-title">⚡ ТЕКУЩИЕ</div>
+    <div id="tasks-current"></div>
+  </div>
+  <div class="task-section">
+    <div class="task-section-title done">✅ ВЫПОЛНЕННЫЕ</div>
+    <div id="tasks-done"></div>
+  </div>
+</div>
+
+<div class="conn">
+  <div class="led" id="led"></div>
+  <span id="conn-label">connecting</span>
+</div>
+
+
+<script type="module" src="./main.js"></script>
+</body>
+</html>

@@ -2,6 +2,7 @@ node_modules/
 tasks.json
 *.log
 .env
+dist/
 demo.js
 seed_tasks.js
 .claude/settings.local.json

@@ -1,0 +1,44 @@
+:root {
+  --color-bg: #080810;
+  --color-surface: #0c0d1e;
+  --color-surface-alt: #0a0b1a;
+  --color-surface-deep: #06070f;
+  --color-surface-hover: #0d1020;
+  --color-border: #1e2240;
+  --color-border-alt: #1a1c2e;
+  --color-accent: #7aa2f7;
+  --color-accent-hover: #9ab8ff;
+  --color-thinking: #bb9af7;
+  --color-success: #9ece6a;
+  --color-danger: #f7768e;
+  --color-warning: #e0af68;
+  --color-text: #c8d3f5;
+  --color-text-bright: #e4ecff;
+  --color-text-dim: #3a4060;
+  --color-text-dimmer: #2a3050;
+  --color-text-muted: #4a5070;
+  --color-card-bg: linear-gradient(160deg, #0c0d1e 0%, #0a0b1a 100%);
+
+  --gap-xs: 4px;
+  --gap-sm: 8px;
+  --gap-md: 14px;
+  --gap-lg: 24px;
+
+  --radius-sm: 3px;
+  --radius-md: 4px;
+
+  --font-main: 'Press Start 2P', monospace;
+  --font-size-xs: 5px;
+  --font-size-sm: 6px;
+  --font-size-md: 7px;
+  --font-size-lg: 8px;
+  --font-size-xl: 10px;
+
+  --z-canvas: 1;
+  --z-admin: 100;
+  --z-mobile-menu: 400;
+  --z-backdrop: 499;
+  --z-panel: 500;
+  --z-loading: 1000;
+  --z-scanline: 9999;
+}

@@ -1,10 +1,13 @@
 {
   "name": "agent-dashboard",
-  "version": "1.0.0",
+  "version": "2.0.0",
   "description": "",
   "main": "server.js",
   "scripts": {
+    "dev": "concurrently \"node server.js\" \"npx vite\"",
+    "build": "npx vite build",
     "start": "node server.js",
+    "preview": "npx vite preview",
     "test": "echo \"Error: no test specified\" && exit 1",
     "test:e2e": "npx playwright test"
   },
@@ -14,9 +17,12 @@
   "type": "commonjs",
   "dependencies": {
     "chokidar": "^3.6.0",
+    "dotenv": "^17.4.0",
     "ws": "^8.20.0"
   },
   "devDependencies": {
-    "@playwright/test": "^1.58.2"
+    "@playwright/test": "^1.58.2",
+    "concurrently": "^9.2.1",
+    "vite": "^8.0.3"
   }
 }
