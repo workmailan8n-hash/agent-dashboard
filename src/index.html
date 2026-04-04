@@ -46,7 +46,20 @@
   <canvas id="office" width="1400" height="600"></canvas>
 </div>
 
-<div id="grid"></div>
+<div id="grid">
+  <div id="mood-meter">
+    <div class="mm-header">
+      <span class="mm-label">📊 OFFICE MOOD</span>
+      <span id="mm-emoji" class="mm-emoji">😐</span>
+      <span id="mm-level" class="mm-level">CHILL</span>
+    </div>
+    <div class="mm-bar-track">
+      <div id="mm-bar" class="mm-bar" style="width:0%"></div>
+      <span id="mm-pct" class="mm-pct">0%</span>
+    </div>
+    <div id="mm-stats" class="mm-stats">— no agents —</div>
+  </div>
+</div>
 
 <div id="task-view">
   <!-- Add task form -->

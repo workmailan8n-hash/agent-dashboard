@@ -2,6 +2,76 @@
 #grid {
   display: none;
 }
+
+/* ── Office Mood Meter ──────────────────────────────────────── */
+#mood-meter {
+  grid-column: 1 / -1;
+  background: var(--color-card-bg);
+  border: 1px solid var(--color-border);
+  border-top: 2px solid #bb9af7;
+  border-radius: var(--radius-md);
+  padding: 10px 14px 10px 14px;
+  margin-bottom: 2px;
+  box-shadow: 0 2px 12px #bb9af720;
+}
+.mm-header {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 7px;
+}
+.mm-label {
+  font-size: var(--font-size-md);
+  color: var(--color-text-muted);
+  letter-spacing: 0.5px;
+  flex: 1;
+}
+.mm-emoji {
+  font-size: 14px;
+  line-height: 1;
+}
+.mm-level {
+  font-size: var(--font-size-xl);
+  color: #bb9af7;
+  letter-spacing: 0.5px;
+  transition: color 0.5s;
+}
+.mm-bar-track {
+  position: relative;
+  background: #1a1c2e;
+  border-radius: var(--radius-sm);
+  height: 12px;
+  overflow: hidden;
+  margin-bottom: 6px;
+}
+.mm-bar {
+  height: 100%;
+  border-radius: var(--radius-sm);
+  background: linear-gradient(90deg, #7aa2f7, #bb9af7);
+  transition: width 0.8s ease, background 0.5s;
+  position: relative;
+}
+.mm-bar::after {
+  content: '';
+  position: absolute;
+  top: 0; left: 0; right: 0;
+  height: 4px;
+  background: #ffffff28;
+  border-radius: var(--radius-sm);
+}
+.mm-pct {
+  position: absolute;
+  right: 6px; top: 50%;
+  transform: translateY(-50%);
+  font-size: 7px;
+  color: #ffffffcc;
+  pointer-events: none;
+}
+.mm-stats {
+  font-size: 7px;
+  color: var(--color-text-muted);
+  line-height: 1.8;
+}
 .card {
   background: var(--color-card-bg);
   border: 1px solid var(--color-border);

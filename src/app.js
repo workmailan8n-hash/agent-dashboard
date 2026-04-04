@@ -2926,6 +2926,9 @@ function generateLayout(n) {
   // ── 4. Trophy Cabinet (solo — agent admires trophies) ──────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:13, anim:'window_gaze', type:'trophy_cabinet', w:6, _objId:'trophy_cabinet', _defObjTx:rX+0.3, _defObjTy:12, _offsetX:1.2, _offsetY:1 });
 
+  // ── 5. Whiteboard (main office, top wall — agent doodles) ───────
+  IDLE_SPOTS.push({ tx:15, ty:2, anim:'doodling', type:'whiteboard', w:7, _objId:'whiteboard', _defObjTx:14, _defObjTy:0, _offsetX:1, _offsetY:2 });
+
   // ══ Zone 1: RECREATION (ACT_ZONE+9, spread across full width) ══
 
   // ── 7. Foosball Table (recreation, cols 8-10) ─────────────────
@@ -3135,6 +3138,10 @@ function buildObstacleGrid() {
   // ── Trophy Cabinet ─────
   const [tcbObsTx,tcbObsTy] = getAdminPos('trophy_cabinet', rXobs+0.3, 12);
   markRect(tcbObsTx, tcbObsTy, 2, 3);
+
+  // ── Whiteboard ─────
+  const [wbObsTx,wbObsTy] = getAdminPos('whiteboard', 14, 0);
+  markRect(wbObsTx, wbObsTy, 4, 2);
 
   // ── Zone 1: RECREATION obstacles (ACT_ZONE+9) ─────
   if (ACT_ZONE_Y > 0) {
@@ -5317,6 +5324,58 @@ function drawDynamicEffects(ctx, tick) {
     ctx.font = "4px 'Press Start 2P',monospace";
     ctx.textAlign = 'center';
     ctx.fillText('SPRINT BOARD', cbx + cbW/2, cby + cbH - 3);
+    ctx.textAlign = 'left';
+  }
+
+  // ── Whiteboard (main office, top wall) ───────────────────────
+  {
+    const [_wbTx, _wbTy] = getAdminPos('whiteboard', 14, 0);
+    const [wbx, wby] = ts(_wbTx, _wbTy);
+    const wbW = T * 4, wbH = T * 1.8;
+    // Metal frame / shadow
+    ctx.save(); ctx.shadowColor = '#00000060'; ctx.shadowBlur = 5;
+    fillR(ctx, wbx - 3, wby - 3, wbW + 6, wbH + 6, '#606070'); ctx.restore();
+    // Frame inner
+    fillR(ctx, wbx - 1, wby - 1, wbW + 2, wbH + 2, '#808090');
+    // White surface
+    fillR(ctx, wbx, wby, wbW, wbH, '#f0f0f5');
+    // Subtle horizontal lines (ruled guide)
+    ctx.strokeStyle = '#e0e0ea'; ctx.lineWidth = 0.5;
+    for (let ly = 8; ly < wbH - 4; ly += 8) {
+      ctx.beginPath(); ctx.moveTo(wbx + 3, wby + ly); ctx.lineTo(wbx + wbW - 3, wby + ly); ctx.stroke();
+    }
+    // Chalk scribbles — equations and diagrams
+    ctx.strokeStyle = '#3060c0'; ctx.lineWidth = 1.5;
+    // Arrow diagram
+    ctx.beginPath(); ctx.moveTo(wbx+6, wby+12); ctx.lineTo(wbx+18, wby+12); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wbx+15, wby+9); ctx.lineTo(wbx+18, wby+12); ctx.lineTo(wbx+15, wby+15); ctx.stroke();
+    // Box
+    ctx.strokeRect(wbx+22, wby+6, 14, 12);
+    // Text: f(x)
+    ctx.fillStyle = '#1840a0'; ctx.font = "bold 5px monospace";
+    ctx.fillText('f(x)', wbx+24, wby+15);
+    // Equals sign + result
+    ctx.fillStyle = '#3060c0';
+    ctx.fillText('= O(n²)', wbx+40, wby+15);
+    // Second row: a simple diagram circle with lines
+    ctx.strokeStyle = '#c04060'; ctx.lineWidth = 1;
+    ctx.beginPath(); ctx.arc(wbx+10, wby+30, 7, 0, Math.PI*2); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wbx+17, wby+30); ctx.lineTo(wbx+30, wby+30); ctx.stroke();
+    ctx.beginPath(); ctx.arc(wbx+37, wby+30, 7, 0, Math.PI*2); ctx.stroke();
+    // Checkmark
+    ctx.strokeStyle = '#208040'; ctx.lineWidth = 2;
+    ctx.beginPath(); ctx.moveTo(wbx+56, wby+24); ctx.lineTo(wbx+60, wby+30); ctx.lineTo(wbx+70, wby+18); ctx.stroke();
+    // Marker tray (bottom edge)
+    fillR(ctx, wbx, wby + wbH, wbW, 5, '#707080');
+    // Markers on tray
+    const markerColors = ['#c04040','#2060c0','#208040','#c08020'];
+    for (let mi = 0; mi < 4; mi++) {
+      fillR(ctx, wbx + 6 + mi * 10, wby + wbH + 1, 7, 3, markerColors[mi]);
+    }
+    // Label
+    ctx.fillStyle = '#505060'; ctx.font = "4px 'Press Start 2P',monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText('WHITEBOARD', wbx + wbW/2, wby + wbH + 14);
     ctx.textAlign = 'left';
   }
 
@@ -7952,6 +8011,44 @@ function renderCard(agent) {
   card.querySelector('.msg-count').textContent=messageCount;
 }
 
+function updateMoodMeter() {
+  const states = Object.values(agentStates);
+  const meterEl = document.getElementById('mood-meter');
+  if (!meterEl) return;
+  if (states.length === 0) {
+    document.getElementById('mm-bar').style.width = '0%';
+    document.getElementById('mm-pct').textContent = '0%';
+    document.getElementById('mm-emoji').textContent = '😐';
+    document.getElementById('mm-level').textContent = 'EMPTY';
+    document.getElementById('mm-level').style.color = '#565f89';
+    document.getElementById('mm-stats').textContent = '— no agents —';
+    return;
+  }
+  let totalRatio = 0, working = 0, burnedOut = 0;
+  for (const sp of states) {
+    const ratio = sp.totalTicks > 2 ? sp.workTicks / sp.totalTicks : 0;
+    totalRatio += ratio;
+    if (sp.isWorking) working++;
+    if (sp.burnout >= 3) burnedOut++;
+  }
+  const avg = totalRatio / states.length;
+  const pct = Math.round(avg * 100);
+  let emoji, level, color, barColor;
+  if (avg >= 0.7)       { emoji='🔥'; level='ON FIRE';  color='#ff9e64'; barColor='linear-gradient(90deg,#ff6040,#ff9e64)'; }
+  else if (avg >= 0.4)  { emoji='😊'; level='FOCUSED';  color='#9ece6a'; barColor='linear-gradient(90deg,#7aa2f7,#9ece6a)'; }
+  else if (avg >= 0.1)  { emoji='😐'; level='CHILL';    color='#bb9af7'; barColor='linear-gradient(90deg,#7aa2f7,#bb9af7)'; }
+  else                  { emoji='😤'; level='TIRED';    color='#565f89'; barColor='linear-gradient(90deg,#3a3860,#565f89)'; }
+  document.getElementById('mm-bar').style.width = pct + '%';
+  document.getElementById('mm-bar').style.background = barColor;
+  document.getElementById('mm-pct').textContent = pct + '%';
+  document.getElementById('mm-emoji').textContent = emoji;
+  document.getElementById('mm-level').textContent = level;
+  document.getElementById('mm-level').style.color = color;
+  const idle = states.length - working;
+  document.getElementById('mm-stats').textContent =
+    `${working} working · ${idle} idle${burnedOut > 0 ? ' · 🔥 ' + burnedOut + ' burnout' : ''}`;
+}
+
 function updateUI() {
   const list=Object.values(agentsData);
   document.getElementById('agent-count').textContent=`${list.length} agents`;
@@ -7959,6 +8056,7 @@ function updateUI() {
     const el=document.getElementById(`t-${a.id}`);
     if (el) el.textContent=timeSince(a.lastActivity);
   }
+  updateMoodMeter();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -8257,6 +8355,7 @@ function buildAdminObjects() {
 
   // Corkboard (sprint board on top wall)
   adminObjects.push({id:'corkboard', label:'📌 Corkboard', tx:7, ty:0, w:3.5, h:2});
+  adminObjects.push({id:'whiteboard', label:'📝 Whiteboard', tx:14, ty:0, w:4, h:1.8});
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -8395,6 +8494,7 @@ const BUILTIN_POSITIONS = {
 
   // ═══ MAIN OFFICE WALL DECORATIONS ═══
   "corkboard": {"tx": 7, "ty": 0},
+  "whiteboard": {"tx": 14, "ty": 0},
 
   // ═══ RIGHT ZONE ═══
   "trophy_cabinet": {"tx": 23, "ty": 12}
@@ -8867,6 +8967,7 @@ const CLICK_OBJ_MAP = {
   'nap_pod':         'nap_pod',
   'corkboard':       'corkboard',
   'trophy_cabinet':  'trophy_cabinet',
+  'whiteboard':      'whiteboard',
   'kitchen_table':   'kitchen_table',
   'bookshelf':       'bookshelf',
   'conf_table':      'conf_table',
@@ -8902,6 +9003,7 @@ function findClickableAt(tx, ty) {
     {id:'telescope', w:1, h:2},
     {id:'nap_pod', w:2.5, h:1.5},
     {id:'corkboard', w:3.5, h:2},
+    {id:'whiteboard', w:4, h:1.8},
     {id:'trophy_cabinet', w:2, h:2.5},
     {id:'kitchen_table', w:4, h:3},
     {id:'bookshelf', w:4.5, h:3.5},
@@ -9122,6 +9224,10 @@ function initClickParticles(type, cx, cy) {
     case 'corkboard':
       // Sticky notes flutter off
       for (let i=0;i<6;i++) p.push({x:cx+(Math.random()-0.5)*40, y:cy+(Math.random()-0.5)*20, vx:(Math.random()-0.5)*2.5, vy:-1.5-Math.random()*2, size:6+Math.random()*4, col:['#f7e468','#f7a8c8','#a8d8f7','#b8f7a8','#f7c8a8','#d8a8f7'][i]});
+      break;
+    case 'whiteboard':
+      // Chalk dust + marker caps burst
+      for (let i=0;i<10;i++) p.push({x:cx+(Math.random()-0.5)*35, y:cy+(Math.random()-0.5)*18, vx:(Math.random()-0.5)*2.2, vy:-0.8-Math.random()*2, size:2+Math.random()*4, col:['#ffffff','#aaccff','#ffccaa','#aaffcc','#ffaacc','#ffffff','#e0e0f8'][Math.floor(Math.random()*7)]});
       break;
   }
   return p;
@@ -9694,6 +9800,22 @@ function drawClickAnims(ctx, tick) {
           ctx.fillStyle = '#f7e468'; ctx.font = "7px 'Press Start 2P',monospace";
           ctx.textAlign = 'center';
           ctx.fillText('SPRINT!', a.x, a.y - 28 - t * 12); ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'whiteboard': {
+        // Chalk dust drifts off
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.015; p.vx *= 0.97;
+          ctx.globalAlpha = alpha * (1 - t * 0.75);
+          ctx.fillStyle = p.col;
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+        }
+        if (t < 0.45) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#ffffff'; ctx.font = "6px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('✓ IDEA!', a.x, a.y - 22 - t * 14); ctx.textAlign = 'left';
         }
         break;
       }
