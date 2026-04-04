@@ -42,7 +42,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Activity heatmap overlay (toggle with H key)
 - [x] Agent productivity chart (work% vs idle%)
 - [x] "Office mood" meter in right panel
-- [ ] Daily timeline (who worked when)
+- [x] Daily timeline (who worked when)
 
 ## Day 6 — Sims Mode (Agent Control)
 - [ ] Click agent → radial menu appears with activity icons
