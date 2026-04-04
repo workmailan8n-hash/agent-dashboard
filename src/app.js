@@ -5188,6 +5188,68 @@ function drawDynamicEffects(ctx, tick) {
     ctx.restore();
   }
 
+  // ── Corkboard (main office, top wall) ────────────────────────
+  {
+    const [_cbTx, _cbTy] = getAdminPos('corkboard', 7, 0);
+    const [cbx, cby] = ts(_cbTx, _cbTy);
+    const cbW = T * 3.5, cbH = T * 2;
+    // Frame
+    ctx.save(); ctx.shadowColor = '#00000070'; ctx.shadowBlur = 5;
+    fillR(ctx, cbx - 3, cby - 3, cbW + 6, cbH + 6, '#4a3010'); ctx.restore();
+    // Cork surface
+    fillR(ctx, cbx, cby, cbW, cbH, '#c88840');
+    // Cork texture dots
+    ctx.fillStyle = '#b07830';
+    const dotPat = [[4,3],[14,8],[26,5],[38,11],[50,4],[62,9],[74,3],[86,7],[96,12],[8,15],[20,19],[32,14],[44,20],[56,16],[68,22],[80,17],[92,21],[6,28],[18,24],[30,30],[42,26],[54,31],[66,25]];
+    for (const [dx, dy] of dotPat) if (dx < cbW && dy < cbH) ctx.fillRect(cbx+dx, cby+dy, 2, 2);
+    // Sticky notes
+    const notes = [
+      {x:4,  y:4,  w:28, h:22, col:'#f7e468', lines:['TODO','bug fix']},
+      {x:36, y:3,  w:26, h:20, col:'#f7a8c8', lines:['SHIP','it!']},
+      {x:66, y:5,  w:30, h:22, col:'#a8d8f7', lines:['REVIEW','PR#42']},
+      {x:8,  y:30, w:28, h:22, col:'#b8f7a8', lines:['DONE','✓deploy']},
+      {x:42, y:28, w:28, h:24, col:'#f7c8a8', lines:['IDEA','v2.0']},
+      {x:76, y:31, w:28, h:20, col:'#d8a8f7', lines:['MTNG','10am']},
+    ];
+    for (const n of notes) {
+      if (n.x + n.w > cbW || n.y + n.h > cbH) continue;
+      // Note shadow
+      ctx.fillStyle = '#00000025';
+      ctx.fillRect(cbx + n.x + 2, cby + n.y + 2, n.w, n.h);
+      // Note body
+      ctx.fillStyle = n.col;
+      ctx.fillRect(cbx + n.x, cby + n.y, n.w, n.h);
+      // Note fold corner
+      ctx.fillStyle = n.col + '99';
+      ctx.beginPath();
+      ctx.moveTo(cbx + n.x + n.w - 6, cby + n.y);
+      ctx.lineTo(cbx + n.x + n.w, cby + n.y + 6);
+      ctx.lineTo(cbx + n.x + n.w, cby + n.y);
+      ctx.fill();
+      // Note text lines
+      ctx.fillStyle = '#0000008a';
+      ctx.font = "3px monospace";
+      ctx.textAlign = 'left';
+      ctx.fillText(n.lines[0], cbx + n.x + 3, cby + n.y + 8);
+      if (n.lines[1]) ctx.fillText(n.lines[1], cbx + n.x + 3, cby + n.y + 15);
+      // Push pin
+      ctx.fillStyle = '#cc3030';
+      ctx.beginPath();
+      ctx.arc(cbx + n.x + n.w/2, cby + n.y + 2, 2.5, 0, Math.PI*2);
+      ctx.fill();
+      ctx.fillStyle = '#ee5050';
+      ctx.beginPath();
+      ctx.arc(cbx + n.x + n.w/2 - 0.5, cby + n.y + 1.5, 1, 0, Math.PI*2);
+      ctx.fill();
+    }
+    // Board label
+    ctx.fillStyle = '#2a1808';
+    ctx.font = "4px 'Press Start 2P',monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText('SPRINT BOARD', cbx + cbW/2, cby + cbH - 3);
+    ctx.textAlign = 'left';
+  }
+
   // ── Nap pod ambient glow (makers lab) ────────────────────────
   if (ACT_ZONE_Y > 0) {
     const [_napGlTx, _napGlTy] = getAdminPos('nap_pod', 22, ACT_ZONE_Y+14);
@@ -7480,6 +7542,21 @@ function loop(now) {
     trashAgentId = null;
   }
 
+  // ── Heatmap accumulation (every 6 ticks) ─────────────────────
+  if (globalTick % 6 === 0) {
+    // Decay all cells slightly
+    for (let i = 0; i < heatGrid.length; i++) heatGrid[i] *= 0.997;
+    // Accumulate agent positions
+    for (const sp of Object.values(agentStates)) {
+      const gx = Math.floor(sp.tx), gy = Math.floor(sp.ty);
+      if (gx >= 0 && gx < HEAT_MAX_COLS && gy >= 0 && gy < HEAT_MAX_ROWS) {
+        const idx = gy * HEAT_MAX_COLS + gx;
+        heatGrid[idx] += 1;
+        if (heatGrid[idx] > heatMax) heatMax = heatGrid[idx];
+      }
+    }
+  }
+
   // ── Draw ─────────────────────────────────────────────────────
   ctx.clearRect(0, 0, CW, canvas.height);
   ctx.drawImage(bgBuf, 0, 0);
@@ -7640,10 +7717,69 @@ function loop(now) {
     }
   }
 
+  // Heatmap overlay (on top of everything, below admin)
+  if (heatmapVisible) drawHeatmap(ctx);
+
   // Admin editor overlay (on top of everything)
   drawAdminOverlay(ctx);
 
   requestAnimationFrame(loop);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  HEATMAP OVERLAY
+// ════════════════════════════════════════════════════════════════
+function drawHeatmap(ctx) {
+  ctx.save();
+  // Draw each cell as a colored rectangle
+  const norm = heatMax > 0 ? 1 / heatMax : 1;
+  for (let gy = 0; gy < ROWS; gy++) {
+    for (let gx = 0; gx < COLS; gx++) {
+      const val = heatGrid[gy * HEAT_MAX_COLS + gx] * norm;
+      if (val < 0.01) continue;
+      const px = OX + gx * T, py = OY + gy * T;
+      // Color gradient: green (low) → yellow → red (high)
+      let r, g, b;
+      if (val < 0.5) {
+        const t2 = val * 2;
+        r = Math.round(t2 * 255);
+        g = 220;
+        b = 0;
+      } else {
+        const t2 = (val - 0.5) * 2;
+        r = 255;
+        g = Math.round((1 - t2) * 220);
+        b = 0;
+      }
+      ctx.globalAlpha = Math.min(0.55, val * 0.6 + 0.05);
+      ctx.fillStyle = `rgb(${r},${g},${b})`;
+      ctx.fillRect(px, py, T, T);
+    }
+  }
+  // Label
+  ctx.globalAlpha = 0.92;
+  ctx.fillStyle = '#000000aa';
+  ctx.fillRect(OX + 4, OY + 4, 160, 20);
+  ctx.fillStyle = '#f7768e';
+  ctx.font = "7px 'Press Start 2P',monospace";
+  ctx.textAlign = 'left';
+  ctx.fillText('HEATMAP [H to close]', OX + 8, OY + 16);
+  // Legend bar
+  const lx = OX + 4, ly = OY + 26, lw = 80, lh = 8;
+  const grad = ctx.createLinearGradient(lx, ly, lx + lw, ly);
+  grad.addColorStop(0,   'rgba(0,220,0,0.8)');
+  grad.addColorStop(0.5, 'rgba(255,220,0,0.8)');
+  grad.addColorStop(1,   'rgba(255,0,0,0.8)');
+  ctx.globalAlpha = 0.85;
+  ctx.fillStyle = grad;
+  ctx.fillRect(lx, ly, lw, lh);
+  ctx.fillStyle = '#ffffff';
+  ctx.font = "4px monospace";
+  ctx.fillText('low', lx, ly + lh + 6);
+  ctx.textAlign = 'right';
+  ctx.fillText('high', lx + lw, ly + lh + 6);
+  ctx.textAlign = 'left';
+  ctx.restore();
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -7870,6 +8006,13 @@ document.fonts.ready.then(() => {
 
 let adminMode = false;
 let simsMode = false;
+
+// ── Activity Heatmap ─────────────────────────────────────────────
+let heatmapVisible = false;
+// Grid accumulates agent presence counts (decays over time)
+const HEAT_MAX_COLS = 80, HEAT_MAX_ROWS = 120;
+const heatGrid = new Float32Array(HEAT_MAX_COLS * HEAT_MAX_ROWS);
+let heatMax = 1; // running max for normalization
 let simsSelectedAgent = null;
 let simsMenuVisible = false;
 let simsMenuX = 0, simsMenuY = 0;
@@ -7968,6 +8111,9 @@ function buildAdminObjects() {
     // Zone 3: CAFE (ACT_ZONE+14)
     adminObjects.push({id:'espresso_bar', label:'☕ Espresso Bar', tx:13, ty:ACT_ZONE_Y+14, w:3, h:1.5});
   }
+
+  // Corkboard (sprint board on top wall)
+  adminObjects.push({id:'corkboard', label:'📌 Corkboard', tx:7, ty:0, w:3.5, h:2});
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -8102,7 +8248,10 @@ const BUILTIN_POSITIONS = {
   "server_rack": {"tx": 27, "ty": 52},
   "printer_3d": {"tx": 32, "ty": 52},
   "telescope": {"tx": 32, "ty": 47},
-  "nap_pod": {"tx": 22, "ty": 52}
+  "nap_pod": {"tx": 22, "ty": 52},
+
+  // ═══ MAIN OFFICE WALL DECORATIONS ═══
+  "corkboard": {"tx": 7, "ty": 0}
 };
 
 // Apply custom positions to actual game objects
@@ -8570,6 +8719,7 @@ const CLICK_OBJ_MAP = {
   'basketball':      'basketball',
   'telescope':       'telescope',
   'nap_pod':         'nap_pod',
+  'corkboard':       'corkboard',
   'kitchen_table':   'kitchen_table',
   'bookshelf':       'bookshelf',
   'conf_table':      'conf_table',
@@ -8604,6 +8754,7 @@ function findClickableAt(tx, ty) {
     {id:'basketball', w:2, h:2},
     {id:'telescope', w:1, h:2},
     {id:'nap_pod', w:2.5, h:1.5},
+    {id:'corkboard', w:3.5, h:2},
     {id:'kitchen_table', w:4, h:3},
     {id:'bookshelf', w:4.5, h:3.5},
     {id:'conf_table', w:6, h:3},
@@ -8819,6 +8970,10 @@ function initClickParticles(type, cx, cy) {
     case 'gym':
       // Sweat drops + energy burst
       for (let i=0;i<5;i++) p.push({x:cx+(Math.random()-0.5)*30, y:cy-10-Math.random()*10, vx:(Math.random()-0.5)*2, vy:-1-Math.random()*2, size:1.5, col:['#88ccff','#ffcc40','#ff6040','#88ccff','#ffcc40'][i]});
+      break;
+    case 'corkboard':
+      // Sticky notes flutter off
+      for (let i=0;i<6;i++) p.push({x:cx+(Math.random()-0.5)*40, y:cy+(Math.random()-0.5)*20, vx:(Math.random()-0.5)*2.5, vy:-1.5-Math.random()*2, size:6+Math.random()*4, col:['#f7e468','#f7a8c8','#a8d8f7','#b8f7a8','#f7c8a8','#d8a8f7'][i]});
       break;
   }
   return p;
@@ -9373,6 +9528,27 @@ function drawClickAnims(ctx, tick) {
         }
         break;
       }
+      case 'corkboard': {
+        // Sticky notes flutter off board
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy += 0.04; // gravity
+          p.vx *= 0.98;
+          ctx.globalAlpha = alpha * (1 - t * 0.6);
+          ctx.fillStyle = p.col;
+          ctx.save();
+          ctx.translate(p.x, p.y);
+          ctx.rotate(t * Math.PI * (p.vx > 0 ? 1 : -1));
+          ctx.fillRect(-p.size/2, -p.size/2, p.size, p.size);
+          ctx.restore();
+        }
+        if (t < 0.4) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#f7e468'; ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('SPRINT!', a.x, a.y - 28 - t * 12); ctx.textAlign = 'left';
+        }
+        break;
+      }
     }
     ctx.restore();
     return true;
@@ -9467,9 +9643,11 @@ document.getElementById('admin-export').onclick = () => {
   });
 };
 
-// Keyboard shortcut: E to toggle
+// Keyboard shortcut: E to toggle admin, H to toggle heatmap
 document.addEventListener('keydown', e => {
-  if (e.key === 'e' && !e.ctrlKey && !e.metaKey && document.activeElement.tagName !== 'INPUT') toggleAdmin();
+  if (document.activeElement.tagName === 'INPUT') return;
+  if (e.key === 'e' && !e.ctrlKey && !e.metaKey) toggleAdmin();
+  if (e.key === 'h' || e.key === 'H') heatmapVisible = !heatmapVisible;
 });
 
 // ════════════════════════════════════════════════════════════════

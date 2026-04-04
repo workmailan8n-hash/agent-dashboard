@@ -39,7 +39,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Objects have idle animations (printer blinks, coffee steams, clock ticks)
 
 ## Day 5 — Stats Dashboard
-- [ ] Activity heatmap overlay (toggle with H key)
+- [x] Activity heatmap overlay (toggle with H key)
 - [ ] Agent productivity chart (work% vs idle%)
 - [ ] "Office mood" meter in right panel
 - [ ] Daily timeline (who worked when)
