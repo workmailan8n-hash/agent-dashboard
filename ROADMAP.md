@@ -35,7 +35,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 ## Day 4 — Smooth Transitions
 - [x] Sit down / stand up animation (not teleport to chair)
 - [x] Door opens when agent enters, closes behind
-- [ ] Elevator or stairs to 2nd floor (expand office vertically)
+- [x] Elevator or stairs to 2nd floor (expand office vertically)
 - [ ] Objects have idle animations (printer blinks, coffee steams, clock ticks)
 
 ## Day 5 — Stats Dashboard
