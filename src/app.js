@@ -2072,6 +2072,82 @@ const aquariumFish = [
   { x:0.5, y:0.3, speed:0.015, color:'#ffcc20', size:3, phase:3 },
   { x:0.2, y:0.7, speed:-0.01, color:'#60ff80', size:3, phase:4.5 },
 ];
+// ── Lava Lamp (right zone, animated blobs) ────────────────────────
+function drawLavaLamp(ctx, x, y, tick) {
+  const t = tick * 0.02;
+  const lampW = 20, lampH = 52;
+  const bx = x + 6; // center x of lamp
+  // Base
+  fillR(ctx, x+2, y+lampH, lampW-4, 6, '#2a2a3a');
+  fillR(ctx, x+4, y+lampH+5, lampW-8, 3, '#202028');
+  // Glass body (tapered cylinder)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x+2, y+8);
+  ctx.lineTo(x+lampW-2, y+8);
+  ctx.lineTo(x+lampW, y+lampH);
+  ctx.lineTo(x, y+lampH);
+  ctx.closePath();
+  ctx.fillStyle = '#1a1a2a90';
+  ctx.fill();
+  ctx.strokeStyle = '#4a4a6a';
+  ctx.lineWidth = 1.5;
+  ctx.stroke();
+  ctx.restore();
+  // Liquid fill (warm glow)
+  ctx.save();
+  ctx.beginPath();
+  ctx.moveTo(x+3, y+9);
+  ctx.lineTo(x+lampW-3, y+9);
+  ctx.lineTo(x+lampW-1, y+lampH-1);
+  ctx.lineTo(x+1, y+lampH-1);
+  ctx.closePath();
+  ctx.fillStyle = '#ff401040';
+  ctx.fill();
+  ctx.restore();
+  // Animated blobs
+  const blobDefs = [
+    { phase: 0,   size: 7, col: '#ff6030' },
+    { phase: 2.1, size: 5, col: '#ff8040' },
+    { phase: 4.2, size: 6, col: '#ff4820' },
+  ];
+  for (const b of blobDefs) {
+    const blobT = (t + b.phase) % (Math.PI * 2);
+    const rise  = Math.sin(blobT);        // -1..1
+    const blobY = y + 12 + (lampH - 20) * (0.5 - rise * 0.45);
+    const wobble = Math.sin(blobT * 1.7 + b.phase) * 2;
+    const blobX  = bx + wobble;
+    ctx.save();
+    ctx.globalAlpha = 0.85;
+    ctx.fillStyle = b.col;
+    ctx.beginPath();
+    ctx.ellipse(blobX, blobY, b.size, b.size * 0.75, wobble * 0.1, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.restore();
+  }
+  // Glass shine
+  ctx.save();
+  ctx.globalAlpha = 0.25;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.moveTo(x+3, y+10); ctx.lineTo(x+5, y+10); ctx.lineTo(x+4, y+lampH-4); ctx.lineTo(x+2, y+lampH-4); ctx.closePath();
+  ctx.fill();
+  ctx.restore();
+  // Top cap
+  fillR(ctx, x+1, y+4, lampW-2, 5, '#303048');
+  fillR(ctx, x+4, y, lampW-8, 5, '#404058');
+  // Glow underneath (LED base)
+  ctx.save();
+  ctx.globalAlpha = 0.3;
+  ctx.shadowColor = '#ff6030';
+  ctx.shadowBlur = 12;
+  ctx.fillStyle = '#ff6030';
+  ctx.beginPath();
+  ctx.arc(bx, y+lampH+3, 6, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+}
+
 function drawAquariumFish(ctx, tick) {
   const rX = PER_ROW * STEP_X + 2;
   const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
@@ -2984,6 +3060,7 @@ function generateLayout(n) {
 
   // ── 4b. Rubber Duck (right panel — agents visit for debugging inspiration) ──
   IDLE_SPOTS.push({ tx:rX+1.5, ty:11.5, anim:'window_gaze', type:'rubber_duck', w:5, _objId:'rubber_duck', _defObjTx:rX+0.3, _defObjTy:10.5, _offsetX:1.2, _offsetY:1 });
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:5, anim:'window_gaze', type:'lava_lamp', w:4, _objId:'lava_lamp', _defObjTx:rX+0.3, _defObjTy:4.5, _offsetX:1.2, _offsetY:0.5 });
 
   // ── 5. Whiteboard (main office, top wall — agent doodles) ───────
   IDLE_SPOTS.push({ tx:15, ty:2, anim:'doodling', type:'whiteboard', w:7, _objId:'whiteboard', _defObjTx:14, _defObjTy:0, _offsetX:1, _offsetY:2 });
@@ -3201,6 +3278,9 @@ function buildObstacleGrid() {
   // ── Rubber Duck ─────
   const [rdObsTx,rdObsTy] = getAdminPos('rubber_duck', rXobs+0.3, 10.5);
   markRect(rdObsTx, rdObsTy, 2, 2);
+  // ── Lava Lamp ─────
+  const [llObsTx,llObsTy] = getAdminPos('lava_lamp', rXobs+0.3, 4.5);
+  markRect(llObsTx, llObsTy, 1.5, 2.5);
 
   // ── Whiteboard ─────
   const [wbObsTx,wbObsTy] = getAdminPos('whiteboard', 14, 0);
@@ -7761,6 +7841,10 @@ function loop(now) {
   { const [_rdTx, _rdTy] = getAdminPos('rubber_duck', (PER_ROW * STEP_X + 2)+0.3, 10.5);
     const [rdx, rdy] = ts(_rdTx, _rdTy);
     drawRubberDuck(ctx, rdx - T/2, rdy, globalTick); }
+  // Lava lamp (animated blobs in right zone)
+  { const [_llTx, _llTy] = getAdminPos('lava_lamp', (PER_ROW * STEP_X + 2)+0.3, 4.5);
+    const [llx, lly] = ts(_llTx, _llTy);
+    drawLavaLamp(ctx, llx - T/2, lly - 8, globalTick); }
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -7901,14 +7985,50 @@ function loop(now) {
         ctx.restore();
       }
     }
-    // Selected agent — show "click object to send" hint
-    if (simsSelectedAgent && agentStates[simsSelectedAgent]) {
+    // Radial menu — draw activity picker
+    if (simsMenuVisible && simsMenuItems.length > 0) {
       ctx.save();
-      ctx.fillStyle = '#9ece6a';
-      ctx.font = "7px 'Press Start 2P',monospace";
+      // Background circle
+      ctx.globalAlpha = 0.85;
+      ctx.fillStyle = '#0d0d1a';
+      ctx.beginPath();
+      ctx.arc(simsMenuX, simsMenuY, 80, 0, Math.PI*2);
+      ctx.fill();
+      ctx.strokeStyle = '#7aa2f7';
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.arc(simsMenuX, simsMenuY, 80, 0, Math.PI*2);
+      ctx.stroke();
+      ctx.globalAlpha = 1;
+      // Center label
+      ctx.fillStyle = '#c8d3f5';
+      ctx.font = "5px 'Press Start 2P',monospace";
       ctx.textAlign = 'center';
-      const sp2 = agentStates[simsSelectedAgent];
-      ctx.fillText('CLICK OBJECT', sp2.sx, sp2.sy - 50);
+      ctx.fillText('SEND TO', simsMenuX, simsMenuY + 4);
+      // Menu items
+      for (const item of simsMenuItems) {
+        // Item background circle
+        ctx.globalAlpha = 0.9;
+        ctx.fillStyle = '#1a1c3e';
+        ctx.beginPath();
+        ctx.arc(item.cx, item.cy, 18, 0, Math.PI*2);
+        ctx.fill();
+        ctx.strokeStyle = '#7aa2f760';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        ctx.arc(item.cx, item.cy, 18, 0, Math.PI*2);
+        ctx.stroke();
+        ctx.globalAlpha = 1;
+        // Icon
+        ctx.font = '14px serif';
+        ctx.textAlign = 'center';
+        ctx.fillText(item.icon, item.cx, item.cy + 5);
+        // Label
+        ctx.fillStyle = '#9aa5ce';
+        ctx.font = "4px 'Press Start 2P',monospace";
+        ctx.fillText(item.label, item.cx, item.cy + 17);
+      }
+      ctx.textAlign = 'left';
       ctx.restore();
     }
   }
@@ -8481,6 +8601,7 @@ function buildAdminObjects() {
   adminObjects.push({id:'aquarium', label:'🐠 Aquarium', tx: rX+0.3, ty:8, w:2.5, h:2});
   adminObjects.push({id:'trophy_cabinet', label:'🏆 Trophies', tx: rX+0.3, ty:12, w:2, h:2.5});
   adminObjects.push({id:'rubber_duck', label:'🦆 Rubber Duck', tx: rX+0.3, ty:10.5, w:2, h:2.5});
+  adminObjects.push({id:'lava_lamp', label:'🫧 Lava Lamp', tx: rX+0.3, ty:4.5, w:1.5, h:2.5});
   adminObjects.push({id:'printer', label:'🖨 Printer', tx: KITCHEN_WALL_COL-3, ty:KITCHEN_START_ROW-2, w:2, h:1});
   adminObjects.push({id:'trashcan', label:'🗑 Trash', tx: KITCHEN_WALL_COL-2, ty:3, w:1, h:1});
 
@@ -8701,7 +8822,8 @@ const BUILTIN_POSITIONS = {
 
   // ═══ RIGHT ZONE ═══
   "trophy_cabinet": {"tx": 23, "ty": 12},
-  "rubber_duck": {"tx": 23, "ty": 10}
+  "rubber_duck": {"tx": 23, "ty": 10},
+  "lava_lamp": {"tx": 23, "ty": 4}
 };
 
 // Apply custom positions to actual game objects
@@ -9171,6 +9293,7 @@ const CLICK_OBJ_MAP = {
   'nap_pod':         'nap_pod',
   'corkboard':       'corkboard',
   'trophy_cabinet':  'trophy_cabinet',
+  'lava_lamp':       'lava_lamp',
   'whiteboard':      'whiteboard',
   'kitchen_table':   'kitchen_table',
   'bookshelf':       'bookshelf',
@@ -9209,6 +9332,7 @@ function findClickableAt(tx, ty) {
     {id:'corkboard', w:3.5, h:2},
     {id:'whiteboard', w:4, h:1.8},
     {id:'trophy_cabinet', w:2, h:2.5},
+    {id:'lava_lamp', w:1.5, h:2.5},
     {id:'kitchen_table', w:4, h:3},
     {id:'bookshelf', w:4.5, h:3.5},
     {id:'conf_table', w:6, h:3},
@@ -9235,57 +9359,84 @@ canvas.addEventListener('click', e => {
   if (simsMode) {
     const {tx, ty} = mouseToTile(e);
 
-    // Step 1: If no agent selected — click on agent to select
+    // Step 1: If radial menu is visible — check if clicked a menu item
+    if (simsMenuVisible) {
+      let clickedItem = false;
+      for (const item of simsMenuItems) {
+        const dx = e.offsetX - item.cx;
+        const dy = e.offsetY - item.cy;
+        if (dx*dx + dy*dy < 22*22) {
+          clickedItem = true;
+          // Find a free IDLE_SPOT of this type
+          const spots = IDLE_SPOTS.filter(s =>
+            s.type === item.spotType &&
+            (!idleOccupied[IDLE_SPOTS.indexOf(s)] || idleOccupied[IDLE_SPOTS.indexOf(s)] === simsSelectedAgent)
+          );
+          const sp = agentStates[simsSelectedAgent];
+          if (sp && spots.length > 0) {
+            const spot = spots[Math.floor(Math.random() * spots.length)];
+            const si = IDLE_SPOTS.indexOf(spot);
+            sp._simsWaiting = false;
+            sp.arrived = false;
+            sp.activityDur = 30 + Math.random() * 30;
+            if (sp.slotIdx >= 0) delete idleOccupied[sp.slotIdx];
+            sp.slotIdx = si;
+            idleOccupied[si] = sp.id;
+            sp.activityAnim = spot.anim;
+            sp.setTarget(spot.tx, spot.ty);
+          } else if (sp && item.spotType === 'wander') {
+            sp._simsWaiting = false;
+            sp.arrived = false;
+            const wx = 2 + Math.random() * (COLS - 4);
+            const wy = 2 + Math.random() * (ROWS - 4);
+            sp.setTarget(wx, wy);
+          }
+          simsMenuVisible = false;
+          simsSelectedAgent = null;
+          return;
+        }
+      }
+      // Clicked outside menu — dismiss
+      if (!clickedItem) {
+        simsMenuVisible = false;
+        simsSelectedAgent = null;
+        return;
+      }
+      return;
+    }
+
+    // Step 1b: If no agent selected — click on agent to select and show radial menu
     if (!simsSelectedAgent) {
       for (const [id, sp] of Object.entries(agentStates)) {
         const dx = tx - sp.tx, dy = ty - sp.ty;
         if (dx*dx + dy*dy < 2.5) {
           simsSelectedAgent = id;
+          // Build radial menu
+          simsMenuX = sp.sx;
+          simsMenuY = sp.sy;
+          const MENU_ITEMS = [
+            { icon: '🛋️', label: 'Rest',    spotType: 'couch'   },
+            { icon: '☕',  label: 'Kitchen', spotType: 'kitchen' },
+            { icon: '🏋️', label: 'Gym',     spotType: 'gym'     },
+            { icon: '🎮',  label: 'Gaming',  spotType: 'gaming'  },
+            { icon: '🏓',  label: 'P.Pong',  spotType: 'group'   },
+            { icon: '🚶',  label: 'Wander',  spotType: 'wander'  },
+          ];
+          const R = 55;
+          simsMenuItems = MENU_ITEMS.map((m, i) => {
+            const angle = -Math.PI/2 + (i / MENU_ITEMS.length) * Math.PI * 2;
+            return { ...m, cx: sp.sx + Math.cos(angle)*R, cy: sp.sy + Math.sin(angle)*R, angle };
+          });
+          simsMenuVisible = true;
           return;
         }
       }
       return;
     }
 
-    // Step 2: Agent selected — click on OBJECT to send agent there
-    // Check if clicked on another agent (switch selection)
-    for (const [id, sp] of Object.entries(agentStates)) {
-      if (id === simsSelectedAgent) continue;
-      const dx = tx - sp.tx, dy = ty - sp.ty;
-      if (dx*dx + dy*dy < 2.5) {
-        simsSelectedAgent = id; // switch to this agent
-        return;
-      }
-    }
-
-    // Find nearest IDLE_SPOT to click position
-    let bestSpot = -1, bestDist = Infinity;
-    for (let i = 0; i < IDLE_SPOTS.length; i++) {
-      if (idleOccupied[i] && idleOccupied[i] !== simsSelectedAgent) continue;
-      const dx = tx - IDLE_SPOTS[i].tx, dy = ty - IDLE_SPOTS[i].ty;
-      const d = dx*dx + dy*dy;
-      if (d < bestDist && d < 16) { bestDist = d; bestSpot = i; }
-    }
-
-    const sp = agentStates[simsSelectedAgent];
-    if (sp && bestSpot >= 0) {
-      // Send agent to this spot
-      sp._simsWaiting = false;
-      sp.arrived = false;
-      sp.activityDur = 30 + Math.random() * 30;
-      if (sp.slotIdx >= 0) delete idleOccupied[sp.slotIdx];
-      sp.slotIdx = bestSpot;
-      idleOccupied[bestSpot] = sp.id;
-      sp.activityAnim = IDLE_SPOTS[bestSpot].anim;
-      sp.setTarget(IDLE_SPOTS[bestSpot].tx, IDLE_SPOTS[bestSpot].ty);
-      simsSelectedAgent = null; // deselect after sending
-    } else if (sp) {
-      // No spot nearby — just walk to click position
-      sp._simsWaiting = false;
-      sp.arrived = false;
-      sp.setTarget(tx, ty);
-      simsSelectedAgent = null;
-    }
+    // Step 2: agent selected but menu not visible — click elsewhere to deselect
+    simsMenuVisible = false;
+    simsSelectedAgent = null;
     return;
   }
 
@@ -9432,6 +9583,9 @@ function initClickParticles(type, cx, cy) {
     case 'whiteboard':
       // Chalk dust + marker caps burst
       for (let i=0;i<10;i++) p.push({x:cx+(Math.random()-0.5)*35, y:cy+(Math.random()-0.5)*18, vx:(Math.random()-0.5)*2.2, vy:-0.8-Math.random()*2, size:2+Math.random()*4, col:['#ffffff','#aaccff','#ffccaa','#aaffcc','#ffaacc','#ffffff','#e0e0f8'][Math.floor(Math.random()*7)]});
+      break;
+    case 'lava_lamp':
+      for (let i = 0; i < 8; i++) p.push({x: cx + (Math.random()-0.5)*10, y: cy - 5, vx: (Math.random()-0.5)*1.2, vy: -1.2-Math.random()*1.5, size: 3+Math.random()*4, col: ['#ff6030','#ff8040','#ffaa60'][i%3]});
       break;
     case 'rubber_duck':
       // Lightbulb idea sparks
@@ -10027,6 +10181,25 @@ function drawClickAnims(ctx, tick) {
         }
         break;
       }
+      case 'lava_lamp': {
+        // Blobs float up when tapped
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy -= 0.04; p.vx *= 0.97;
+          ctx.globalAlpha = alpha * (1 - t * 0.6);
+          ctx.fillStyle = p.col;
+          ctx.beginPath();
+          ctx.ellipse(Math.round(p.x), Math.round(p.y), p.size, p.size*0.8, 0, 0, Math.PI*2);
+          ctx.fill();
+        }
+        if (t < 0.5) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#ff8040';
+          ctx.font = "6px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('✨ ZEN', a.x, a.y - 25 - t * 14); ctx.textAlign = 'left';
+        }
+        break;
+      }
       case 'rubber_duck': {
         // Lightbulb / idea sparks
         for (const p of a.particles) {
@@ -10151,6 +10324,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'h' || e.key === 'H') heatmapVisible = !heatmapVisible;
   if (e.key === 'p' || e.key === 'P') productivityVisible = !productivityVisible;
   if (e.key === 't' || e.key === 'T') timelineVisible = !timelineVisible;
+  if (e.key === 'Escape' && simsMenuVisible) { simsMenuVisible = false; simsSelectedAgent = null; }
 });
 
 // ════════════════════════════════════════════════════════════════
