@@ -2923,6 +2923,9 @@ function generateLayout(n) {
   // ── 3. Aquarium (solo — agent watches fish) ────────────────────
   IDLE_SPOTS.push({ tx:rX+1.5, ty:9, anim:'window_gaze', type:'aquarium', w:8, _objId:'aquarium', _defObjTx:rX+0.3, _defObjTy:8, _offsetX:1.2, _offsetY:1 });
 
+  // ── 4. Trophy Cabinet (solo — agent admires trophies) ──────────
+  IDLE_SPOTS.push({ tx:rX+1.5, ty:13, anim:'window_gaze', type:'trophy_cabinet', w:6, _objId:'trophy_cabinet', _defObjTx:rX+0.3, _defObjTy:12, _offsetX:1.2, _offsetY:1 });
+
   // ══ Zone 1: RECREATION (ACT_ZONE+9, spread across full width) ══
 
   // ── 7. Foosball Table (recreation, cols 8-10) ─────────────────
@@ -3128,6 +3131,10 @@ function buildObstacleGrid() {
   // ── Aquarium ─────
   const [aqTx,aqTy] = getAdminPos('aquarium', rXobs+0.3, 8);
   markRect(aqTx, aqTy, 3, 2);
+
+  // ── Trophy Cabinet ─────
+  const [tcbObsTx,tcbObsTy] = getAdminPos('trophy_cabinet', rXobs+0.3, 12);
+  markRect(tcbObsTx, tcbObsTy, 2, 3);
 
   // ── Zone 1: RECREATION obstacles (ACT_ZONE+9) ─────
   if (ACT_ZONE_Y > 0) {
@@ -4431,6 +4438,69 @@ function buildBackground() {
     fillR(ctx, aqx+5, aqy+5, 4, aqH-14);
     // Frame top rim
     fillR(ctx, aqx-1, aqy-2, aqW+2, 4, '#606070');
+
+    // ── 4. Trophy Cabinet (right zone, row 12) ──────────────────
+    const [_tcbTx, _tcbTy] = getAdminPos('trophy_cabinet', rX+0.3, 12);
+    const [tcbx, tcby] = ts(_tcbTx, _tcbTy);
+    const tcbW = T*2, tcbH = T*2.5;
+    // Cabinet body shadow
+    ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
+    fillR(ctx, tcbx, tcby, tcbW, tcbH, '#4a3010'); ctx.restore();
+    // Cabinet body
+    fillR(ctx, tcbx+2, tcby+2, tcbW-4, tcbH-4, '#5a3c18');
+    // Crown molding (top)
+    fillR(ctx, tcbx-2, tcby-4, tcbW+4, 5, '#3a2408');
+    fillR(ctx, tcbx-1, tcby-3, tcbW+2, 3, '#6a5020');
+    // Glass door left
+    fillR(ctx, tcbx+3, tcby+7, tcbW/2-5, tcbH-11, '#1a385090');
+    ctx.strokeStyle='#806040'; ctx.lineWidth=1;
+    ctx.strokeRect(tcbx+3+0.5, tcby+7+0.5, tcbW/2-5-1, tcbH-11-1);
+    // Glass door right
+    fillR(ctx, tcbx+tcbW/2+2, tcby+7, tcbW/2-5, tcbH-11, '#1a385090');
+    ctx.strokeRect(tcbx+tcbW/2+2+0.5, tcby+7+0.5, tcbW/2-5-1, tcbH-11-1);
+    // Center divider
+    fillR(ctx, tcbx+tcbW/2-1, tcby+7, 2, tcbH-11, '#3a2408');
+    // Door handles
+    ctx.fillStyle='#c09830';
+    ctx.fillRect(tcbx+tcbW/2-5, tcby+tcbH/2-3, 4, 6);
+    ctx.fillRect(tcbx+tcbW/2+1, tcby+tcbH/2-3, 4, 6);
+    // Shelf lines inside cabinet
+    [0.33, 0.66].forEach(frac => {
+      const sy = tcby+7 + (tcbH-11)*frac;
+      fillR(ctx, tcbx+3, sy-1, tcbW-6, 2, '#3a2408');
+      fillR(ctx, tcbx+3, sy+1, tcbW-6, 1, '#6a5020');
+    });
+    // Trophies on shelves (5 trophies: 2 top, 2 mid, 1 bottom)
+    const trophyColors = ['#e0af68','#c8d3f5','#bb9af7','#9ece6a','#e0af68'];
+    [[0.22,0.14],[0.65,0.14],[0.25,0.47],[0.62,0.47],[0.44,0.78]].forEach(([fx,fy],ti) => {
+      const trx = tcbx+4 + fx*(tcbW-8), trY = tcby+8 + fy*(tcbH-14);
+      const tc = trophyColors[ti % trophyColors.length];
+      ctx.fillStyle = tc;
+      // Cup shape
+      ctx.beginPath();
+      ctx.moveTo(trx-4, trY+5); ctx.lineTo(trx-5, trY-1);
+      ctx.lineTo(trx+5, trY-1); ctx.lineTo(trx+4, trY+5);
+      ctx.closePath(); ctx.fill();
+      // Handles
+      ctx.strokeStyle = tc; ctx.lineWidth = 1.5;
+      ctx.beginPath(); ctx.arc(trx-5, trY+2, 2, -Math.PI*0.5, Math.PI*0.5); ctx.stroke();
+      ctx.beginPath(); ctx.arc(trx+5, trY+2, 2, Math.PI*0.5, -Math.PI*0.5); ctx.stroke();
+      // Stem
+      ctx.fillStyle = tc;
+      ctx.fillRect(trx-1, trY+5, 2, 3);
+      // Base
+      ctx.fillRect(trx-3, trY+8, 6, 2);
+      // Shine
+      ctx.fillStyle='#ffffff50';
+      ctx.fillRect(trx-3, trY-1, 2, 4);
+    });
+    // Base plinth
+    fillR(ctx, tcbx, tcby+tcbH, tcbW, 4, '#3a2408');
+    // Label
+    ctx.fillStyle='#c09830'; ctx.font="4px 'Press Start 2P',monospace";
+    ctx.textAlign='center';
+    ctx.fillText('TROPHIES', tcbx+tcbW/2, tcby+tcbH+12);
+    ctx.textAlign='left';
 
     // ── 2. Dartboard (ON the top wall — row 0) ──────────────────
     const [_dartTx, _dartTy] = getAdminPos('darts', rX+1.5, 0);
@@ -7719,6 +7789,8 @@ function loop(now) {
 
   // Heatmap overlay (on top of everything, below admin)
   if (heatmapVisible) drawHeatmap(ctx);
+  // Productivity chart overlay
+  if (productivityVisible) drawProductivityChart(ctx);
 
   // Admin editor overlay (on top of everything)
   drawAdminOverlay(ctx);
@@ -7778,6 +7850,74 @@ function drawHeatmap(ctx) {
   ctx.fillText('low', lx, ly + lh + 6);
   ctx.textAlign = 'right';
   ctx.fillText('high', lx + lw, ly + lh + 6);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
+// ════════════════════════════════════════════════════════════════
+//  PRODUCTIVITY CHART OVERLAY  (P key)
+// ════════════════════════════════════════════════════════════════
+function drawProductivityChart(ctx) {
+  const agents = Object.values(agentStates);
+  if (agents.length === 0) return;
+  ctx.save();
+  const panW = 230, rowH = 22, headerH = 32, footerH = 10;
+  const chartH = headerH + agents.length * rowH + footerH;
+  const panX = OX + 4, panY = OY + 4;
+  // Panel background
+  ctx.fillStyle = '#0d1226ee';
+  fillR(ctx, panX, panY, panW, chartH, '#0d1226ee');
+  // Border
+  ctx.strokeStyle = '#bb9af750';
+  ctx.lineWidth = 1;
+  ctx.strokeRect(panX + 0.5, panY + 0.5, panW - 1, chartH - 1);
+  // Title
+  ctx.fillStyle = '#bb9af7';
+  ctx.font = "7px 'Press Start 2P',monospace";
+  ctx.textAlign = 'left';
+  ctx.fillText('PRODUCTIVITY [P]', panX + 8, panY + 18);
+  // Divider
+  ctx.fillStyle = '#2a2c4e';
+  ctx.fillRect(panX + 6, panY + headerH - 4, panW - 12, 1);
+  // Column headers
+  ctx.fillStyle = '#565f89';
+  ctx.font = '6px monospace';
+  ctx.fillText('AGENT', panX + 8, panY + headerH - 8);
+  ctx.textAlign = 'right';
+  ctx.fillText('WORK%', panX + panW - 8, panY + headerH - 8);
+  ctx.textAlign = 'left';
+  // Per-agent bars
+  const nameW = 68, barX = panX + nameW + 10, barW = panW - nameW - 22;
+  agents.forEach((s, i) => {
+    const y = panY + headerH + i * rowH;
+    const ratio = s.totalTicks > 2 ? s.workTicks / s.totalTicks : 0;
+    const pct = Math.round(ratio * 100);
+    const accent = s.palette?.accent || '#c8d3f5';
+    // Row bg (alternating)
+    if (i % 2 === 0) { ctx.fillStyle = '#ffffff06'; ctx.fillRect(panX + 2, y, panW - 4, rowH); }
+    // Agent name (truncated)
+    const name = (s.slug || s.id || '???').replace(/-/g, ' ').slice(0, 9).toUpperCase();
+    ctx.fillStyle = accent;
+    ctx.font = '6px monospace';
+    ctx.textAlign = 'left';
+    ctx.fillText(name, panX + 8, y + rowH/2 + 2);
+    // Bar track
+    ctx.fillStyle = '#1a1c2e';
+    ctx.fillRect(barX, y + 5, barW, 12);
+    // Work bar (colored by agent accent)
+    if (ratio > 0) {
+      ctx.fillStyle = accent + 'cc';
+      ctx.fillRect(barX, y + 5, Math.round(barW * ratio), 12);
+      // Shine strip
+      ctx.fillStyle = '#ffffff28';
+      ctx.fillRect(barX, y + 5, Math.round(barW * ratio), 4);
+    }
+    // Percentage label inside/after bar
+    ctx.fillStyle = pct >= 20 ? '#ffffffcc' : '#565f89';
+    ctx.font = 'bold 7px monospace';
+    ctx.textAlign = 'center';
+    ctx.fillText(`${pct}%`, barX + barW/2, y + rowH/2 + 3);
+  });
   ctx.textAlign = 'left';
   ctx.restore();
 }
@@ -8009,6 +8149,8 @@ let simsMode = false;
 
 // ── Activity Heatmap ─────────────────────────────────────────────
 let heatmapVisible = false;
+// ── Productivity Chart ────────────────────────────────────────────
+let productivityVisible = false;
 // Grid accumulates agent presence counts (decays over time)
 const HEAT_MAX_COLS = 80, HEAT_MAX_ROWS = 120;
 const heatGrid = new Float32Array(HEAT_MAX_COLS * HEAT_MAX_ROWS);
@@ -8037,6 +8179,7 @@ function buildAdminObjects() {
   adminObjects.push({id:'cooler', label:'💧 Cooler', tx: rX+2.5, ty:2, w:1.5, h:1.5});
   adminObjects.push({id:'darts', label:'🎯 Darts', tx: rX+1.5, ty:0, w:2, h:1});
   adminObjects.push({id:'aquarium', label:'🐠 Aquarium', tx: rX+0.3, ty:8, w:2.5, h:2});
+  adminObjects.push({id:'trophy_cabinet', label:'🏆 Trophies', tx: rX+0.3, ty:12, w:2, h:2.5});
   adminObjects.push({id:'printer', label:'🖨 Printer', tx: KITCHEN_WALL_COL-3, ty:KITCHEN_START_ROW-2, w:2, h:1});
   adminObjects.push({id:'trashcan', label:'🗑 Trash', tx: KITCHEN_WALL_COL-2, ty:3, w:1, h:1});
 
@@ -8251,7 +8394,10 @@ const BUILTIN_POSITIONS = {
   "nap_pod": {"tx": 22, "ty": 52},
 
   // ═══ MAIN OFFICE WALL DECORATIONS ═══
-  "corkboard": {"tx": 7, "ty": 0}
+  "corkboard": {"tx": 7, "ty": 0},
+
+  // ═══ RIGHT ZONE ═══
+  "trophy_cabinet": {"tx": 23, "ty": 12}
 };
 
 // Apply custom positions to actual game objects
@@ -8720,6 +8866,7 @@ const CLICK_OBJ_MAP = {
   'telescope':       'telescope',
   'nap_pod':         'nap_pod',
   'corkboard':       'corkboard',
+  'trophy_cabinet':  'trophy_cabinet',
   'kitchen_table':   'kitchen_table',
   'bookshelf':       'bookshelf',
   'conf_table':      'conf_table',
@@ -8755,6 +8902,7 @@ function findClickableAt(tx, ty) {
     {id:'telescope', w:1, h:2},
     {id:'nap_pod', w:2.5, h:1.5},
     {id:'corkboard', w:3.5, h:2},
+    {id:'trophy_cabinet', w:2, h:2.5},
     {id:'kitchen_table', w:4, h:3},
     {id:'bookshelf', w:4.5, h:3.5},
     {id:'conf_table', w:6, h:3},
@@ -9643,11 +9791,12 @@ document.getElementById('admin-export').onclick = () => {
   });
 };
 
-// Keyboard shortcut: E to toggle admin, H to toggle heatmap
+// Keyboard shortcut: E to toggle admin, H to toggle heatmap, P to toggle productivity chart
 document.addEventListener('keydown', e => {
   if (document.activeElement.tagName === 'INPUT') return;
   if (e.key === 'e' && !e.ctrlKey && !e.metaKey) toggleAdmin();
   if (e.key === 'h' || e.key === 'H') heatmapVisible = !heatmapVisible;
+  if (e.key === 'p' || e.key === 'P') productivityVisible = !productivityVisible;
 });
 
 // ════════════════════════════════════════════════════════════════
