@@ -188,6 +188,7 @@ const ANIM = {
   window_gaze:    { frames: 4,  fps: 3,  loop: true,  spriteRow: 17 },
   headphones:     { frames: 8,  fps: 8,  loop: true,  spriteRow: 18 },
   air_guitar:     { frames: 8,  fps: 10, loop: true,  spriteRow: 19 },
+  in_hammock:     { frames: 6,  fps:  4, loop: true,  spriteRow: 24 },
   yoga:           { frames: 6,  fps: 4,  loop: true,  spriteRow: 20 },
   reading:        { frames: 4,  fps: 3,  loop: true,  spriteRow: 21 },
   desk_nap:       { frames: 4,  fps: 3,  loop: true,  spriteRow: 22 },
@@ -2276,6 +2277,42 @@ function drawPinballMachine(ctx, x, y, tick) {
   ctx.textAlign = 'left';
 }
 
+// ── Hammock object (between two wooden posts) ───────────────────
+function drawHammock(ctx, x, y, tick) {
+  const swing = Math.sin(tick * 0.04) * 4;
+  // Left post
+  fillR(ctx, x + 2, y - 28, 5, 36, '#7a4a1e');
+  fillR(ctx, x - 2, y + 4, 9, 4, '#5a3410');  // base
+  fillR(ctx, x + 3, y - 30, 3, 5, '#9a6a2e');  // cap
+  // Right post
+  fillR(ctx, x + 50, y - 28, 5, 36, '#7a4a1e');
+  fillR(ctx, x + 46, y + 4, 9, 4, '#5a3410');  // base
+  fillR(ctx, x + 51, y - 30, 3, 5, '#9a6a2e'); // cap
+  // Rope anchors
+  ctx.strokeStyle = '#c8a050'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(x + 7, y - 16); ctx.lineTo(x + 15 + swing, y - 6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(x + 50, y - 16); ctx.lineTo(x + 42 + swing, y - 6); ctx.stroke();
+  // Hammock fabric (curved, swings slightly)
+  const hx = swing;
+  ctx.strokeStyle = '#e88040'; ctx.lineWidth = 4;
+  ctx.beginPath();
+  ctx.moveTo(x + 14 + hx, y - 8);
+  ctx.quadraticCurveTo(x + 28 + hx, y + 10, x + 42 + hx, y - 8);
+  ctx.stroke();
+  ctx.strokeStyle = '#d06828'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(x + 14 + hx, y - 6);
+  ctx.quadraticCurveTo(x + 28 + hx, y + 8, x + 42 + hx, y - 6);
+  ctx.stroke();
+  // Decorative stripes on fabric
+  ctx.strokeStyle = '#f09850'; ctx.lineWidth = 1;
+  for (let i = 0; i < 3; i++) {
+    const px2 = x + 18 + i * 8 + hx;
+    const py2 = y + 2 + Math.sin((i + 1) * 0.8) * 3;
+    ctx.beginPath(); ctx.moveTo(px2, py2 - 3); ctx.lineTo(px2 + 2, py2 + 3); ctx.stroke();
+  }
+}
+
 function drawJukebox(ctx, x, y, tick) {
   const t = tick * 0.025;
   const jW = 22, jH = 48;
@@ -2952,6 +2989,47 @@ function drawShootingBasket(ctx, cx, cy, pal, t) {
   drawHeadFront(ctx, cx, cy-11-lift, pal, false);
 }
 
+// ── in_hammock — agent lounging in a swinging hammock ────────────
+function drawInHammock(ctx, cx, cy, pal, t) {
+  const swing = Math.sin(t * Math.PI * 2 * 0.25) * 6;  // gentle sway
+  const ph = t * Math.PI * 2;
+  const bodyY = cy + 4 + Math.sin(ph * 0.3) * 1.5; // subtle bobbing
+  const sway = swing * 0.4;
+  // hammock ropes
+  ctx.strokeStyle = '#c8a050'; ctx.lineWidth = 1.5;
+  ctx.beginPath(); ctx.moveTo(cx - 16 + sway, bodyY - 4); ctx.lineTo(cx - 8 + sway, bodyY + 6); ctx.stroke();
+  ctx.beginPath(); ctx.moveTo(cx + 16 + sway, bodyY - 4); ctx.lineTo(cx + 8 + sway, bodyY + 6); ctx.stroke();
+  // hammock fabric (curved bed)
+  ctx.strokeStyle = '#d4824a'; ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(cx - 14 + sway, bodyY + 4);
+  ctx.quadraticCurveTo(cx + sway, bodyY + 14, cx + 14 + sway, bodyY + 4);
+  ctx.stroke();
+  ctx.strokeStyle = '#c07038'; ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(cx - 12 + sway, bodyY + 5);
+  ctx.quadraticCurveTo(cx + sway, bodyY + 12, cx + 12 + sway, bodyY + 5);
+  ctx.stroke();
+  // body (lying horizontal)
+  const bx = cx - 10 + sway, by = bodyY + 2;
+  px(ctx, bx, by, 20, 5, pal.shirt);                        // torso
+  px(ctx, bx + 15, by + 1, 8, 4, pal.pants);               // legs
+  px(ctx, bx - 2, by + 1, 5, 4, pal.pants);                // other leg
+  // head
+  const headX = cx + 8 + sway, headY = bodyY - 2;
+  px(ctx, headX - 4, headY - 8, 8, 7, pal.skin);            // head
+  px(ctx, headX - 4, headY - 10, 8, 3, pal.hair);           // hair
+  // closed eyes (relaxing)
+  ctx.fillStyle = '#603020';
+  ctx.fillRect((headX - 2)|0, (headY - 6)|0, 2, 1);
+  ctx.fillRect((headX + 1)|0, (headY - 6)|0, 2, 1);
+  // Zzz particles floating
+  if ((t * 10 | 0) % 3 === 0) {
+    ctx.font = '5px monospace'; ctx.fillStyle = '#a0c0ff80';
+    ctx.fillText('z', cx + 12 + sway, bodyY - 8 - (t * 15) % 12);
+  }
+}
+
 // ── playing_foosball — at foosball table side view ───────────────
 function drawPlayingFoosball(ctx, cx, cy, pal, t) {
   const twist = Math.sin(t * Math.PI * 4) * 0.3;
@@ -3051,6 +3129,7 @@ const CHAR_DRAW = {
   fixing_server:     drawFixingServer,
   watching_3dprint:  drawWatching3DPrint,
   shooting_basket:   drawShootingBasket,
+  in_hammock:        drawInHammock,
   playing_foosball:  drawPlayingFoosball,
   using_telescope:   drawUsingTelescope,
   rowing:            drawRowing,
@@ -3400,6 +3479,9 @@ function generateLayout(n) {
 
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({ tx:COLS - 4, ty:ACT_ZONE_Y + 14, anim:'reading', type:'shelf', w:5 });
+  // ── Hammock (recreation zone, col 29-32, row ACT+12) ─────────────
+  IDLE_SPOTS.push({ tx:30.5, ty:ACT_ZONE_Y+12, anim:'in_hammock', type:'hammock', w:5,
+    _objId:'hammock', _defObjTx:29, _defObjTy:ACT_ZONE_Y+11, _offsetX:1.5, _offsetY:1 });
 
   // ── Vending machine spot (inside kitchen) ────────────────────────
   IDLE_SPOTS.push({ tx: KITCHEN_WALL_COL+1.5, ty: ACT_ZONE_Y-1.5, anim:'eating', type:'kitchen', w:3 });
@@ -3597,6 +3679,8 @@ function buildObstacleGrid() {
     markRect(jbObsTx, jbObsTy, 2, 2);
     const [pbObsTx,pbObsTy] = getAdminPos('pinball', 32, ACT_ZONE_Y+9);
     markRect(pbObsTx, pbObsTy, 2, 2);
+    const [hmObsTx,hmObsTy] = getAdminPos('hammock', 29, ACT_ZONE_Y+11);
+    markRect(hmObsTx, hmObsTy, 4, 2);
   }
 
   // ── Zone 2: MAKERS LAB obstacles (ACT_ZONE+14) ─────
@@ -5156,6 +5240,10 @@ function buildBackground() {
     ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3-6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3+6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
 
+    // ── Hammock (recreation zone, col 29) ───────────────────────
+    { const [_hmTx, _hmTy] = getAdminPos('hammock', 29, ACT_ZONE_Y+11);
+      const [hmx, hmy] = ts(_hmTx, _hmTy);
+      drawHammock(ctx, hmx - T/2, hmy + 4, globalTick); }
     // ── Jukebox (gaming room, col 25) ──────────────────────────
     { const [_jbTx, _jbTy] = getAdminPos('jukebox', 25, ACT_ZONE_Y+9);
       const [jbx, jby] = ts(_jbTx, _jbTy);
@@ -9839,6 +9927,22 @@ canvas.addEventListener('click', e => {
             const wx = 2 + Math.random() * (COLS - 4);
             const wy = 2 + Math.random() * (ROWS - 4);
             sp.setTarget(wx, wy);
+          } else if (sp && item.spotType === 'recall') {
+            // Release current slot
+            if (sp.slotIdx >= 0 && idleOccupied[sp.slotIdx] === sp.id) {
+              delete idleOccupied[sp.slotIdx];
+            }
+            sp.slotIdx = -1;
+            sp.activityAnim = null;
+            sp.activityDur = 0;
+            sp.arrived = false;
+            sp._simsWaiting = true;
+            // Walk to a free couch slot
+            const freeCouchSlot = COUCH_SLOTS.find((s, i) => {
+              const spotI = IDLE_SPOTS.findIndex(is => is.type === 'couch' && Math.abs(is.tx - s.tx) < 0.1);
+              return spotI === -1 || !idleOccupied[spotI] || idleOccupied[spotI] === sp.id;
+            }) || (COUCH_SLOTS.length > 0 ? COUCH_SLOTS[0] : { tx: 5, ty: 24 });
+            sp.setTarget(freeCouchSlot.tx, freeCouchSlot.ty);
           }
           simsMenuVisible = false;
           simsSelectedAgent = null;
@@ -9873,6 +9977,7 @@ canvas.addEventListener('click', e => {
             { icon: '🎵',  label: 'DJ',      spotType: 'dj'      },
             { icon: '🏓',  label: 'P.Pong',  spotType: 'group'   },
             { icon: '🚶',  label: 'Wander',  spotType: 'wander'  },
+            { icon: '↩',   label: 'Recall',  spotType: 'recall'  },
           ];
           const R = 62;
           simsMenuItems = MENU_ITEMS.map((m, i) => {
