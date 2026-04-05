@@ -2148,6 +2148,75 @@ function drawLavaLamp(ctx, x, y, tick) {
   ctx.restore();
 }
 
+function drawJukebox(ctx, x, y, tick) {
+  const t = tick * 0.025;
+  const jW = 22, jH = 48;
+  // Cabinet base
+  fillR(ctx, x+1, y+jH-6, jW-2, 6, '#2a1a08');
+  fillR(ctx, x+3, y+jH-8, jW-6, 4, '#3a2a10');
+  // Main body
+  ctx.save();
+  ctx.shadowColor = '#ff880060'; ctx.shadowBlur = 10;
+  fillR(ctx, x, y+8, jW, jH-14, '#3a1a08');
+  ctx.restore();
+  // Top arch dome
+  ctx.save();
+  ctx.fillStyle = '#ff9030';
+  ctx.beginPath();
+  ctx.ellipse(x + jW/2, y+9, jW/2, 10, 0, Math.PI, 0);
+  ctx.fill();
+  ctx.fillStyle = '#ffb040';
+  ctx.beginPath();
+  ctx.ellipse(x + jW/2, y+9, jW/2-3, 7, 0, Math.PI, 0);
+  ctx.fill();
+  ctx.restore();
+  // Speaker grill (center)
+  ctx.save();
+  ctx.fillStyle = '#1a1008';
+  fillR(ctx, x+4, y+18, jW-8, 18, '#1a1008');
+  // Grill lines
+  ctx.strokeStyle = '#5a3a18'; ctx.lineWidth = 1;
+  for (let gi = 0; gi < 5; gi++) {
+    ctx.beginPath(); ctx.moveTo(x+5, y+20+gi*3); ctx.lineTo(x+jW-5, y+20+gi*3); ctx.stroke();
+  }
+  ctx.restore();
+  // Animated color band (rainbow pulse)
+  const hue = (tick * 2) % 360;
+  ctx.save();
+  ctx.globalAlpha = 0.6;
+  ctx.fillStyle = `hsl(${hue},100%,55%)`;
+  fillR(ctx, x+2, y+16, jW-4, 3, `hsl(${hue},100%,55%)`);
+  ctx.fillStyle = `hsl(${(hue+120)%360},100%,55%)`;
+  fillR(ctx, x+2, y+37, jW-4, 3, `hsl(${(hue+120)%360},100%,55%)`);
+  ctx.restore();
+  // Dome glow (animated)
+  ctx.save();
+  ctx.globalAlpha = 0.3 + Math.sin(t * 3) * 0.15;
+  ctx.shadowColor = '#ff8820'; ctx.shadowBlur = 14;
+  ctx.fillStyle = '#ff8820';
+  ctx.beginPath();
+  ctx.ellipse(x + jW/2, y+5, 8, 5, 0, 0, Math.PI*2);
+  ctx.fill();
+  ctx.restore();
+  // Buttons row
+  const btnCols = ['#f7768e','#9ece6a','#7aa2f7','#e0af68'];
+  for (let bi = 0; bi < 4; bi++) {
+    const pulse = Math.sin(t * 4 + bi * 1.1) > 0.3;
+    ctx.fillStyle = pulse ? btnCols[bi] : btnCols[bi] + '60';
+    ctx.beginPath();
+    ctx.arc(x+5+bi*5, y+42, 2, 0, Math.PI*2);
+    ctx.fill();
+  }
+  // Label
+  ctx.save();
+  ctx.fillStyle = '#ffcc60';
+  ctx.font = "bold 5px 'Press Start 2P', monospace";
+  ctx.textAlign = 'center';
+  ctx.fillText('JUKE', x + jW/2, y+15);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
 function drawAquariumFish(ctx, tick) {
   const rX = PER_ROW * STEP_X + 2;
   const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
@@ -3087,6 +3156,7 @@ function generateLayout(n) {
   // ── 10. DJ Console (recreation, cols 20-22) ───────────────────
   IDLE_SPOTS.push({ tx:21, ty:ACT_ZONE_Y+10, anim:'djing', type:'dj', w:5,
     _objId:'dj_console', _defObjTx:20, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
+  IDLE_SPOTS.push({ tx:26, ty:ACT_ZONE_Y+10, anim:'air_guitar', type:'jukebox', w:4, _objId:'jukebox', _defObjTx:25, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
 
   // ══ Zone 2: MAKERS LAB (ACT_ZONE+14, left side) ═══════════════
 
@@ -3299,6 +3369,9 @@ function buildObstacleGrid() {
 
     const [djObsTx,djObsTy] = getAdminPos('dj_console', 20, ACT_ZONE_Y+9);
     markRect(djObsTx, djObsTy, 3, 1);
+
+    const [jbObsTx,jbObsTy] = getAdminPos('jukebox', 25, ACT_ZONE_Y+9);
+    markRect(jbObsTx, jbObsTy, 2, 2);
   }
 
   // ── Zone 2: MAKERS LAB obstacles (ACT_ZONE+14) ─────
@@ -4858,6 +4931,11 @@ function buildBackground() {
     ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3-6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
     ctx.beginPath(); ctx.ellipse(djx-4, djy+djH*0.3+6, 4, 3, 0, 0, Math.PI*2); ctx.fill();
 
+    // ── Jukebox (gaming room, col 25) ──────────────────────────
+    { const [_jbTx, _jbTy] = getAdminPos('jukebox', 25, ACT_ZONE_Y+9);
+      const [jbx, jby] = ts(_jbTx, _jbTy);
+      drawJukebox(ctx, jbx - T/2, jby - 8, globalTick); }
+
     // ── Telescope (makers lab, col 23) ──────────────────────────
     const [_telTx, _telTy] = getAdminPos('telescope', 18, ACT_ZONE_Y+14);
     const [telx, tely] = ts(_telTx, _telTy);
@@ -5762,7 +5840,15 @@ class AgentState {
 
     // ── Sims mode: wait on couch until user gives command ─────────
     if (simsMode && this._simsWaiting && !this.isWorking) {
-      if (this.state !== 'sitting_couch' && this.arrived) {
+      if (this.arrived) {
+        if (this.state !== 'sitting_couch') this.state = 'sitting_couch';
+        return;
+      }
+      // Not yet arrived at couch — walk there, skip slot logic
+      if (this.state !== 'walking') this.setAnim('walking');
+      const _simsWS = this.burnout >= 3 ? 2.5 : 3.5;
+      if (this.moveToward(dt, _simsWS)) {
+        this.arrived = true;
         this.state = 'sitting_couch';
       }
       return;
@@ -8668,6 +8754,7 @@ function buildAdminObjects() {
     adminObjects.push({id:'basketball', label:'🏀 Basketball', tx:12, ty:ACT_ZONE_Y+9, w:2, h:2});
     adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:16, ty:ACT_ZONE_Y+9, w:2, h:2.5});
     adminObjects.push({id:'dj_console', label:'🎧 DJ Console', tx:20, ty:ACT_ZONE_Y+9, w:2.5, h:1.2});
+    adminObjects.push({id:'jukebox', label:'🎵 Jukebox', tx:25, ty:ACT_ZONE_Y+9, w:2, h:2.5});
     // Zone 2: MAKERS LAB (ACT_ZONE+14)
     adminObjects.push({id:'server_rack', label:'🖥 Server Rack', tx:2, ty:ACT_ZONE_Y+14, w:2, h:2.2});
     adminObjects.push({id:'printer_3d', label:'🖨 3D Printer', tx:7, ty:ACT_ZONE_Y+14, w:2, h:1.8});
@@ -8802,6 +8889,7 @@ const BUILTIN_POSITIONS = {
   "gaming_sofa": {"tx": 19, "ty": 41},
   "arcade": {"tx": 27, "ty": 37},
   "dj_console": {"tx": 32, "ty": 37},
+  "jukebox": {"tx": 27, "ty": 41},
 
   // ═══ SPORTS ROOM (rows 46-54, cols 1-16) — games spread ═══
   "pingpong": {"tx": 2, "ty": 47},
@@ -8953,12 +9041,18 @@ function toggleSimsMode() {
     simsBtn.textContent = '🎮 PLAYING';
     simsBtn.style.background = '#9ece6a';
     simsBtn.style.color = '#0a0a18';
+    const _simsCouchPos = COUCH_SLOTS.length > 0 ? COUCH_SLOTS : [{tx:5,ty:24},{tx:10,ty:24}];
+    let _simsCouchIdx = 0;
     for (const sp of Object.values(agentStates)) {
       if (!sp.isWorking) {
+        if (sp.slotIdx >= 0 && idleOccupied[sp.slotIdx] === sp.id) delete idleOccupied[sp.slotIdx];
         sp.arrived = false;
         sp.activityDur = 0;
         sp.slotIdx = -1;
         sp._simsWaiting = true;
+        const _sc = _simsCouchPos[_simsCouchIdx % _simsCouchPos.length];
+        _simsCouchIdx++;
+        sp.setTarget(_sc.tx, _sc.ty);
       }
     }
   } else {
@@ -9294,6 +9388,7 @@ const CLICK_OBJ_MAP = {
   'corkboard':       'corkboard',
   'trophy_cabinet':  'trophy_cabinet',
   'lava_lamp':       'lava_lamp',
+  'jukebox':         'jukebox',
   'whiteboard':      'whiteboard',
   'kitchen_table':   'kitchen_table',
   'bookshelf':       'bookshelf',
@@ -9333,6 +9428,7 @@ function findClickableAt(tx, ty) {
     {id:'whiteboard', w:4, h:1.8},
     {id:'trophy_cabinet', w:2, h:2.5},
     {id:'lava_lamp', w:1.5, h:2.5},
+    {id:'jukebox', w:2, h:2.5},
     {id:'kitchen_table', w:4, h:3},
     {id:'bookshelf', w:4.5, h:3.5},
     {id:'conf_table', w:6, h:3},
@@ -9590,6 +9686,10 @@ function initClickParticles(type, cx, cy) {
     case 'rubber_duck':
       // Lightbulb idea sparks
       for (let i=0;i<8;i++) p.push({x:cx+(Math.random()-0.5)*24, y:cy+(Math.random()-0.5)*16, vx:(Math.random()-0.5)*2.5, vy:-1.5-Math.random()*2.5, size:2+Math.random()*3, col:['#f7e468','#ffe080','#fff4a0','#ffcc20','#f7d060','#ffffff','#ffd700'][Math.floor(Math.random()*7)]});
+      break;
+    case 'jukebox':
+      // Music notes burst
+      for (let i=0;i<10;i++) p.push({x:cx+(Math.random()-0.5)*20, y:cy-5-Math.random()*10, vx:(Math.random()-0.5)*2.2, vy:-1.8-Math.random()*2, size:3+Math.random()*3, col:['#ff9030','#ffb040','#f7768e','#9ece6a','#7aa2f7','#e0af68','#ffcc60'][i%7]});
       break;
   }
   return p;
@@ -10220,6 +10320,25 @@ function drawClickAnims(ctx, tick) {
           ctx.save(); ctx.scale(pulse, pulse);
           ctx.fillText('💡 AHA!', (a.x) / pulse, (a.y - 30 - t * 15) / pulse);
           ctx.restore();
+        }
+        break;
+      }
+      case 'jukebox': {
+        // Floating music notes
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy -= 0.02; p.vx *= 0.98;
+          ctx.globalAlpha = alpha * (1 - t * 0.6);
+          ctx.fillStyle = p.col;
+          ctx.font = `${p.size + 3}px serif`;
+          ctx.textAlign = 'center';
+          ctx.fillText(['♪','♫','♩','♬'][Math.round(p.x + p.y) % 4], Math.round(p.x), Math.round(p.y));
+        }
+        if (t < 0.55) {
+          ctx.globalAlpha = alpha;
+          ctx.fillStyle = '#ffb040';
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('♪ JAMMIN!', a.x, a.y - 28 - t * 12); ctx.textAlign = 'left';
         }
         break;
       }
