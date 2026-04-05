@@ -48,7 +48,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Click agent → radial menu appears with activity icons
 - [x] "Sims mode" toggle button (🎮) — all agents sit on couches waiting
 - [x] Send agent to any activity: desk, gym, kitchen, arcade, TV, etc.
-- [ ] Agent walks to chosen activity with pathfinding
+- [x] Agent walks to chosen activity with pathfinding
 - [ ] Selected agent highlighted with glow ring
 - [ ] Cancel/recall agent back to couch
 - [ ] Multiple agents can be directed simultaneously
