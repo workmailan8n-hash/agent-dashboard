@@ -6329,7 +6329,7 @@ class AgentState {
         idleOccupied[this.slotIdx] = this.id;  // claim slot
         const sp=IDLE_SPOTS[this.slotIdx];
         this.activityAnim = sp.anim;
-        this.activityDur = 10 + Math.random()*20;  // 10–30 seconds
+        this.activityDur = 15 + Math.random()*25;  // 15–40 seconds
         this.arrived=false; this.walkTimer=0;
       }
       const sp=IDLE_SPOTS[Math.min(this.slotIdx,IDLE_SPOTS.length-1)];
@@ -9320,97 +9320,100 @@ function applyWallPositions() {
   KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1;
 }
 
-// Default layout positions (exported from localhost admin editor)
+// Default layout positions (exported from user's admin editor — canonical layout)
 const BUILTIN_POSITIONS = {
-  // ═══ WORK ZONE (rows 1-20, cols 1-22) ═══
-  "desk_0": {"tx": 1, "ty": 1},
-  "desk_1": {"tx": 6, "ty": 1},
-  "desk_2": {"tx": 11, "ty": 1},
-  "desk_3": {"tx": 16, "ty": 1},
-  "desk_4": {"tx": 1, "ty": 5},
-  "desk_5": {"tx": 6, "ty": 5},
-  "desk_6": {"tx": 11, "ty": 5},
-  "desk_7": {"tx": 16, "ty": 5},
-  "desk_8": {"tx": 1, "ty": 9},
-  "desk_9": {"tx": 6, "ty": 9},
-  "desk_10": {"tx": 11, "ty": 9},
-  "desk_11": {"tx": 16, "ty": 9},
-  "desk_12": {"tx": 1, "ty": 13},
-  "desk_13": {"tx": 6, "ty": 13},
-  "desk_14": {"tx": 11, "ty": 13},
-  "desk_15": {"tx": 16, "ty": 13},
-  "desk_16": {"tx": 1, "ty": 17},
+  // ═══ DESKS ═══
+  "desk_0":  {"tx": 11.5, "ty": 3.5},
+  "desk_1":  {"tx": 8,    "ty": 1},
+  "desk_2":  {"tx": 15,   "ty": 1},
+  "desk_3":  {"tx": 1,    "ty": 5},
+  "desk_4":  {"tx": 8,    "ty": 5},
+  "desk_5":  {"tx": 15,   "ty": 5},
+  "desk_6":  {"tx": 1,    "ty": 9},
+  "desk_7":  {"tx": 8,    "ty": 9},
+  "desk_8":  {"tx": 15,   "ty": 9},
+  "desk_9":  {"tx": 1,    "ty": 13},
+  "desk_10": {"tx": 8,    "ty": 13},
+  "desk_11": {"tx": 15,   "ty": 13},
+  "desk_12": {"tx": 1,    "ty": 17},
+  "desk_13": {"tx": 8,    "ty": 17},
+  "desk_14": {"tx": 15,   "ty": 17},
+  "desk_15": {"tx": 19.5, "ty": 13},
+  "desk_16": {"tx": 19.5, "ty": 16.5},
+  "desk_17": {"tx": 1,    "ty": 1},
+  "desk_18": {"tx": 19.5, "ty": 9},
+  "desk_19": {"tx": 19.5, "ty": 5},
 
-  // ═══ RIGHT PANEL (cols 24-34) ═══
-  "clock": {"tx": 24, "ty": 0},
-  "darts": {"tx": 30, "ty": 0},
-  "kanban": {"tx": 24, "ty": 2},
-  "aquarium": {"tx": 24, "ty": 7},
-  "printer": {"tx": 30, "ty": 9},
-  "plant_0": {"tx": 5, "ty": 0.5},
-  "plant_1": {"tx": 28, "ty": 8},
+  // ═══ WALL DECORATIONS ═══
+  "corkboard":  {"tx": 11,   "ty": 0},
+  "whiteboard": {"tx": 27.5, "ty": 0},
+  "kanban":     {"tx": 22.5, "ty": 0},
+  "darts":      {"tx": 19.5, "ty": 0.5},
+  "telescope":  {"tx": 20,   "ty": 1.5},
+  "plant_0":    {"tx": 4,    "ty": 0},
+  "clock":      {"tx": 33.5, "ty": 14},
 
-  // ═══ KITCHEN (rows 10-19, cols 24-34) ═══
-  "kitchen_counter": {"tx": 24, "ty": 12},
-  "kitchen_table": {"tx": 26, "ty": 14},
-  "fridge": {"tx": 33, "ty": 12},
-  "trashcan": {"tx": 30, "ty": 16},
-  "cooler": {"tx": 32, "ty": 16},
-  "vending": {"tx": 27, "ty": 17},
+  // ═══ RIGHT PANEL ═══
+  "aquarium":   {"tx": 24,   "ty": 8},
+  "cooler":     {"tx": 28,   "ty": 8},
+  "printer":    {"tx": 19,   "ty": 23},
+  "trashcan":   {"tx": 29.5, "ty": 12},
+  "lava_lamp":  {"tx": 30,   "ty": 18},
+  "plant_1":    {"tx": 21.5, "ty": 28},
 
-  // ═══ LOUNGE (rows 22-34) — spacious, 4 per row with gaps ═══
-  "couch_0": {"tx": 2, "ty": 23},
-  "couch_1": {"tx": 9, "ty": 23},
-  "couch_2": {"tx": 16, "ty": 23},
-  "couch_3": {"tx": 23, "ty": 23},
-  "couch_4": {"tx": 30, "ty": 23},
-  "couch_5": {"tx": 2, "ty": 27},
-  "couch_6": {"tx": 9, "ty": 27},
-  "couch_7": {"tx": 16, "ty": 27},
-  "couch_8": {"tx": 23, "ty": 27},
-  "couch_9": {"tx": 30, "ty": 27},
-  "couch_10": {"tx": 2, "ty": 31},
-  "couch_11": {"tx": 9, "ty": 31},
-  "couch_12": {"tx": 16, "ty": 31},
-  "couch_13": {"tx": 23, "ty": 31},
-  "couch_14": {"tx": 30, "ty": 31},
-  "couch_15": {"tx": 5.5, "ty": 25},
-  "couch_16": {"tx": 12.5, "ty": 25},
+  // ═══ KITCHEN ═══
+  "kitchen_counter": {"tx": 22,   "ty": 26},
+  "kitchen_table":   {"tx": 26.5, "ty": 14},
+  "fridge":          {"tx": 21,   "ty": 25.5},
+  "vending":         {"tx": 25,   "ty": 42},
 
-  // ═══ GYM ROOM (rows 36-44, cols 1-16) — spread equipment ═══
-  "gym": {"tx": 2, "ty": 37},
-  "basketball": {"tx": 10, "ty": 37},
+  // ═══ COUCHES (5 per row, 4 rows) ═══
+  "couch_0":  {"tx": 1.5,  "ty": 30},
+  "couch_1":  {"tx": 6.7,  "ty": 30},
+  "couch_2":  {"tx": 11.9, "ty": 30},
+  "couch_3":  {"tx": 17.1, "ty": 30},
+  "couch_4":  {"tx": 22.3, "ty": 30},
+  "couch_5":  {"tx": 1.5,  "ty": 33},
+  "couch_6":  {"tx": 6.7,  "ty": 33},
+  "couch_7":  {"tx": 11.9, "ty": 33},
+  "couch_8":  {"tx": 17.1, "ty": 33},
+  "couch_9":  {"tx": 22.3, "ty": 33},
+  "couch_10": {"tx": 1.5,  "ty": 36},
+  "couch_11": {"tx": 6.7,  "ty": 36},
+  "couch_12": {"tx": 11.9, "ty": 36},
+  "couch_13": {"tx": 17.1, "ty": 36},
+  "couch_14": {"tx": 22.3, "ty": 36},
+  "couch_15": {"tx": 1.5,  "ty": 39},
+  "couch_16": {"tx": 6.7,  "ty": 39},
+  "couch_17": {"tx": 11.9, "ty": 39},
+  "couch_18": {"tx": 17.1, "ty": 39},
+  "couch_19": {"tx": 22.3, "ty": 39},
 
-  // ═══ GAMING ROOM (rows 36-44, cols 18-34) — entertainment spread ═══
-  "tv": {"tx": 19, "ty": 37},
-  "gaming_sofa": {"tx": 19, "ty": 41},
-  "arcade": {"tx": 27, "ty": 37},
-  "dj_console": {"tx": 32, "ty": 37},
-  "jukebox": {"tx": 27, "ty": 42},
-  "pinball": {"tx": 32, "ty": 42},
+  // ═══ ACTIVITY ZONE ═══
+  "server_rack":  {"tx": 1,    "ty": 46},
+  "printer_3d":   {"tx": 3,    "ty": 46},
+  "arcade":       {"tx": 5,    "ty": 46},
+  "rowing_machine": {"tx": 7,  "ty": 46.5},
+  "tv":           {"tx": 11.5, "ty": 47},
+  "gaming_sofa":  {"tx": 11.5, "ty": 51},
+  "foosball":     {"tx": 8,    "ty": 53},
+  "pingpong":     {"tx": 23.5, "ty": 51.5},
+  "jukebox":      {"tx": 25,   "ty": 53},
+  "pinball":      {"tx": 21.5, "ty": 52},
+  "trophy_cabinet": {"tx": 24.5, "ty": 46},
+  "bookshelf":    {"tx": 26.5, "ty": 46},
 
-  // ═══ SPORTS ROOM (rows 46-54, cols 1-16) — games spread ═══
-  "pingpong": {"tx": 2, "ty": 47},
-  "foosball": {"tx": 10, "ty": 47},
+  // ═══ GYM & SPORTS ═══
+  "gym":          {"tx": 2,    "ty": 56},
+  "basketball":   {"tx": 28.5, "ty": 56},
+  "crystal_ball": {"tx": 19.5, "ty": 57},
 
-  // ═══ SOCIAL ROOM (rows 46-54, cols 18-34) — relax spread ═══
-  "conf_table": {"tx": 19, "ty": 47},
-  "espresso_bar": {"tx": 19, "ty": 52},
-  "bookshelf": {"tx": 27, "ty": 47},
-  "server_rack": {"tx": 27, "ty": 52},
-  "printer_3d": {"tx": 32, "ty": 52},
-  "telescope": {"tx": 32, "ty": 47},
-  "nap_pod": {"tx": 22, "ty": 52},
-
-  // ═══ MAIN OFFICE WALL DECORATIONS ═══
-  "corkboard": {"tx": 10.5, "ty": 0},
-  "whiteboard": {"tx": 17, "ty": 0},
-
-  // ═══ RIGHT ZONE ═══
-  "trophy_cabinet": {"tx": 21, "ty": 12},
-  "rubber_duck": {"tx": 23, "ty": 10},
-  "lava_lamp": {"tx": 22, "ty": 6},
-  "crystal_ball": {"tx": 15, "ty": 56}
+  // ═══ BOTTOM ZONE ═══
+  "dj_console":   {"tx": 27,   "ty": 59.5},
+  "rubber_duck":  {"tx": 28,   "ty": 61.5},
+  "nap_pod":      {"tx": 27,   "ty": 62},
+  "conf_table":   {"tx": 12,   "ty": 62},
+  "espresso_bar": {"tx": 20,   "ty": 63},
 };
 
 // Apply custom positions to actual game objects
