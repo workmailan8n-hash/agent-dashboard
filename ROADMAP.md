@@ -51,7 +51,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Agent walks to chosen activity with pathfinding
 - [x] Selected agent highlighted with glow ring
 - [x] Cancel/recall agent back to couch
-- [ ] Multiple agents can be directed simultaneously
+- [x] Multiple agents can be directed simultaneously
 - [ ] Activity queue — assign next task before current finishes
 
 ## Day 7 — Mini-Games
