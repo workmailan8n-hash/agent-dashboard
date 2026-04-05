@@ -2217,6 +2217,89 @@ function drawJukebox(ctx, x, y, tick) {
   ctx.restore();
 }
 
+function drawCrystalBall(ctx, x, y, tick) {
+  const t = tick * 0.018;
+  const cbR = 14; // radius of the sphere
+  const cx = x + 16, cy = y + 20;
+  // Pedestal
+  fillR(ctx, x + 6, y + 36, 20, 4, '#2a2035');
+  fillR(ctx, x + 9, y + 33, 14, 4, '#3a2a4a');
+  fillR(ctx, x + 11, y + 32, 10, 2, '#4a3a5a');
+  // Inner mist — clipped inside sphere
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, cy, cbR, 0, Math.PI * 2);
+  ctx.clip();
+  ctx.fillStyle = '#100820';
+  ctx.fillRect(cx - cbR, cy - cbR, cbR * 2, cbR * 2);
+  // Swirling mist clouds
+  const mistCols = ['#7040c0', '#4080c0', '#c040a0'];
+  for (let i = 0; i < 3; i++) {
+    const a = t * 0.7 + i * 2.094;
+    const mx = cx + Math.cos(a) * 5;
+    const my = cy + Math.sin(a * 0.8) * 4;
+    ctx.globalAlpha = 0.28 + Math.sin(t * 1.5 + i) * 0.1;
+    ctx.fillStyle = mistCols[i];
+    ctx.beginPath();
+    ctx.ellipse(mx, my, 9 + Math.sin(t + i) * 2, 6 + Math.cos(t * 1.3 + i) * 2, a * 0.4, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+  // Stars inside (orbiting)
+  const starCols = ['#ffffff', '#e0c0ff', '#c0e0ff', '#ffd0ff', '#d0ffff'];
+  for (let i = 0; i < 6; i++) {
+    const sa = t * 1.2 + i * 1.047;
+    const sr = 7 + Math.sin(t * 0.9 + i * 1.3) * 4;
+    const sx = cx + Math.cos(sa) * sr;
+    const sy2 = cy + Math.sin(sa * 1.2) * (sr * 0.6);
+    // Clip to sphere
+    const dist = Math.sqrt((sx - cx) ** 2 + (sy2 - cy) ** 2);
+    if (dist > cbR - 1) continue;
+    const blink = 0.3 + Math.abs(Math.sin(t * 2.5 + i)) * 0.7;
+    ctx.save();
+    ctx.globalAlpha = blink;
+    ctx.fillStyle = starCols[i % 5];
+    ctx.fillRect(Math.round(sx) - 1, Math.round(sy2) - 1, 2, 2);
+    ctx.restore();
+  }
+  // Glass sphere outline
+  ctx.save();
+  ctx.globalAlpha = 0.45;
+  ctx.strokeStyle = '#c0a0ff';
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx, cy, cbR, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+  // Highlight (top-left shine)
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.ellipse(cx - 5, cy - 7, 4, 2.5, -0.4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Ambient glow
+  ctx.save();
+  ctx.globalAlpha = 0.12 + Math.sin(t * 1.8) * 0.05;
+  ctx.shadowColor = '#8040ff';
+  ctx.shadowBlur = 18;
+  ctx.fillStyle = '#8040ff';
+  ctx.beginPath();
+  ctx.arc(cx, cy, cbR, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Label on pedestal
+  ctx.save();
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = '#c0a0e0';
+  ctx.font = "bold 4px 'Press Start 2P', monospace";
+  ctx.textAlign = 'center';
+  ctx.fillText('ORACLE', cx, y + 42);
+  ctx.textAlign = 'left';
+  ctx.restore();
+}
+
 function drawAquariumFish(ctx, tick) {
   const rX = PER_ROW * STEP_X + 2;
   const [_aqTx, _aqTy] = getAdminPos('aquarium', rX+0.3, 8);
@@ -3130,6 +3213,8 @@ function generateLayout(n) {
   // ── 4b. Rubber Duck (right panel — agents visit for debugging inspiration) ──
   IDLE_SPOTS.push({ tx:rX+1.5, ty:11.5, anim:'window_gaze', type:'rubber_duck', w:5, _objId:'rubber_duck', _defObjTx:rX+0.3, _defObjTy:10.5, _offsetX:1.2, _offsetY:1 });
   IDLE_SPOTS.push({ tx:rX+1.5, ty:5, anim:'window_gaze', type:'lava_lamp', w:4, _objId:'lava_lamp', _defObjTx:rX+0.3, _defObjTy:4.5, _offsetX:1.2, _offsetY:0.5 });
+  const _cbDefTx = 15, _cbDefTy = ACT_ZONE_Y + 17;
+  IDLE_SPOTS.push({ tx:_cbDefTx+1.5, ty:_cbDefTy+0.5, anim:'window_gaze', type:'crystal_ball', w:5, _objId:'crystal_ball', _defObjTx:_cbDefTx, _defObjTy:_cbDefTy, _offsetX:1.5, _offsetY:0.5 });
 
   // ── 5. Whiteboard (main office, top wall — agent doodles) ───────
   IDLE_SPOTS.push({ tx:15, ty:2, anim:'doodling', type:'whiteboard', w:7, _objId:'whiteboard', _defObjTx:14, _defObjTy:0, _offsetX:1, _offsetY:2 });
@@ -3351,6 +3436,11 @@ function buildObstacleGrid() {
   // ── Lava Lamp ─────
   const [llObsTx,llObsTy] = getAdminPos('lava_lamp', rXobs+0.3, 4.5);
   markRect(llObsTx, llObsTy, 1.5, 2.5);
+  // ── Crystal Ball ─────
+  if (ACT_ZONE_Y > 0) {
+    const [cbObsTx,cbObsTy] = getAdminPos('crystal_ball', 15, ACT_ZONE_Y+17);
+    markRect(cbObsTx, cbObsTy, 2, 2.5);
+  }
 
   // ── Whiteboard ─────
   const [wbObsTx,wbObsTy] = getAdminPos('whiteboard', 14, 0);
@@ -7931,6 +8021,11 @@ function loop(now) {
   { const [_llTx, _llTy] = getAdminPos('lava_lamp', (PER_ROW * STEP_X + 2)+0.3, 4.5);
     const [llx, lly] = ts(_llTx, _llTy);
     drawLavaLamp(ctx, llx - T/2, lly - 8, globalTick); }
+  // Crystal Ball (activity zone oracle)
+  if (ACT_ZONE_Y > 0) {
+    const [_cbTx, _cbTy] = getAdminPos('crystal_ball', 15, ACT_ZONE_Y+17);
+    const [cbx, cby] = ts(_cbTx, _cbTy);
+    drawCrystalBall(ctx, cbx - T/2, cby - 8, globalTick); }
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -8688,6 +8783,7 @@ function buildAdminObjects() {
   adminObjects.push({id:'trophy_cabinet', label:'🏆 Trophies', tx: rX+0.3, ty:12, w:2, h:2.5});
   adminObjects.push({id:'rubber_duck', label:'🦆 Rubber Duck', tx: rX+0.3, ty:10.5, w:2, h:2.5});
   adminObjects.push({id:'lava_lamp', label:'🫧 Lava Lamp', tx: rX+0.3, ty:4.5, w:1.5, h:2.5});
+  if (ACT_ZONE_Y > 0) adminObjects.push({id:'crystal_ball', label:'🔮 Crystal Ball', tx:15, ty:ACT_ZONE_Y+17, w:2, h:2.5});
   adminObjects.push({id:'printer', label:'🖨 Printer', tx: KITCHEN_WALL_COL-3, ty:KITCHEN_START_ROW-2, w:2, h:1});
   adminObjects.push({id:'trashcan', label:'🗑 Trash', tx: KITCHEN_WALL_COL-2, ty:3, w:1, h:1});
 
@@ -8911,7 +9007,8 @@ const BUILTIN_POSITIONS = {
   // ═══ RIGHT ZONE ═══
   "trophy_cabinet": {"tx": 23, "ty": 12},
   "rubber_duck": {"tx": 23, "ty": 10},
-  "lava_lamp": {"tx": 23, "ty": 4}
+  "lava_lamp": {"tx": 23, "ty": 4},
+  "crystal_ball": {"tx": 15, "ty": 56}
 };
 
 // Apply custom positions to actual game objects
@@ -9389,6 +9486,7 @@ const CLICK_OBJ_MAP = {
   'trophy_cabinet':  'trophy_cabinet',
   'lava_lamp':       'lava_lamp',
   'jukebox':         'jukebox',
+  'crystal_ball':    'crystal_ball',
   'whiteboard':      'whiteboard',
   'kitchen_table':   'kitchen_table',
   'bookshelf':       'bookshelf',
@@ -9429,6 +9527,7 @@ function findClickableAt(tx, ty) {
     {id:'trophy_cabinet', w:2, h:2.5},
     {id:'lava_lamp', w:1.5, h:2.5},
     {id:'jukebox', w:2, h:2.5},
+    {id:'crystal_ball', w:2, h:2.5},
     {id:'kitchen_table', w:4, h:3},
     {id:'bookshelf', w:4.5, h:3.5},
     {id:'conf_table', w:6, h:3},
@@ -9514,11 +9613,14 @@ canvas.addEventListener('click', e => {
             { icon: '🛋️', label: 'Rest',    spotType: 'couch'   },
             { icon: '☕',  label: 'Kitchen', spotType: 'kitchen' },
             { icon: '🏋️', label: 'Gym',     spotType: 'gym'     },
-            { icon: '🎮',  label: 'Gaming',  spotType: 'gaming'  },
+            { icon: '🎮',  label: 'TV',      spotType: 'gaming'  },
+            { icon: '🕹️', label: 'Arcade',  spotType: 'arcade'  },
+            { icon: '😴',  label: 'Nap',     spotType: 'nap_pod' },
+            { icon: '🎵',  label: 'DJ',      spotType: 'dj'      },
             { icon: '🏓',  label: 'P.Pong',  spotType: 'group'   },
             { icon: '🚶',  label: 'Wander',  spotType: 'wander'  },
           ];
-          const R = 55;
+          const R = 62;
           simsMenuItems = MENU_ITEMS.map((m, i) => {
             const angle = -Math.PI/2 + (i / MENU_ITEMS.length) * Math.PI * 2;
             return { ...m, cx: sp.sx + Math.cos(angle)*R, cy: sp.sy + Math.sin(angle)*R, angle };
@@ -9690,6 +9792,10 @@ function initClickParticles(type, cx, cy) {
     case 'jukebox':
       // Music notes burst
       for (let i=0;i<10;i++) p.push({x:cx+(Math.random()-0.5)*20, y:cy-5-Math.random()*10, vx:(Math.random()-0.5)*2.2, vy:-1.8-Math.random()*2, size:3+Math.random()*3, col:['#ff9030','#ffb040','#f7768e','#9ece6a','#7aa2f7','#e0af68','#ffcc60'][i%7]});
+      break;
+    case 'crystal_ball':
+      // Stars + sparkles burst outward
+      for (let i=0;i<12;i++) p.push({x:cx+(Math.random()-0.5)*16, y:cy+(Math.random()-0.5)*16, vx:(Math.random()-0.5)*2.8, vy:-1.5-Math.random()*2.5, size:2+Math.random()*3, col:['#c080ff','#8040ff','#e0c0ff','#ffffff','#ff80ff','#80c0ff','#40ffff'][i%7]});
       break;
   }
   return p;
@@ -10339,6 +10445,28 @@ function drawClickAnims(ctx, tick) {
           ctx.font = "7px 'Press Start 2P',monospace";
           ctx.textAlign = 'center';
           ctx.fillText('♪ JAMMIN!', a.x, a.y - 28 - t * 12); ctx.textAlign = 'left';
+        }
+        break;
+      }
+      case 'crystal_ball': {
+        // Stars spiral outward
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vy -= 0.03; p.vx *= 0.97;
+          ctx.globalAlpha = alpha * (1 - t * 0.65);
+          ctx.fillStyle = p.col;
+          ctx.beginPath();
+          ctx.arc(Math.round(p.x), Math.round(p.y), p.size * 0.8, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        // Fortune text
+        const fortunes = ['DESTINY!','FORETOLD!','INCOMING!','GREATNESS!'];
+        const fortune = fortunes[Math.floor(a.startTick / 60) % 4];
+        if (t < 0.5) {
+          ctx.globalAlpha = alpha * (1 - t * 1.5);
+          ctx.fillStyle = '#e0b0ff';
+          ctx.font = "6px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('🔮 ' + fortune, a.x, a.y - 30 - t * 14); ctx.textAlign = 'left';
         }
         break;
       }
