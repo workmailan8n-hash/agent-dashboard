@@ -208,6 +208,7 @@ const ANIM = {
   boxing:         { frames: 8,  fps: 10, loop: true,  spriteRow: 30 },
   cycling:        { frames: 8,  fps: 10, loop: true,  spriteRow: 30 },
   lifting_weights:{ frames: 8,  fps: 8,  loop: true,  spriteRow: 30 },
+  rowing:         { frames: 8,  fps: 8,  loop: true,  spriteRow: 30 },
   ping_pong_l:    { frames: 6,  fps: 10, loop: true,  spriteRow: 31 },
   ping_pong_r:    { frames: 6,  fps: 10, loop: true,  spriteRow: 31 },
   smoking_beer:   { frames:12,  fps:  6, loop: true,  spriteRow: 32 },
@@ -1935,6 +1936,44 @@ function drawLiftingWeights(ctx, cx, cy, pal, t) {
   ctx.beginPath(); ctx.ellipse(cx+9,cy-6,1,2,0.3,0,Math.PI*2); ctx.fill();
 }
 
+// ── rowing — seated, pull-back stroke on rowing ergometer ─────────
+function drawRowing(ctx, cx, cy, pal, t) {
+  const stroke = t * Math.PI * 2;
+  const pullBack = Math.sin(stroke) * 0.5 + 0.5; // 0=reach forward, 1=pulled back
+  const lean = pullBack * 6 - 2; // body leans back when pulling
+  const armReach = (1 - pullBack) * 12; // arms reach forward at start of stroke
+  shd(ctx, cx, cy+16);
+  // Legs (bent at catch, straight at finish)
+  const kneeH = (1 - pullBack) * 8;
+  px(ctx,cx-4,cy+4-kneeH,4,8+kneeH,pal.pants);
+  px(ctx,cx+1,cy+4-kneeH,4,8+kneeH,pal.pants);
+  px(ctx,cx-5,cy+13,5,3,'#1a1a2a');
+  px(ctx,cx+1,cy+13,5,3,'#1a1a2a');
+  // Body leaning back on drive phase
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(lean * 0.015);
+  ctx.translate(-cx, -cy);
+  px(ctx,cx-6,cy-3,12,9,pal.shirt);
+  // Arms — reach forward on catch, pull to waist on drive
+  const lArmX = cx - 10 + armReach * 0.4;
+  const rArmX = cx + 6 + armReach * 0.4;
+  px(ctx,lArmX,cy-2,4,5,pal.skin);
+  px(ctx,rArmX,cy-2,4,5,pal.skin);
+  // Handle / oar bar (horizontal)
+  ctx.fillStyle='#806040'; ctx.fillRect(lArmX-2,cy-1,rArmX-lArmX+8,2);
+  // Head
+  ctx.fillStyle=pal.skin; ctx.beginPath(); ctx.ellipse(cx,cy-12,7,8,0,0,Math.PI*2); ctx.fill();
+  ctx.fillStyle=pal.hair; ctx.beginPath(); ctx.ellipse(cx,cy-15,7,6,0,-Math.PI,0); ctx.fill();
+  ctx.fillStyle='#1a1b26'; ctx.fillRect(cx-5,cy-14,4,3); ctx.fillRect(cx+1,cy-14,4,3);
+  ctx.restore();
+  // Sweat droplet at hard pull
+  if (pullBack > 0.8) {
+    ctx.fillStyle='#88ccff80';
+    ctx.beginPath(); ctx.ellipse(cx+10,cy-8,1.5,2.5,0.3,0,Math.PI*2); ctx.fill();
+  }
+}
+
 // ── ping_pong_l — swing synced to ball arriving on left side ──────
 function drawPingPongL(ctx, cx, cy, pal, t) {
   // Hit when ball is near left side (ppBall.t < 0.15)
@@ -2925,6 +2964,7 @@ const CHAR_DRAW = {
   shooting_basket:   drawShootingBasket,
   playing_foosball:  drawPlayingFoosball,
   using_telescope:   drawUsingTelescope,
+  rowing:            drawRowing,
 };
 
 // ════════════════════════════════════════════════════════════════
@@ -3164,6 +3204,7 @@ function generateLayout(n) {
   IDLE_SPOTS.push({ tx:gymX+6,   ty:gymY+0.5, anim:'boxing',          type:'gym', w:4, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+6-_gymDefTx, _offsetY:gymY+0.5-_gymDefTy });
   IDLE_SPOTS.push({ tx:gymX+6,   ty:gymY+2.5, anim:'cycling',         type:'gym', w:4, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+6-_gymDefTx, _offsetY:gymY+2.5-_gymDefTy });
   IDLE_SPOTS.push({ tx:gymX+0.5, ty:gymY+2.5, anim:'lifting_weights', type:'gym', w:6, _objId:'gym', _defObjTx:_gymDefTx, _defObjTy:_gymDefTy, _offsetX:gymX+0.5-_gymDefTx, _offsetY:gymY+2.5-_gymDefTy });
+  IDLE_SPOTS.push({ tx:gymX+5,   ty:gymY+4,   anim:'rowing', type:'gym', w:5, _objId:'rowing_machine', _defObjTx:_gymDefTx+4, _defObjTy:_gymDefTy+3.8, _offsetX:gymX+5-(_gymDefTx+4), _offsetY:gymY+4-(_gymDefTy+3.8) });
 
   // ── Gaming/TV zone (center of activity area) ─────────────────────
   const tvX = 10, tvY = ACT_ZONE_Y + 1;
@@ -3394,6 +3435,8 @@ function buildObstacleGrid() {
   if (ACT_ZONE_Y > 0) {
     const [gmTx,gmTy] = getAdminPos('gym', 1, ACT_ZONE_Y+0.5);
     markRect(gmTx, gmTy, 5, 3);
+    const [_rmObTx,_rmObTy] = getAdminPos('rowing_machine', gmTx+4, ACT_ZONE_Y+4.3);
+    markRect(_rmObTx, _rmObTy, 2, 1);
   }
 
   // ── Kanban board (right entertainment zone) ─────
@@ -5257,6 +5300,41 @@ function buildBackground() {
     // Bottle cap
     fillR(ctx,ymx+T*2.5+5,ymy+T*0.25-10,4,3,'#305870');
 
+    // ── Rowing Ergometer (right of yoga mat) ──
+    const [_rowTx,_rowTy] = getAdminPos('rowing_machine', _gymTx+4, _gymTy+3.8);
+    const [rwx,rwy] = ts(_rowTx, _rowTy);
+    ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=5;
+    // Main rail/monorail
+    fillR(ctx,rwx+2,rwy+T*0.65,T*1.6,4,'#303040'); ctx.restore();
+    // Side rails
+    fillR(ctx,rwx+2,rwy+T*0.55,4,14,'#404050');
+    fillR(ctx,rwx+T*1.6-2,rwy+T*0.55,4,14,'#404050');
+    // Seat (slides along rail)
+    fillR(ctx,rwx+T*0.6,rwy+T*0.5,10,6,'#3a3050');
+    fillR(ctx,rwx+T*0.6+1,rwy+T*0.5-1,8,4,'#4a4068');
+    // Footplate
+    fillR(ctx,rwx+4,rwy+T*0.3,14,12,'#2a3048');
+    fillR(ctx,rwx+5,rwy+T*0.3+2,6,3,'#3a4058'); // left strap
+    fillR(ctx,rwx+5,rwy+T*0.3+7,6,3,'#3a4058'); // right strap
+    // Handle/chain housing
+    fillR(ctx,rwx+2,rwy+T*0.2,6,T*0.45,'#252535');
+    fillR(ctx,rwx+3,rwy+T*0.22,4,T*0.41,'#303045');
+    // Chain (dotted)
+    ctx.fillStyle='#707080';
+    for (let ci=0; ci<5; ci++) ctx.fillRect(rwx+8+ci*4,rwy+T*0.4,2,2);
+    // Pull handle
+    fillR(ctx,rwx+T*1.1,rwy+T*0.38,8,3,'#808090');
+    fillR(ctx,rwx+T*1.1,rwy+T*0.34,4,6,'#707080');
+    fillR(ctx,rwx+T*1.1+4,rwy+T*0.34,4,6,'#707080');
+    // Display monitor
+    fillR(ctx,rwx+2,rwy,8,T*0.2,'#0d1a2a');
+    fillR(ctx,rwx+3,rwy+2,6,T*0.2-4,SCREEN_C);
+    fillR(ctx,rwx+4,rwy+3,2,1,'#7aa2f7');
+    fillR(ctx,rwx+7,rwy+3,1,1,'#9ece6a');
+    // Leg shadow
+    ctx.fillStyle='#00000030';
+    ctx.beginPath(); ctx.ellipse(rwx+T*0.8,rwy+T*0.75,T*0.7,3,0,0,Math.PI*2); ctx.fill();
+
     // ── GAMING/TV ZONE (center) ──────────────────────────────────
     const [_tvATx,_tvATy] = getAdminPos('tv', 10, ACT_ZONE_Y+0.3);
     const [tvx,tvy] = ts(_tvATx, _tvATy);
@@ -5985,6 +6063,16 @@ class AgentState {
           delete idleOccupied[this.slotIdx];
         }
         this.slotIdx = -1;
+
+        // In sims mode: return to couch and wait for next command
+        if (simsMode) {
+          this._simsWaiting = true;
+          this.arrived = false;
+          this.activityDur = 0;
+          const _sc = COUCH_SLOTS.length > 0 ? COUCH_SLOTS[0] : {tx:5, ty:24};
+          this.setTarget(_sc.tx, _sc.ty);
+          return; // handled — _simsWaiting block will walk agent back next tick
+        }
 
         // Build list of available slots (not held by any other agent)
         const avail=[];
@@ -8164,6 +8252,37 @@ function loop(now) {
         ctx.ellipse(sp.sx, sp.sy + 16, 12, 5, 0, 0, Math.PI*2);
         ctx.stroke();
         ctx.restore();
+      } else if (!sp.isWorking && !sp.arrived && sp.targetTx !== sp.tx && sp.targetTy !== sp.ty) {
+        // Agent en-route to sims-assigned activity — draw A* path + destination marker
+        const pts = [{tx: sp.tx, ty: sp.ty}];
+        for (const wp of sp.waypoints) pts.push(wp);
+        pts.push({tx: sp.targetTx, ty: sp.targetTy});
+        if (pts.length >= 2) {
+          ctx.save();
+          ctx.setLineDash([3, 5]);
+          ctx.strokeStyle = sp.id === simsSelectedAgent ? '#9ece6a' : '#7aa2f760';
+          ctx.lineWidth = 1.5;
+          ctx.beginPath();
+          ctx.moveTo(OX + pts[0].tx * T + T/2, OY + pts[0].ty * T + T/2);
+          for (let pi = 1; pi < pts.length; pi++) {
+            ctx.lineTo(OX + pts[pi].tx * T + T/2, OY + pts[pi].ty * T + T/2);
+          }
+          ctx.stroke();
+          ctx.setLineDash([]);
+          // Pulsing destination marker
+          const destPulse = 0.5 + Math.sin(globalTick * 0.12) * 0.35;
+          const destX = OX + sp.targetTx * T + T/2;
+          const destY = OY + sp.targetTy * T + T/2;
+          ctx.globalAlpha = destPulse;
+          ctx.strokeStyle = '#9ece6a';
+          ctx.lineWidth = 2;
+          ctx.beginPath(); ctx.arc(destX, destY, 7, 0, Math.PI*2); ctx.stroke();
+          ctx.globalAlpha = destPulse * 0.4;
+          ctx.strokeStyle = '#9ece6a';
+          ctx.lineWidth = 1;
+          ctx.beginPath(); ctx.arc(destX, destY, 11, 0, Math.PI*2); ctx.stroke();
+          ctx.restore();
+        }
       }
     }
     // Radial menu — draw activity picker
@@ -8823,6 +8942,7 @@ function buildAdminObjects() {
   // Gym / Treadmills
   if (ACT_ZONE_Y > 0) {
     adminObjects.push({id:'gym', label:'🏃 Gym', tx:1, ty:ACT_ZONE_Y+0.5, w:5, h:4});
+    adminObjects.push({id:'rowing_machine', label:'🚣 Rowing', tx:5, ty:ACT_ZONE_Y+4.3, w:2.5, h:1.5});
   }
 
   // Vending machine
@@ -9493,6 +9613,7 @@ const CLICK_OBJ_MAP = {
   'conf_table':      'conf_table',
   'gaming_sofa':     'gaming_sofa',
   'gym':             'gym',
+  'rowing_machine':  'rowing_machine',
 };
 
 // Dynamic: desks and couches
@@ -9533,6 +9654,7 @@ function findClickableAt(tx, ty) {
     {id:'conf_table', w:6, h:3},
     {id:'gaming_sofa', w:4, h:1.5},
     {id:'gym', w:5, h:4},
+    {id:'rowing_machine', w:2.5, h:1.5},
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++) checks.push({id:'desk_'+i, w:3.5, h:3});
@@ -9773,6 +9895,10 @@ function initClickParticles(type, cx, cy) {
     case 'gym':
       // Sweat drops + energy burst
       for (let i=0;i<5;i++) p.push({x:cx+(Math.random()-0.5)*30, y:cy-10-Math.random()*10, vx:(Math.random()-0.5)*2, vy:-1-Math.random()*2, size:1.5, col:['#88ccff','#ffcc40','#ff6040','#88ccff','#ffcc40'][i]});
+      break;
+    case 'rowing_machine':
+      // Splashing water droplets + sweat
+      for (let i=0;i<8;i++) p.push({x:cx+(Math.random()-0.5)*20, y:cy+(Math.random()-0.5)*10, vx:(Math.random()-0.5)*2.5, vy:-1.5-Math.random()*2, size:2+Math.random()*2, col:['#5ab8f7','#88ccff','#c0e8ff','#ffffff','#40a0e0'][i%5]});
       break;
     case 'corkboard':
       // Sticky notes flutter off
