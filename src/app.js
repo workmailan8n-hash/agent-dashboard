@@ -3291,7 +3291,7 @@ function generateLayout(n) {
   }
 
   const couchRows=Math.ceil(stableCount/COUCH_PER_ROW);
-  const baseRows=LOUNGE_Y+couchRows*3;  // no buffer gap between lounge and activity zone
+  const baseRows=LOUNGE_Y+couchRows*3+1;  // 1-row gap between lounge and activity zone
   ACT_ZONE_Y = baseRows;
   ROWS = Math.max(baseRows + 24, 70);  // min 70 rows to fit all BUILTIN objects
   CH=OY+ROWS*T+OY;
@@ -3560,6 +3560,7 @@ function buildObstacleGrid() {
   }
   // (Activity wall removed — open flow between lounge and activity zone)
   // Sports wall (row 45)
+  const actDoorL = Math.floor(COLS*0.35), actDoorR = Math.floor(COLS*0.65);
   for (let c = 1; c < COLS-1; c++) {
     if (c >= actDoorL && c <= actDoorR) continue;
     mark(c, 45);
