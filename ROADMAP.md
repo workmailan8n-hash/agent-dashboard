@@ -46,7 +46,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 
 ## Day 6 — Sims Mode (Agent Control)
 - [x] Click agent → radial menu appears with activity icons
-- [ ] "Sims mode" toggle button (🎮) — all agents sit on couches waiting
+- [x] "Sims mode" toggle button (🎮) — all agents sit on couches waiting
 - [ ] Send agent to any activity: desk, gym, kitchen, arcade, TV, etc.
 - [ ] Agent walks to chosen activity with pathfinding
 - [ ] Selected agent highlighted with glow ring
