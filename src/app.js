@@ -6376,9 +6376,9 @@ class AgentState {
         if (working) this.setAnim('sitting_down','typing_normal');
         else         this.setAnim(this.activityAnim || this.couchIdleState);
       } else if (!working) {
-        // Timeout: give up on this slot after 5s and pick another
+        // Timeout: give up on this slot after 20s and pick another
         this.walkTimer += dt;
-        if (this.walkTimer > 6) {
+        if (this.walkTimer > 20) {
           if (this.slotIdx >= 0 && idleOccupied[this.slotIdx] === this.id)
             delete idleOccupied[this.slotIdx];
           this.slotIdx = -1; this.activityDur = 0; this.walkTimer = 0;
