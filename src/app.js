@@ -3291,7 +3291,7 @@ function generateLayout(n) {
   }
 
   const couchRows=Math.ceil(stableCount/COUCH_PER_ROW);
-  const baseRows=LOUNGE_Y+couchRows*3+2;
+  const baseRows=LOUNGE_Y+couchRows*3;  // no buffer gap between lounge and activity zone
   ACT_ZONE_Y = baseRows;
   ROWS = Math.max(baseRows + 24, 70);  // min 70 rows to fit all BUILTIN objects
   CH=OY+ROWS*T+OY;
@@ -3558,22 +3558,13 @@ function buildObstacleGrid() {
     if (c >= loungeDoorL && c <= loungeDoorR) continue;
     mark(c, 21);
   }
-  // Activity wall (row 35)
-  const actDoorL = Math.floor(COLS*0.35), actDoorR = Math.floor(COLS*0.65);
-  for (let c = 1; c < COLS-1; c++) {
-    if (c >= actDoorL && c <= actDoorR) continue;
-    mark(c, 35);
-  }
+  // (Activity wall removed — open flow between lounge and activity zone)
   // Sports wall (row 45)
   for (let c = 1; c < COLS-1; c++) {
     if (c >= actDoorL && c <= actDoorR) continue;
     mark(c, 45);
   }
-  // Gym/Gaming divider (col 17, rows 36-44)
-  for (let r = 36; r <= 44; r++) {
-    if (r >= 39 && r <= 41) continue;
-    mark(17, r);
-  }
+  // (Gym/Gaming divider removed — open layout)
   // Sports/Social divider (col 17, rows 46-54)
   for (let r = 46; r <= 54; r++) {
     if (r >= 49 && r <= 51) continue;
@@ -4737,11 +4728,7 @@ function buildBackground() {
   // ── Lounge wall (horizontal, row 21, door in center) ──
   drawHWall(21, 1, COLS-2, Math.floor(COLS*0.3), Math.floor(COLS*0.5));
 
-  // ── Activity zone wall (horizontal, row 35, wide door) ──
-  drawHWall(35, 1, COLS-2, Math.floor(COLS*0.35), Math.floor(COLS*0.65));
-
-  // ── Gym/Gaming divider (vertical, col 17, rows 35-44, door at 39-41) ──
-  drawVWall(17, 36, 44, 39, 41);
+  // (Activity zone wall and gym/gaming divider removed — open layout)
 
   // ── Sports/Social divider (vertical, col 17, rows 46-54, door at 49-51) ──
   drawVWall(17, 46, 54, 49, 51);
