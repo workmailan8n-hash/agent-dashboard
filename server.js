@@ -25,6 +25,9 @@ const agentTasks = {}; // agentId -> { todos: [{id,content,status,priority}], up
 // Shared layout — synced to all clients when admin moves objects
 let sharedLayout = { positions: null, walls: null };
 
+// Public tunnel URL (set by Serveo)
+let publicUrl = null;
+
 // Telegram bot
 const TG_TOKEN = process.env.TG_TOKEN || '';
 const TG_CHAT = process.env.TG_CHAT || '';
@@ -92,6 +95,22 @@ function readSubagentMeta(filePath) {
   }
 }
 
+// Derive project name from cwd path (e.g. "C:\AI\courseai" → "courseai")
+function deriveProjectName(cwdPath) {
+  if (!cwdPath) return '';
+  // Normalize path and extract the last meaningful directory
+  const normalized = cwdPath.replace(/\\/g, '/').replace(/\/+$/, '');
+  const parts = normalized.split('/');
+  // Walk up from the end to find a non-generic directory name
+  for (let i = parts.length - 1; i >= 0; i--) {
+    const part = parts[i].toLowerCase();
+    if (part && part !== 'src' && part !== 'public' && part !== 'dist' && part !== 'node_modules' && part !== '.claude' && part !== 'projects') {
+      return part;
+    }
+  }
+  return '';
+}
+
 // Check if a file is in a subagents directory
 function isSubagentFile(filePath) {
   return filePath.includes("subagents") && path.basename(filePath).startsWith("agent-");
@@ -144,17 +163,21 @@ function parseNewLines(filePath) {
     const id = isSubagent ? subagentId : (sid || fileBaseName);
 
     if (!agents[id]) {
-      // For subagents: use type+description from meta as the slug
+      // Slug = project name from cwd path (e.g. "courseai", "agent-dashboard")
       let agentSlug = slug || id.slice(0, 8);
+      const agentCwd = cwd || projectDir;
+      const projectName = deriveProjectName(agentCwd);
       if (meta) {
-        agentSlug = meta.description
-          ? meta.description.toLowerCase().replace(/[^a-z0-9]+/g, "-").slice(0, 28)
-          : (meta.agentType || "agent");
+        // Subagents: project + type (e.g. "dashboard/reviewer")
+        const typeLabel = meta.agentType || "agent";
+        agentSlug = projectName ? `${projectName}/${typeLabel}` : typeLabel;
+      } else if (projectName) {
+        agentSlug = projectName;
       }
       agents[id] = {
         id,
         slug: agentSlug,
-        cwd: cwd || projectDir,
+        cwd: agentCwd,
         version: version || "",
         status: "idle",
         currentTool: null,
@@ -168,8 +191,14 @@ function parseNewLines(filePath) {
     }
 
     const agent = agents[id];
-    if (!isSubagent && slug) agent.slug = slug;
-    if (cwd) agent.cwd = cwd;
+    if (cwd && cwd !== agent.cwd) {
+      agent.cwd = cwd;
+      // Update slug when project changes (agent moved to different project)
+      if (!isSubagent) {
+        const newProject = deriveProjectName(cwd);
+        if (newProject) agent.slug = newProject;
+      }
+    }
     if (timestamp) agent.lastActivity = timestamp;
 
     if (type === "assistant" && message) {
@@ -315,6 +344,7 @@ const server = http.createServer((req, res) => {
       wsClients: clients.size,
       tasks: Object.keys(agentTasks).length,
       memMB: Math.round(mem.heapUsed / 1024 / 1024),
+      publicUrl: publicUrl || null,
     }));
     return;
   }
@@ -391,8 +421,8 @@ chokidar
   log.info("Claude projects dir not found, running in demo mode (no file watcher)");
 }
 
-// Mark agents as idle after 30s of inactivity
-// Remove agents that have been idle for more than 24h AND are subagents (cleanup)
+// Mark agents as idle after 30s, keep max 20 most recent agents
+const MAX_AGENTS = 20;
 setInterval(() => {
   const now = Date.now();
   for (const agent of Object.values(agents)) {
@@ -405,12 +435,16 @@ setInterval(() => {
       agent.currentToolLabel = null;
       broadcast({ type: "agent_update", agent: { ...agent } });
     }
+  }
 
-    // Fix: remove stale agents to prevent memory leak
-    const staleMs = agent.isSubagent ? 86400000 : 86400000 * 7; // 24h for subagents, 7d for sessions
-    if (ageMs > staleMs) {
-      delete agents[agent.id];
-      broadcast({ type: "agent_remove", id: agent.id });
+  // Keep only MAX_AGENTS most recently active — the rest "go home"
+  const sorted = Object.values(agents).sort((a, b) =>
+    new Date(b.lastActivity) - new Date(a.lastActivity)
+  );
+  if (sorted.length > MAX_AGENTS) {
+    for (const stale of sorted.slice(MAX_AGENTS)) {
+      delete agents[stale.id];
+      broadcast({ type: "agent_remove", id: stale.id });
     }
   }
 }, 5000);
@@ -444,6 +478,7 @@ server.listen(PORT, "0.0.0.0", async () => {
       if (match) {
         urlSent = true;
         const url = match[0].replace(/^http:/, "https:");
+        publicUrl = url;
         log.info(`Public URL: ${url}`);
         broadcast({ type: "public_url", url });
         // Remove listeners once URL is captured

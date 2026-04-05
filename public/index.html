@@ -9564,6 +9564,166 @@ simsBtn.style.cssText = 'background:#2a2848;color:#c8d3f5;border:1px solid #3a38
 simsBtn.onclick = toggleSimsMode;
 document.querySelector('header .view-tabs').appendChild(simsBtn);
 
+// ── DEMO button ─────────────────────────────────────────────────
+const demoBtn = document.createElement('button');
+demoBtn.textContent = '🎬 DEMO';
+demoBtn.style.cssText = 'background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:4px 10px;font-family:inherit;font-size:7px;cursor:pointer;margin-left:4px;border-radius:4px;';
+document.querySelector('header .view-tabs').appendChild(demoBtn);
+
+let demoRunning = false;
+let demoTimers = [];
+
+const DEMO_AGENTS = {
+  frontend: { id: 'demo-frontend-01', slug: 'frontend' },
+  backend:  { id: 'demo-backend-02',  slug: 'backend' },
+  devops:   { id: 'demo-devops-03',   slug: 'devops' },
+  designer: { id: 'demo-designer-04', slug: 'designer' },
+  qa:       { id: 'demo-qa-05',       slug: 'qa' },
+  reviewer: { id: 'demo-reviewer-06', slug: 'reviewer' },
+};
+
+const DEMO_TOOL_LABELS = {
+  Bash:'⚡ Выполняет команду', Read:'📖 Читает файл', Write:'✍️ Пишет файл',
+  Edit:'✏️ Редактирует файл', Grep:'🔍 Ищет в коде', Glob:'📂 Ищет файлы',
+};
+
+function demoPost(data) {
+  return fetch('/api/demo', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/json' },
+    body: JSON.stringify(data),
+  }).catch(() => {});
+}
+
+function demoDel(id) {
+  return fetch('/api/demo/' + id, { method: 'DELETE' }).catch(() => {});
+}
+
+function demoSend(name, overrides) {
+  const a = DEMO_AGENTS[name];
+  return demoPost({ id: a.id, slug: a.slug, ...overrides });
+}
+
+function demoWork(name, tool) {
+  return demoSend(name, { status: 'working', currentTool: tool, currentToolLabel: DEMO_TOOL_LABELS[tool] || tool });
+}
+
+function demoThink(name) {
+  return demoSend(name, { status: 'thinking', currentTool: null, currentToolLabel: null });
+}
+
+function demoIdle(name) {
+  return demoSend(name, { status: 'idle', currentTool: null, currentToolLabel: null });
+}
+
+function demoRemove(name) {
+  return demoDel(DEMO_AGENTS[name].id);
+}
+
+function demoAt(sec, fn) {
+  const t = setTimeout(fn, sec * 1000);
+  demoTimers.push(t);
+}
+
+function startDemoScenario() {
+  const main5 = ['frontend', 'backend', 'devops', 'designer', 'qa'];
+  const tools = { frontend:['Edit','Write','Bash','Read'], backend:['Bash','Read','Write','Grep'], devops:['Bash','Bash','Read','Edit'], designer:['Write','Edit','Read','Write'], qa:['Grep','Read','Bash','Edit'] };
+
+  // Phase 1: Morning arrival (0:00-0:30)
+  main5.forEach((n, i) => {
+    demoAt(i * 6, () => demoIdle(n));
+    demoAt(i * 6 + 3, () => demoWork(n, ['Read','Edit','Bash','Write','Grep'][i]));
+  });
+
+  // Phase 2: Working phase (0:30-1:00)
+  main5.forEach((n) => {
+    demoAt(30, () => demoWork(n, tools[n][0]));
+    demoAt(35, () => demoThink(n));
+    demoAt(37, () => demoWork(n, tools[n][1]));
+    demoAt(42, () => demoWork(n, tools[n][2]));
+    demoAt(47, () => demoThink(n));
+    demoAt(49, () => demoWork(n, tools[n][3]));
+  });
+  demoAt(55, () => demoWork('frontend', 'Write'));
+
+  // Phase 3: Break time (1:00-1:30)
+  demoAt(60, () => demoIdle('designer'));
+  demoAt(62, () => demoIdle('qa'));
+  demoAt(65, () => demoIdle('devops'));
+  demoAt(60, () => demoWork('frontend', 'Edit'));
+  demoAt(65, () => demoWork('backend', 'Bash'));
+  demoAt(70, () => demoThink('frontend'));
+  demoAt(72, () => demoWork('frontend', 'Write'));
+  demoAt(75, () => demoThink('backend'));
+  demoAt(77, () => demoWork('backend', 'Read'));
+  demoAt(80, () => demoWork('frontend', 'Bash'));
+  demoAt(85, () => demoWork('backend', 'Edit'));
+
+  // Phase 4: Collaboration (1:30-2:00)
+  demoAt(90, () => demoThink('designer'));
+  demoAt(91, () => demoThink('qa'));
+  demoAt(95, () => demoWork('qa', 'Grep'));
+  demoAt(97, () => demoIdle('reviewer'));
+  demoAt(100, () => demoWork('reviewer', 'Read'));
+  demoAt(103, () => demoThink('reviewer'));
+  demoAt(105, () => demoWork('reviewer', 'Edit'));
+  demoAt(100, () => demoWork('designer', 'Write'));
+  demoAt(102, () => demoWork('devops', 'Bash'));
+  demoAt(110, () => demoWork('frontend', 'Bash'));
+  demoAt(112, () => demoThink('frontend'));
+  demoAt(114, () => demoIdle('frontend'));
+  demoAt(116, () => demoWork('frontend', 'Read'));
+
+  // Phase 5: Activity phase (2:00-2:30)
+  demoAt(120, () => demoIdle('qa'));
+  demoAt(122, () => demoIdle('designer'));
+  demoAt(124, () => demoIdle('devops'));
+  demoAt(120, () => demoWork('frontend', 'Edit'));
+  demoAt(125, () => demoWork('backend', 'Write'));
+  demoAt(128, () => demoThink('frontend'));
+  demoAt(130, () => demoWork('frontend', 'Bash'));
+  demoAt(130, () => demoWork('reviewer', 'Grep'));
+  demoAt(135, () => demoThink('backend'));
+  demoAt(137, () => demoWork('backend', 'Read'));
+  demoAt(140, () => demoWork('reviewer', 'Write'));
+  demoAt(145, () => demoThink('reviewer'));
+
+  // Phase 6: End of day (2:30-3:00)
+  const despawnOrder = ['reviewer', 'designer', 'qa', 'devops', 'backend', 'frontend'];
+  despawnOrder.forEach((n, i) => {
+    demoAt(150 + i * 4, () => demoIdle(n));
+    demoAt(153 + i * 4, () => demoRemove(n));
+  });
+
+  // Restart cycle after 183 seconds (180 + 3 second pause)
+  demoAt(183, () => {
+    if (demoRunning) startDemoScenario();
+  });
+}
+
+function stopDemo() {
+  demoTimers.forEach(t => clearTimeout(t));
+  demoTimers = [];
+  // Remove all demo agents
+  Object.values(DEMO_AGENTS).forEach(a => demoDel(a.id));
+}
+
+demoBtn.onclick = () => {
+  if (demoRunning) {
+    demoRunning = false;
+    demoBtn.textContent = '🎬 DEMO';
+    demoBtn.style.background = '#2a2848';
+    demoBtn.style.color = '#c8d3f5';
+    stopDemo();
+  } else {
+    demoRunning = true;
+    demoBtn.textContent = '🎬 PLAYING';
+    demoBtn.style.background = '#e0af68';
+    demoBtn.style.color = '#0a0a18';
+    startDemoScenario();
+  }
+};
+
 // Admin info panel
 const adminPanel = document.createElement('div');
 adminPanel.id = 'admin-panel';

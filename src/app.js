@@ -2186,6 +2186,12 @@ function drawLavaLamp(ctx, x, y, tick) {
   ctx.arc(bx, y+lampH+3, 6, 0, Math.PI*2);
   ctx.fill();
   ctx.restore();
+  // Label
+  ctx.fillStyle = '#ff8040';
+  ctx.font = "4px 'Press Start 2P',monospace";
+  ctx.textAlign = 'center';
+  ctx.fillText('LAVA', x + lampW/2, y + lampH + 16);
+  ctx.textAlign = 'left';
 }
 
 function drawPinballMachine(ctx, x, y, tick) {
@@ -3426,7 +3432,7 @@ function generateLayout(n) {
   IDLE_SPOTS.push({ tx:_cbDefTx+1.5, ty:_cbDefTy+0.5, anim:'window_gaze', type:'crystal_ball', w:5, _objId:'crystal_ball', _defObjTx:_cbDefTx, _defObjTy:_cbDefTy, _offsetX:1.5, _offsetY:0.5 });
 
   // ── 5. Whiteboard (main office, top wall — agent doodles) ───────
-  IDLE_SPOTS.push({ tx:15, ty:2, anim:'doodling', type:'whiteboard', w:7, _objId:'whiteboard', _defObjTx:14, _defObjTy:0, _offsetX:1, _offsetY:2 });
+  IDLE_SPOTS.push({ tx:18, ty:2, anim:'doodling', type:'whiteboard', w:6, _objId:'whiteboard', _defObjTx:17, _defObjTy:0, _offsetX:1, _offsetY:2 });
 
   // ══ Zone 1: RECREATION (ACT_ZONE+9, spread across full width) ══
 
@@ -3658,8 +3664,8 @@ function buildObstacleGrid() {
   }
 
   // ── Whiteboard ─────
-  const [wbObsTx,wbObsTy] = getAdminPos('whiteboard', 14, 0);
-  markRect(wbObsTx, wbObsTy, 4, 2);
+  const [wbObsTx,wbObsTy] = getAdminPos('whiteboard', 17, 0);
+  markRect(wbObsTx, wbObsTy, 3, 1.6);
 
   // ── Zone 1: RECREATION obstacles (ACT_ZONE+9) ─────
   if (ACT_ZONE_Y > 0) {
@@ -3670,7 +3676,7 @@ function buildObstacleGrid() {
     markRect(bbObsTx, bbObsTy, 2, 2);
 
     const [arcObsTx,arcObsTy] = getAdminPos('arcade', 16, ACT_ZONE_Y+9);
-    markRect(arcObsTx, arcObsTy, 2, 3);
+    markRect(arcObsTx, arcObsTy, 2, 2);
 
     const [djObsTx,djObsTy] = getAdminPos('dj_console', 20, ACT_ZONE_Y+9);
     markRect(djObsTx, djObsTy, 3, 1);
@@ -3844,8 +3850,8 @@ function drawKanban(ctx) {
   const [_kbTx, _kbTy] = getAdminPos('kanban', rX + 0.2, 2.5);
   const bx = OX + _kbTx * T;
   const by = OY + _kbTy * T;
-  const bw = Math.min((COLS - 1 - _kbTx - 0.3) * T, T * 6);
-  const bh = T * 3;
+  const bw = Math.min((COLS - 1 - _kbTx - 0.3) * T, T * 4.5);
+  const bh = T * 2.5;
 
   if (bw < T * 2) return; // not enough space
 
@@ -3867,9 +3873,9 @@ function drawKanban(ctx) {
 
   // Header
   ctx.fillStyle = '#3d2a0a';
-  ctx.font = "bold 11px monospace";
+  ctx.font = "bold 8px monospace";
   ctx.textAlign = 'center';
-  ctx.fillText('KANBAN', bx + bw/2, by + 16);
+  ctx.fillText('KANBAN', bx + bw/2, by + 14);
 
   // Divider line
   ctx.fillStyle = '#a08050';
@@ -3881,7 +3887,7 @@ function drawKanban(ctx) {
   const colY = by + 26;
 
   // Column headers
-  ctx.font = "bold 9px monospace";
+  ctx.font = "bold 7px monospace";
   ctx.textAlign = 'left';
   ctx.fillStyle = '#e0af68'; ctx.fillText('TODO', col1x + 2, colY + 2);
   ctx.fillStyle = '#9ece6a'; ctx.fillText('DONE', col2x + 2, colY + 2);
@@ -3891,7 +3897,7 @@ function drawKanban(ctx) {
   // Task cards
   const todo = myTasks.filter(t => t.status === 'todo').slice(0, 6);
   const done = myTasks.filter(t => t.status === 'done').slice(0, 6);
-  const cardH = 16, gap = 3;
+  const cardH = 12, gap = 2;
 
   todo.forEach((task, i) => {
     const cy2 = colY + 8 + i * (cardH + gap);
@@ -3901,10 +3907,11 @@ function drawKanban(ctx) {
     ctx.fillStyle = '#e0af68';
     ctx.fillRect(col1x, cy2, 3, cardH); // priority bar
     ctx.fillStyle = '#3d2a0a';
-    ctx.font = '8px monospace';
-    const maxChars = Math.floor((colW - 14) / 5);
-    const label = task.title.substring(0, maxChars);
-    ctx.fillText(label, col1x + 6, cy2 + 11);
+    ctx.font = '6px monospace';
+    const maxChars = Math.max(3, Math.floor((colW - 14) / 4));
+    const rawLabel = task.title || ('TASK-' + (i+1));
+    const label = rawLabel.substring(0, maxChars);
+    ctx.fillText(label, col1x + 6, cy2 + 9);
   });
 
   done.forEach((task, i) => {
@@ -3915,20 +3922,21 @@ function drawKanban(ctx) {
     ctx.fillStyle = '#9ece6a';
     ctx.fillRect(col2x, cy2, 3, cardH);
     ctx.fillStyle = '#3d2a0a80';
-    ctx.font = '8px monospace';
-    const maxChars = Math.floor((colW - 14) / 5);
-    const label = task.title.substring(0, maxChars);
-    ctx.fillText(label, col2x + 6, cy2 + 11);
+    ctx.font = '6px monospace';
+    const maxChars = Math.max(3, Math.floor((colW - 14) / 4));
+    const rawLabel = task.title || ('TASK-' + (i+1));
+    const label = rawLabel.substring(0, maxChars);
+    ctx.fillText(label, col2x + 6, cy2 + 9);
     // Strikethrough line
     ctx.fillStyle = '#3d2a0a50';
-    ctx.fillRect(col2x + 6, cy2 + 8, Math.min(label.length * 5, colW - 14), 1);
+    ctx.fillRect(col2x + 6, cy2 + 6, Math.min(label.length * 4, colW - 14), 1);
   });
 
   if (myTasks.length === 0) {
     ctx.fillStyle = '#a08050';
-    ctx.font = '8px monospace';
+    ctx.font = '6px monospace';
     ctx.textAlign = 'center';
-    ctx.fillText('no tasks yet', bx + bw/2, colY + 14);
+    ctx.fillText('no tasks', bx + bw/2, colY + 14);
   }
 
   // Pushpin decorations
@@ -4896,20 +4904,33 @@ function buildBackground() {
     const [_trTx, _trTy] = getAdminPos('trashcan', KITCHEN_WALL_COL-2, 3);
     const [tcx, tcy] = ts(_trTx, _trTy);
     const cx2 = tcx + T/2, cy2 = tcy + T*0.5;
+    // Shadow
     ctx.save(); ctx.shadowColor='#00000060'; ctx.shadowBlur=4;
-    ctx.fillStyle='#404050';
+    // Can body (tapered cylinder)
+    ctx.fillStyle='#505060';
     ctx.beginPath();
-    ctx.moveTo(cx2-8, cy2+14);
-    ctx.lineTo(cx2+8, cy2+14);
-    ctx.lineTo(cx2+6, cy2-8);
-    ctx.lineTo(cx2-6, cy2-8);
+    ctx.moveTo(cx2-9, cy2+14);
+    ctx.lineTo(cx2+9, cy2+14);
+    ctx.lineTo(cx2+7, cy2-6);
+    ctx.lineTo(cx2-7, cy2-6);
     ctx.closePath(); ctx.fill();
     ctx.restore();
-    ctx.fillStyle='#505060';
-    ctx.fillRect((cx2-8)|0, (cy2-10)|0, 16, 3);
-    ctx.fillStyle='#606070';
-    ctx.fillRect((cx2-6)|0, (cy2-10)|0, 3, 22);
-    ctx.fillRect((cx2+3)|0, (cy2-10)|0, 3, 22);
+    // Lid
+    ctx.fillStyle='#606878';
+    ctx.fillRect((cx2-10)|0, (cy2-10)|0, 20, 4);
+    // Lid handle
+    ctx.fillStyle='#707880';
+    ctx.fillRect((cx2-3)|0, (cy2-14)|0, 6, 5);
+    // Horizontal bands on can body
+    ctx.fillStyle='#5a5a6a';
+    ctx.fillRect((cx2-8)|0, (cy2)|0, 16, 2);
+    ctx.fillRect((cx2-8)|0, (cy2+8)|0, 16, 2);
+    // Recycling symbol hint
+    ctx.fillStyle='#3a8a3a';
+    ctx.font = "6px monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText('\u267B', cx2, cy2 + 6);
+    ctx.textAlign = 'left';
   }
 
   // ════ RIGHT ENTERTAINMENT ZONE ══════════════════════════════════
@@ -5064,7 +5085,7 @@ function buildBackground() {
     // ── Arcade Machine (recreation, col 16) ────────────────────
     const [_arcTx, _arcTy] = getAdminPos('arcade', 16, ACT_ZONE_Y+9);
     const [arcx, arcy] = ts(_arcTx, _arcTy);
-    const arcW = T*2, arcH = T*2.5;
+    const arcW = T*2, arcH = T*2;
     ctx.save(); ctx.shadowColor='#00000070'; ctx.shadowBlur=8;
     fillR(ctx, arcx, arcy, arcW, arcH, '#1a1a30'); ctx.restore();
     fillR(ctx, arcx+2, arcy+2, arcW-4, 12, '#c02040');
@@ -5840,9 +5861,9 @@ function drawDynamicEffects(ctx, tick) {
 
   // ── Corkboard (main office, top wall) ────────────────────────
   {
-    const [_cbTx, _cbTy] = getAdminPos('corkboard', 7, 0);
+    const [_cbTx, _cbTy] = getAdminPos('corkboard', 10.5, 0);
     const [cbx, cby] = ts(_cbTx, _cbTy);
-    const cbW = T * 3.5, cbH = T * 2;
+    const cbW = T * 2.5, cbH = T * 1.6;
     // Frame
     ctx.save(); ctx.shadowColor = '#00000070'; ctx.shadowBlur = 5;
     fillR(ctx, cbx - 3, cby - 3, cbW + 6, cbH + 6, '#4a3010'); ctx.restore();
@@ -5854,12 +5875,12 @@ function drawDynamicEffects(ctx, tick) {
     for (const [dx, dy] of dotPat) if (dx < cbW && dy < cbH) ctx.fillRect(cbx+dx, cby+dy, 2, 2);
     // Sticky notes
     const notes = [
-      {x:4,  y:4,  w:28, h:22, col:'#f7e468', lines:['TODO','bug fix']},
-      {x:36, y:3,  w:26, h:20, col:'#f7a8c8', lines:['SHIP','it!']},
-      {x:66, y:5,  w:30, h:22, col:'#a8d8f7', lines:['REVIEW','PR#42']},
-      {x:8,  y:30, w:28, h:22, col:'#b8f7a8', lines:['DONE','✓deploy']},
-      {x:42, y:28, w:28, h:24, col:'#f7c8a8', lines:['IDEA','v2.0']},
-      {x:76, y:31, w:28, h:20, col:'#d8a8f7', lines:['MTNG','10am']},
+      {x:3,  y:3,  w:22, h:18, col:'#f7e468', lines:['TODO','fix']},
+      {x:28, y:3,  w:22, h:18, col:'#f7a8c8', lines:['SHIP','it!']},
+      {x:53, y:3,  w:22, h:18, col:'#a8d8f7', lines:['PR','#42']},
+      {x:3,  y:26, w:22, h:18, col:'#b8f7a8', lines:['DONE','ok']},
+      {x:28, y:26, w:22, h:18, col:'#f7c8a8', lines:['IDEA','v2']},
+      {x:53, y:26, w:22, h:18, col:'#d8a8f7', lines:['MTG','10am']},
     ];
     for (const n of notes) {
       if (n.x + n.w > cbW || n.y + n.h > cbH) continue;
@@ -5902,9 +5923,9 @@ function drawDynamicEffects(ctx, tick) {
 
   // ── Whiteboard (main office, top wall) ───────────────────────
   {
-    const [_wbTx, _wbTy] = getAdminPos('whiteboard', 14, 0);
+    const [_wbTx, _wbTy] = getAdminPos('whiteboard', 17, 0);
     const [wbx, wby] = ts(_wbTx, _wbTy);
-    const wbW = T * 4, wbH = T * 1.8;
+    const wbW = T * 3, wbH = T * 1.6;
     // Metal frame / shadow
     ctx.save(); ctx.shadowColor = '#00000060'; ctx.shadowBlur = 5;
     fillR(ctx, wbx - 3, wby - 3, wbW + 6, wbH + 6, '#606070'); ctx.restore();
@@ -5937,13 +5958,13 @@ function drawDynamicEffects(ctx, tick) {
     ctx.beginPath(); ctx.arc(wbx+37, wby+30, 7, 0, Math.PI*2); ctx.stroke();
     // Checkmark
     ctx.strokeStyle = '#208040'; ctx.lineWidth = 2;
-    ctx.beginPath(); ctx.moveTo(wbx+56, wby+24); ctx.lineTo(wbx+60, wby+30); ctx.lineTo(wbx+70, wby+18); ctx.stroke();
+    ctx.beginPath(); ctx.moveTo(wbx+50, wby+24); ctx.lineTo(wbx+54, wby+30); ctx.lineTo(wbx+62, wby+18); ctx.stroke();
     // Marker tray (bottom edge)
     fillR(ctx, wbx, wby + wbH, wbW, 5, '#707080');
     // Markers on tray
-    const markerColors = ['#c04040','#2060c0','#208040','#c08020'];
-    for (let mi = 0; mi < 4; mi++) {
-      fillR(ctx, wbx + 6 + mi * 10, wby + wbH + 1, 7, 3, markerColors[mi]);
+    const markerColors = ['#c04040','#2060c0','#208040'];
+    for (let mi = 0; mi < 3; mi++) {
+      fillR(ctx, wbx + 6 + mi * 12, wby + wbH + 1, 7, 3, markerColors[mi]);
     }
     // Label
     ctx.fillStyle = '#505060'; ctx.font = "4px 'Press Start 2P',monospace";
@@ -5992,6 +6013,7 @@ class AgentState {
     this._spawnSitTimer = 2 + Math.random() * 3; // sit for 2-5 seconds before moving
     this._simsWaiting = false;
     this._simsTarget = null;
+    this._simsArrivalPending = false;
     this.nextState  = null;   // queued after non-loop anim finishes
     this.animTime   = 0;      // accumulated seconds in current state
     this.animT      = 0;      // normalized [0..1]
@@ -6341,6 +6363,16 @@ class AgentState {
       const walkSpeed = this.burnout >= 3 ? 2.5 : 3.5;
       if (this.moveToward(dt, walkSpeed)) {
         this.arrived = true; this.idleTimer = 0; this.walkTimer = 0;
+        // Sims arrival celebration
+        if (simsMode && this._simsArrivalPending) {
+          this._simsArrivalPending = false;
+          const exclamations = ['Ого!','Круто!','Кайф!','Вау!','Йой!','Топ!','Файно!','Кльово!','Ура!','Супер!'];
+          simsArrivalFx.push({x: this.sx, y: this.sy, life: 2.2, maxLife: 2.2, text: exclamations[Math.floor(Math.random()*exclamations.length)]});
+          PS.confetti(this.sx, this.sy - 10);
+          PS.burst(this.sx, this.sy, this.pal ? this.pal.accent : '#9ece6a');
+          this.speechBubble = exclamations[Math.floor(Math.random()*exclamations.length)];
+          this.speechBubbleLife = 3;
+        }
         if (working) this.setAnim('sitting_down','typing_normal');
         else         this.setAnim(this.activityAnim || this.couchIdleState);
       } else if (!working) {
@@ -7940,6 +7972,12 @@ function loop(now) {
   lastTime = now;
   globalTick++;
 
+  // ── Sims arrival effects tick ────────────────────────────────
+  for (let i = simsArrivalFx.length - 1; i >= 0; i--) {
+    simsArrivalFx[i].life -= dt;
+    if (simsArrivalFx[i].life <= 0) simsArrivalFx.splice(i, 1);
+  }
+
   // ── Door animation ────────────────────────────────────────────
   if (doorAnim.timer > 0) { doorAnim.timer -= dt; if (doorAnim.timer <= 0) doorAnim.target = 0; }
   doorAnim.open = lerp(doorAnim.open, doorAnim.target, Math.min(1, dt * 4));
@@ -8502,48 +8540,74 @@ function loop(now) {
         }
       }
     }
-    // Radial menu — draw activity picker
-    if (simsMenuVisible && simsMenuItems.length > 0) {
+    // Hover tooltip — show spot name when hovering in sims mode
+    if (simsSelectedAgent && simsHoverSpot) {
+      const hs = simsHoverSpot.spot;
+      const hx = OX + hs.tx * T + T/2;
+      const hy = OY + hs.ty * T - 4;
       ctx.save();
-      // Background circle
-      ctx.globalAlpha = 0.85;
-      ctx.fillStyle = '#0d0d1a';
-      ctx.beginPath();
-      ctx.arc(simsMenuX, simsMenuY, 80, 0, Math.PI*2);
+      // Spot type label mapping
+      const spotLabels = {
+        couch:'Rest', kitchen:'Kitchen', gym:'Gym', gaming:'TV/Gaming',
+        arcade:'Arcade', nap_pod:'Nap Pod', dj:'DJ Booth', group:'Social',
+        window:'Window', plant:'Plant', floor:'Chill', printer:'Printer',
+        darts:'Darts', aquarium:'Aquarium', trophy_cabinet:'Trophies',
+        rubber_duck:'Duck', lava_lamp:'Lava Lamp', crystal_ball:'Crystal Ball',
+        whiteboard:'Whiteboard', basketball:'Basketball', jukebox:'Jukebox',
+        pinball:'Pinball', server:'Server', printer3d:'3D Printer',
+        telescope:'Telescope', espresso:'Espresso', shelf:'Bookshelf',
+        hammock:'Hammock'
+      };
+      const label = spotLabels[hs.type] || hs.type;
+      ctx.globalAlpha = 0.92;
+      ctx.fillStyle = '#1a1c3e';
+      ctx.font = "5px 'Press Start 2P',monospace";
+      const textW = ctx.measureText(label).width;
+      const pad = 4;
+      rrect(ctx, hx - textW/2 - pad, hy - 8, textW + pad*2, 12, 3);
       ctx.fill();
-      ctx.strokeStyle = '#7aa2f7';
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(simsMenuX, simsMenuY, 80, 0, Math.PI*2);
+      ctx.strokeStyle = '#9ece6a';
+      ctx.lineWidth = 1;
       ctx.stroke();
       ctx.globalAlpha = 1;
-      // Center label
       ctx.fillStyle = '#c8d3f5';
-      ctx.font = "5px 'Press Start 2P',monospace";
       ctx.textAlign = 'center';
-      ctx.fillText('SEND TO', simsMenuX, simsMenuY + 4);
-      // Menu items
-      for (const item of simsMenuItems) {
-        // Item background circle
-        ctx.globalAlpha = 0.9;
-        ctx.fillStyle = '#1a1c3e';
+      ctx.fillText(label, hx, hy);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
+
+    // Arrival celebration effects
+    for (let i = simsArrivalFx.length - 1; i >= 0; i--) {
+      const fx = simsArrivalFx[i];
+      const progress = 1 - fx.life / fx.maxLife;
+      ctx.save();
+      // Rising speech bubble with exclamation
+      const bubbleY = fx.y - 20 - progress * 18;
+      const bubbleAlpha = progress < 0.2 ? progress / 0.2 : progress > 0.7 ? (1 - progress) / 0.3 : 1;
+      ctx.globalAlpha = bubbleAlpha * 0.95;
+      ctx.fillStyle = '#1a1c3e';
+      ctx.font = "6px 'Press Start 2P',monospace";
+      ctx.textAlign = 'center';
+      const bw = ctx.measureText(fx.text).width + 8;
+      rrect(ctx, fx.x - bw/2, bubbleY - 8, bw, 14, 4);
+      ctx.fill();
+      ctx.strokeStyle = '#f7768e';
+      ctx.lineWidth = 1;
+      ctx.stroke();
+      ctx.fillStyle = '#ff9e64';
+      ctx.fillText(fx.text, fx.x, bubbleY + 2);
+      // Sparkle ring expanding outward
+      const sparkleR = 8 + progress * 20;
+      ctx.globalAlpha = (1 - progress) * 0.6;
+      for (let s = 0; s < 8; s++) {
+        const a = (s / 8) * Math.PI * 2 + progress * 3;
+        const sx = fx.x + Math.cos(a) * sparkleR;
+        const sy = fx.y + Math.sin(a) * sparkleR * 0.5;
+        ctx.fillStyle = ['#9ece6a','#ff9e64','#7aa2f7','#bb9af7','#f7768e','#e0af68','#73daca','#c8d3f5'][s];
         ctx.beginPath();
-        ctx.arc(item.cx, item.cy, 18, 0, Math.PI*2);
+        ctx.arc(sx, sy, 1.5 * (1 - progress), 0, Math.PI*2);
         ctx.fill();
-        ctx.strokeStyle = '#7aa2f760';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        ctx.arc(item.cx, item.cy, 18, 0, Math.PI*2);
-        ctx.stroke();
-        ctx.globalAlpha = 1;
-        // Icon
-        ctx.font = '14px serif';
-        ctx.textAlign = 'center';
-        ctx.fillText(item.icon, item.cx, item.cy + 5);
-        // Label
-        ctx.fillStyle = '#9aa5ce';
-        ctx.font = "4px 'Press Start 2P',monospace";
-        ctx.fillText(item.label, item.cx, item.cy + 17);
       }
       ctx.textAlign = 'left';
       ctx.restore();
@@ -9093,9 +9157,8 @@ const HEAT_MAX_COLS = 80, HEAT_MAX_ROWS = 120;
 const heatGrid = new Float32Array(HEAT_MAX_COLS * HEAT_MAX_ROWS);
 let heatMax = 1; // running max for normalization
 let simsSelectedAgent = null;
-let simsMenuVisible = false;
-let simsMenuX = 0, simsMenuY = 0;
-let simsMenuItems = [];
+let simsHoverSpot = null; // {spot, idx} — IDLE_SPOT under cursor in sims mode
+const simsArrivalFx = [];  // [{x, y, life, maxLife, text}] — arrival celebration effects
 let adminObjects = []; // {id, label, tx, ty, w, h} — tile coords
 let adminSelected = null;
 let adminDragging = false;
@@ -9185,7 +9248,7 @@ function buildAdminObjects() {
     // Zone 1: RECREATION (ACT_ZONE+9)
     adminObjects.push({id:'foosball', label:'⚽ Foosball', tx:8, ty:ACT_ZONE_Y+9, w:3, h:1.5});
     adminObjects.push({id:'basketball', label:'🏀 Basketball', tx:12, ty:ACT_ZONE_Y+9, w:2, h:2});
-    adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:16, ty:ACT_ZONE_Y+9, w:2, h:2.5});
+    adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:16, ty:ACT_ZONE_Y+9, w:2, h:2});
     adminObjects.push({id:'dj_console', label:'🎧 DJ Console', tx:20, ty:ACT_ZONE_Y+9, w:2.5, h:1.2});
     adminObjects.push({id:'jukebox', label:'🎵 Jukebox', tx:25, ty:ACT_ZONE_Y+9, w:2, h:2.5});
     adminObjects.push({id:'pinball', label:'🎱 Pinball', tx:32, ty:ACT_ZONE_Y+9, w:2, h:2.5});
@@ -9199,8 +9262,8 @@ function buildAdminObjects() {
   }
 
   // Corkboard (sprint board on top wall)
-  adminObjects.push({id:'corkboard', label:'📌 Corkboard', tx:7, ty:0, w:3.5, h:2});
-  adminObjects.push({id:'whiteboard', label:'📝 Whiteboard', tx:14, ty:0, w:4, h:1.8});
+  adminObjects.push({id:'corkboard', label:'📌 Corkboard', tx:10.5, ty:0, w:2.5, h:1.6});
+  adminObjects.push({id:'whiteboard', label:'📝 Whiteboard', tx:17, ty:0, w:3, h:1.6});
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -9291,8 +9354,8 @@ const BUILTIN_POSITIONS = {
   "kitchen_counter": {"tx": 24, "ty": 12},
   "kitchen_table": {"tx": 26, "ty": 14},
   "fridge": {"tx": 33, "ty": 12},
-  "trashcan": {"tx": 33, "ty": 16},
-  "cooler": {"tx": 30, "ty": 16},
+  "trashcan": {"tx": 30, "ty": 16},
+  "cooler": {"tx": 32, "ty": 16},
   "vending": {"tx": 27, "ty": 17},
 
   // ═══ LOUNGE (rows 22-34) — spacious, 4 per row with gaps ═══
@@ -9323,8 +9386,8 @@ const BUILTIN_POSITIONS = {
   "gaming_sofa": {"tx": 19, "ty": 41},
   "arcade": {"tx": 27, "ty": 37},
   "dj_console": {"tx": 32, "ty": 37},
-  "jukebox": {"tx": 27, "ty": 41},
-  "pinball": {"tx": 32, "ty": 41},
+  "jukebox": {"tx": 27, "ty": 42},
+  "pinball": {"tx": 32, "ty": 42},
 
   // ═══ SPORTS ROOM (rows 46-54, cols 1-16) — games spread ═══
   "pingpong": {"tx": 2, "ty": 47},
@@ -9340,13 +9403,13 @@ const BUILTIN_POSITIONS = {
   "nap_pod": {"tx": 22, "ty": 52},
 
   // ═══ MAIN OFFICE WALL DECORATIONS ═══
-  "corkboard": {"tx": 7, "ty": 0},
-  "whiteboard": {"tx": 14, "ty": 0},
+  "corkboard": {"tx": 10.5, "ty": 0},
+  "whiteboard": {"tx": 17, "ty": 0},
 
   // ═══ RIGHT ZONE ═══
-  "trophy_cabinet": {"tx": 23, "ty": 12},
+  "trophy_cabinet": {"tx": 21, "ty": 12},
   "rubber_duck": {"tx": 23, "ty": 10},
-  "lava_lamp": {"tx": 23, "ty": 4},
+  "lava_lamp": {"tx": 22, "ty": 6},
   "crystal_ball": {"tx": 15, "ty": 56}
 };
 
@@ -9471,8 +9534,8 @@ function enterAdminMode() {
 
 function toggleSimsMode() {
   simsMode = !simsMode;
-  simsMenuVisible = false;
   simsSelectedAgent = null;
+  simsHoverSpot = null;
   if (simsMode) {
     simsBtn.textContent = '🎮 PLAYING';
     simsBtn.style.background = '#9ece6a';
@@ -9498,7 +9561,9 @@ function toggleSimsMode() {
     for (const sp of Object.values(agentStates)) {
       sp._simsWaiting = false;
       sp._simsTarget = null;
+      sp._simsArrivalPending = false;
     }
+    simsArrivalFx.length = 0;
   }
 }
 
@@ -9576,6 +9641,31 @@ canvas.addEventListener('mousedown', e => {
 });
 
 canvas.addEventListener('mousemove', e => {
+  // Sims mode: hover detection for spot tooltips
+  if (simsMode && simsSelectedAgent) {
+    const {tx, ty} = mouseToTile(e);
+    simsHoverSpot = null;
+    let bestDist = 9; // 3 tile radius squared
+    for (let i = 0; i < IDLE_SPOTS.length; i++) {
+      const s = IDLE_SPOTS[i];
+      const holder = idleOccupied[i];
+      if (holder !== undefined && holder !== simsSelectedAgent) continue;
+      const dx = tx - s.tx, dy = ty - s.ty;
+      const d2 = dx*dx + dy*dy;
+      if (d2 < bestDist) { bestDist = d2; simsHoverSpot = {spot: s, idx: i}; }
+    }
+    canvas.style.cursor = simsHoverSpot ? 'pointer' : 'crosshair';
+  } else if (simsMode) {
+    const {tx, ty} = mouseToTile(e);
+    simsHoverSpot = null;
+    // Check if hovering over an agent
+    let overAgent = false;
+    for (const sp of Object.values(agentStates)) {
+      const dx = tx - sp.tx, dy = ty - sp.ty;
+      if (dx*dx + dy*dy < 2.5) { overAgent = true; break; }
+    }
+    canvas.style.cursor = overAgent ? 'pointer' : 'default';
+  }
   if (!adminMode) return;
   const {tx, ty} = mouseToTile(e);
   // Wall dragging
@@ -9855,7 +9945,7 @@ function findClickableAt(tx, ty) {
     {id:'pingpong', w:6, h:3},
     {id:'clock', w:1.5, h:1.5},
     {id:'espresso_bar', w:3, h:1.5},
-    {id:'arcade', w:2, h:2.5},
+    {id:'arcade', w:2, h:2},
     {id:'dj_console', w:2.5, h:1.2},
     {id:'server_rack', w:2, h:2.2},
     {id:'printer_3d', w:2, h:1.8},
@@ -9863,8 +9953,8 @@ function findClickableAt(tx, ty) {
     {id:'basketball', w:2, h:2},
     {id:'telescope', w:1, h:2},
     {id:'nap_pod', w:2.5, h:1.5},
-    {id:'corkboard', w:3.5, h:2},
-    {id:'whiteboard', w:4, h:1.8},
+    {id:'corkboard', w:2.5, h:1.6},
+    {id:'whiteboard', w:3, h:1.6},
     {id:'trophy_cabinet', w:2, h:2.5},
     {id:'lava_lamp', w:1.5, h:2.5},
     {id:'jukebox', w:2, h:2.5},
@@ -9892,108 +9982,61 @@ function findClickableAt(tx, ty) {
 }
 
 canvas.addEventListener('click', e => {
-  // Sims mode: click agent → show radial menu
+  // Sims mode: click agent to select, click spot to send there
   if (simsMode) {
     const {tx, ty} = mouseToTile(e);
 
-    // Step 1: If radial menu is visible — check if clicked a menu item
-    if (simsMenuVisible) {
-      let clickedItem = false;
-      for (const item of simsMenuItems) {
-        const dx = e.offsetX - item.cx;
-        const dy = e.offsetY - item.cy;
-        if (dx*dx + dy*dy < 22*22) {
-          clickedItem = true;
-          // Find a free IDLE_SPOT of this type
-          const spots = IDLE_SPOTS.filter(s =>
-            s.type === item.spotType &&
-            (!idleOccupied[IDLE_SPOTS.indexOf(s)] || idleOccupied[IDLE_SPOTS.indexOf(s)] === simsSelectedAgent)
-          );
-          const sp = agentStates[simsSelectedAgent];
-          if (sp && spots.length > 0) {
-            const spot = spots[Math.floor(Math.random() * spots.length)];
-            const si = IDLE_SPOTS.indexOf(spot);
-            sp._simsWaiting = false;
-            sp.arrived = false;
-            sp.activityDur = 30 + Math.random() * 30;
-            if (sp.slotIdx >= 0) delete idleOccupied[sp.slotIdx];
-            sp.slotIdx = si;
-            idleOccupied[si] = sp.id;
-            sp.activityAnim = spot.anim;
-            sp.setTarget(spot.tx, spot.ty);
-          } else if (sp && item.spotType === 'wander') {
-            sp._simsWaiting = false;
-            sp.arrived = false;
-            const wx = 2 + Math.random() * (COLS - 4);
-            const wy = 2 + Math.random() * (ROWS - 4);
-            sp.setTarget(wx, wy);
-          } else if (sp && item.spotType === 'recall') {
-            // Release current slot
-            if (sp.slotIdx >= 0 && idleOccupied[sp.slotIdx] === sp.id) {
-              delete idleOccupied[sp.slotIdx];
-            }
-            sp.slotIdx = -1;
-            sp.activityAnim = null;
-            sp.activityDur = 0;
-            sp.arrived = false;
-            sp._simsWaiting = true;
-            // Walk to a free couch slot
-            const freeCouchSlot = COUCH_SLOTS.find((s, i) => {
-              const spotI = IDLE_SPOTS.findIndex(is => is.type === 'couch' && Math.abs(is.tx - s.tx) < 0.1);
-              return spotI === -1 || !idleOccupied[spotI] || idleOccupied[spotI] === sp.id;
-            }) || (COUCH_SLOTS.length > 0 ? COUCH_SLOTS[0] : { tx: 5, ty: 24 });
-            sp.setTarget(freeCouchSlot.tx, freeCouchSlot.ty);
-          }
-          simsMenuVisible = false;
-          simsSelectedAgent = null;
-          return;
-        }
-      }
-      // Clicked outside menu — dismiss
-      if (!clickedItem) {
-        simsMenuVisible = false;
-        simsSelectedAgent = null;
-        return;
-      }
+    // Check if clicked on an agent
+    let clickedAgentId = null;
+    for (const [id, sp] of Object.entries(agentStates)) {
+      const dx = tx - sp.tx, dy = ty - sp.ty;
+      if (dx*dx + dy*dy < 2.5) { clickedAgentId = id; break; }
+    }
+
+    if (clickedAgentId) {
+      // Toggle selection: click same agent = deselect, different = switch
+      simsSelectedAgent = (simsSelectedAgent === clickedAgentId) ? null : clickedAgentId;
       return;
     }
 
-    // Step 1b: If no agent selected — click on agent to select and show radial menu
-    if (!simsSelectedAgent) {
-      for (const [id, sp] of Object.entries(agentStates)) {
-        const dx = tx - sp.tx, dy = ty - sp.ty;
-        if (dx*dx + dy*dy < 2.5) {
-          simsSelectedAgent = id;
-          // Build radial menu
-          simsMenuX = sp.sx;
-          simsMenuY = sp.sy;
-          const MENU_ITEMS = [
-            { icon: '🛋️', label: 'Rest',    spotType: 'couch'   },
-            { icon: '☕',  label: 'Kitchen', spotType: 'kitchen' },
-            { icon: '🏋️', label: 'Gym',     spotType: 'gym'     },
-            { icon: '🎮',  label: 'TV',      spotType: 'gaming'  },
-            { icon: '🕹️', label: 'Arcade',  spotType: 'arcade'  },
-            { icon: '😴',  label: 'Nap',     spotType: 'nap_pod' },
-            { icon: '🎵',  label: 'DJ',      spotType: 'dj'      },
-            { icon: '🏓',  label: 'P.Pong',  spotType: 'group'   },
-            { icon: '🚶',  label: 'Wander',  spotType: 'wander'  },
-            { icon: '↩',   label: 'Recall',  spotType: 'recall'  },
-          ];
-          const R = 62;
-          simsMenuItems = MENU_ITEMS.map((m, i) => {
-            const angle = -Math.PI/2 + (i / MENU_ITEMS.length) * Math.PI * 2;
-            return { ...m, cx: sp.sx + Math.cos(angle)*R, cy: sp.sy + Math.sin(angle)*R, angle };
-          });
-          simsMenuVisible = true;
-          return;
-        }
+    // No agent clicked — if we have a selected agent, send them to clicked location
+    if (simsSelectedAgent) {
+      const sp = agentStates[simsSelectedAgent];
+      if (!sp) { simsSelectedAgent = null; return; }
+
+      // Find nearest IDLE_SPOT to clicked tile (within 3 tiles)
+      let bestSpot = null, bestIdx = -1, bestDist = 9;
+      for (let i = 0; i < IDLE_SPOTS.length; i++) {
+        const s = IDLE_SPOTS[i];
+        const holder = idleOccupied[i];
+        if (holder !== undefined && holder !== simsSelectedAgent) continue; // taken
+        const dx = tx - s.tx, dy = ty - s.ty;
+        const d2 = dx*dx + dy*dy;
+        if (d2 < bestDist) { bestDist = d2; bestSpot = s; bestIdx = i; }
       }
+
+      if (bestSpot) {
+        // Send agent to that idle spot
+        sp._simsWaiting = false;
+        sp.arrived = false;
+        sp.activityDur = 30 + Math.random() * 30;
+        if (sp.slotIdx >= 0 && idleOccupied[sp.slotIdx] === sp.id) delete idleOccupied[sp.slotIdx];
+        sp.slotIdx = bestIdx;
+        idleOccupied[bestIdx] = sp.id;
+        sp.activityAnim = bestSpot.anim;
+        sp._simsArrivalPending = true; // flag for arrival animation
+        sp.setTarget(bestSpot.tx, bestSpot.ty);
+      } else {
+        // No spot nearby — wander to clicked tile
+        sp._simsWaiting = false;
+        sp.arrived = false;
+        sp.activityDur = 10 + Math.random() * 10;
+        sp._simsArrivalPending = true;
+        sp.setTarget(Math.max(1, Math.min(tx, COLS-2)), Math.max(1, Math.min(ty, ROWS-2)));
+      }
+      simsSelectedAgent = null;
       return;
     }
-
-    // Step 2: agent selected but menu not visible — click elsewhere to deselect
-    simsMenuVisible = false;
-    simsSelectedAgent = null;
     return;
   }
 
@@ -10934,7 +10977,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'h' || e.key === 'H') heatmapVisible = !heatmapVisible;
   if (e.key === 'p' || e.key === 'P') productivityVisible = !productivityVisible;
   if (e.key === 't' || e.key === 'T') timelineVisible = !timelineVisible;
-  if (e.key === 'Escape' && simsMenuVisible) { simsMenuVisible = false; simsSelectedAgent = null; }
+  if (e.key === 'Escape' && simsMode && simsSelectedAgent) { simsSelectedAgent = null; }
 });
 
 // ════════════════════════════════════════════════════════════════
