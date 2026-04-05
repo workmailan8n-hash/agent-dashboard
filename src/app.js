@@ -9320,7 +9320,7 @@ function applyWallPositions() {
   KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1;
 }
 
-// Default layout positions (exported from user's admin editor — canonical layout)
+// Default layout positions (exported from user's admin editor — canonical layout v3)
 const BUILTIN_POSITIONS = {
   // ═══ DESKS ═══
   "desk_0":  {"tx": 11.5, "ty": 3.5},
@@ -9339,7 +9339,7 @@ const BUILTIN_POSITIONS = {
   "desk_13": {"tx": 8,    "ty": 17},
   "desk_14": {"tx": 15,   "ty": 17},
   "desk_15": {"tx": 19.5, "ty": 13},
-  "desk_16": {"tx": 19.5, "ty": 16.5},
+  "desk_16": {"tx": 19.5, "ty": 17},
   "desk_17": {"tx": 1,    "ty": 1},
   "desk_18": {"tx": 19.5, "ty": 9},
   "desk_19": {"tx": 19.5, "ty": 5},
@@ -9348,46 +9348,46 @@ const BUILTIN_POSITIONS = {
   "corkboard":  {"tx": 11,   "ty": 0},
   "whiteboard": {"tx": 27.5, "ty": 0},
   "kanban":     {"tx": 22.5, "ty": 0},
-  "darts":      {"tx": 19.5, "ty": 0.5},
+  "darts":      {"tx": 6,    "ty": 0},
   "telescope":  {"tx": 20,   "ty": 1.5},
-  "plant_0":    {"tx": 4,    "ty": 0},
-  "clock":      {"tx": 33.5, "ty": 14},
+  "clock":      {"tx": 31.5, "ty": 0},
 
   // ═══ RIGHT PANEL ═══
-  "aquarium":   {"tx": 24,   "ty": 8},
-  "cooler":     {"tx": 28,   "ty": 8},
-  "printer":    {"tx": 19,   "ty": 23},
-  "trashcan":   {"tx": 29.5, "ty": 12},
+  "aquarium":   {"tx": 30.5, "ty": 5.5},
+  "cooler":     {"tx": 32,   "ty": 17.5},
+  "printer":    {"tx": 29.5, "ty": 22.5},
+  "trashcan":   {"tx": 30.5, "ty": 10.5},
   "lava_lamp":  {"tx": 30,   "ty": 18},
-  "plant_1":    {"tx": 21.5, "ty": 28},
+  "plant_0":    {"tx": 1.5,  "ty": 19.5},
+  "plant_1":    {"tx": 26.5, "ty": 22.5},
+  "vending":    {"tx": 32.5, "ty": 22},
 
   // ═══ KITCHEN ═══
-  "kitchen_counter": {"tx": 22,   "ty": 26},
+  "kitchen_counter": {"tx": 25,   "ty": 10},
   "kitchen_table":   {"tx": 26.5, "ty": 14},
-  "fridge":          {"tx": 21,   "ty": 25.5},
-  "vending":         {"tx": 25,   "ty": 42},
+  "fridge":          {"tx": 24,   "ty": 9},
 
-  // ═══ COUCHES (5 per row, 4 rows) ═══
-  "couch_0":  {"tx": 1.5,  "ty": 30},
-  "couch_1":  {"tx": 6.7,  "ty": 30},
-  "couch_2":  {"tx": 11.9, "ty": 30},
-  "couch_3":  {"tx": 17.1, "ty": 30},
-  "couch_4":  {"tx": 22.3, "ty": 30},
-  "couch_5":  {"tx": 1.5,  "ty": 33},
-  "couch_6":  {"tx": 6.7,  "ty": 33},
-  "couch_7":  {"tx": 11.9, "ty": 33},
-  "couch_8":  {"tx": 17.1, "ty": 33},
-  "couch_9":  {"tx": 22.3, "ty": 33},
-  "couch_10": {"tx": 1.5,  "ty": 36},
-  "couch_11": {"tx": 6.7,  "ty": 36},
-  "couch_12": {"tx": 11.9, "ty": 36},
-  "couch_13": {"tx": 17.1, "ty": 36},
-  "couch_14": {"tx": 22.3, "ty": 36},
-  "couch_15": {"tx": 1.5,  "ty": 39},
-  "couch_16": {"tx": 6.7,  "ty": 39},
-  "couch_17": {"tx": 11.9, "ty": 39},
-  "couch_18": {"tx": 17.1, "ty": 39},
-  "couch_19": {"tx": 22.3, "ty": 39},
+  // ═══ COUCHES (5 columns, 4 rows, staggered) ═══
+  "couch_0":  {"tx": 1.5, "ty": 32},
+  "couch_1":  {"tx": 6,   "ty": 22.5},
+  "couch_2":  {"tx": 22,  "ty": 22.5},
+  "couch_3":  {"tx": 10,  "ty": 22.5},
+  "couch_4":  {"tx": 18,  "ty": 27.5},
+  "couch_5":  {"tx": 1.5, "ty": 27.5},
+  "couch_6":  {"tx": 6,   "ty": 25},
+  "couch_7":  {"tx": 10,  "ty": 32},
+  "couch_8":  {"tx": 22,  "ty": 25},
+  "couch_9":  {"tx": 18,  "ty": 22.5},
+  "couch_10": {"tx": 1.5, "ty": 25},
+  "couch_11": {"tx": 6,   "ty": 27.5},
+  "couch_12": {"tx": 10,  "ty": 25},
+  "couch_13": {"tx": 18,  "ty": 32},
+  "couch_14": {"tx": 22,  "ty": 27.5},
+  "couch_15": {"tx": 1.5, "ty": 22.5},
+  "couch_16": {"tx": 6,   "ty": 32},
+  "couch_17": {"tx": 22,  "ty": 32},
+  "couch_18": {"tx": 10,  "ty": 27.5},
+  "couch_19": {"tx": 18,  "ty": 25},
 
   // ═══ ACTIVITY ZONE ═══
   "server_rack":  {"tx": 1,    "ty": 46},
