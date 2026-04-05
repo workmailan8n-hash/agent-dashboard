@@ -5935,6 +5935,36 @@ function drawDynamicEffects(ctx, tick) {
     ctx.textAlign = 'left';
   }
 
+  // ── Neon Sign (top wall, clickable color-cycler) ──────────────
+  {
+    const [_nsTx, _nsTy] = getAdminPos('neon_sign', 3, 0);
+    const [nsx, nsy] = ts(_nsTx, _nsTy);
+    const nsW = T * 3, nsH = T * 1;
+    const nsColor = NEON_COLORS[neonSignColorIdx];
+    const nsGlow = 0.6 + Math.sin(globalTick * 0.07) * 0.3;
+    ctx.save();
+    // Dark backing panel
+    fillR(ctx, nsx, nsy, nsW, nsH, '#0a0a18');
+    // Glowing border
+    ctx.shadowColor = nsColor; ctx.shadowBlur = 14 * nsGlow;
+    ctx.strokeStyle = nsColor; ctx.lineWidth = 2;
+    ctx.globalAlpha = 0.7 + nsGlow * 0.3;
+    ctx.strokeRect(nsx + 1, nsy + 1, nsW - 2, nsH - 2);
+    // Inner subtle fill
+    ctx.globalAlpha = 0.07 + nsGlow * 0.05;
+    ctx.fillStyle = nsColor;
+    ctx.fillRect(nsx + 2, nsy + 2, nsW - 4, nsH - 4);
+    // Neon text
+    ctx.globalAlpha = nsGlow;
+    ctx.fillStyle = nsColor;
+    ctx.shadowColor = nsColor; ctx.shadowBlur = 10 * nsGlow;
+    ctx.font = "7px 'Press Start 2P',monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText('VIBE', nsx + nsW/2, nsy + nsH/2 + 3);
+    ctx.textAlign = 'left';
+    ctx.restore();
+  }
+
   // ── Nap pod ambient glow (makers lab) ────────────────────────
   if (ACT_ZONE_Y > 0) {
     const [_napGlTx, _napGlTy] = getAdminPos('nap_pod', 22, ACT_ZONE_Y+14);
@@ -8413,8 +8443,10 @@ function loop(now) {
 
   // Sims mode overlay
   if (simsMode) {
-    if (simsSelectedAgent && agentStates[simsSelectedAgent]) {
-      const sp = agentStates[simsSelectedAgent];
+    // Draw selection ring for each selected agent
+    for (const selId of simsSelectedAgents) {
+      const sp = agentStates[selId];
+      if (!sp) continue;
       ctx.save();
       // Multi-layer pulsing glow ring
       const glowPulse = 0.5 + Math.sin(globalTick * 0.12) * 0.35;
@@ -8458,6 +8490,17 @@ function loop(now) {
       ctx.stroke();
       ctx.restore();
     }
+    // Count badge when multiple agents selected
+    if (simsSelectedAgents.size > 1) {
+      ctx.save();
+      ctx.fillStyle = '#9ece6a';
+      ctx.shadowColor = '#9ece6a'; ctx.shadowBlur = 8;
+      ctx.font = "bold 8px 'Press Start 2P',monospace";
+      ctx.textAlign = 'center';
+      ctx.fillText(simsSelectedAgents.size + ' SELECTED', CW/2, 18);
+      ctx.textAlign = 'left';
+      ctx.restore();
+    }
     for (const sp of Object.values(agentStates)) {
       if (sp._simsWaiting) {
         ctx.save();
@@ -8477,7 +8520,7 @@ function loop(now) {
         if (pts.length >= 2) {
           ctx.save();
           ctx.setLineDash([3, 5]);
-          ctx.strokeStyle = sp.id === simsSelectedAgent ? '#9ece6a' : '#7aa2f760';
+          ctx.strokeStyle = simsSelectedAgents.has(sp.id) ? '#9ece6a' : '#7aa2f760';
           ctx.lineWidth = 1.5;
           ctx.beginPath();
           ctx.moveTo(OX + pts[0].tx * T + T/2, OY + pts[0].ty * T + T/2);
@@ -8503,7 +8546,7 @@ function loop(now) {
       }
     }
     // Hover tooltip — show spot name when hovering in sims mode
-    if (simsSelectedAgent && simsHoverSpot) {
+    if (simsSelectedAgents.size > 0 && simsHoverSpot) {
       const hs = simsHoverSpot.spot;
       const hx = OX + hs.tx * T + T/2;
       const hy = OY + hs.ty * T - 4;
@@ -9118,8 +9161,10 @@ function recordTimelineEvent(id, working) {
 const HEAT_MAX_COLS = 80, HEAT_MAX_ROWS = 120;
 const heatGrid = new Float32Array(HEAT_MAX_COLS * HEAT_MAX_ROWS);
 let heatMax = 1; // running max for normalization
-let simsSelectedAgent = null;
+let simsSelectedAgents = new Set();
 let simsHoverSpot = null; // {spot, idx} — IDLE_SPOT under cursor in sims mode
+const NEON_COLORS = ['#ff79c6', '#8be9fd', '#50fa7b', '#ffb86c', '#bd93f9'];
+let neonSignColorIdx = 0;
 const simsArrivalFx = [];  // [{x, y, life, maxLife, text}] — arrival celebration effects
 let adminObjects = []; // {id, label, tx, ty, w, h} — tile coords
 let adminSelected = null;
@@ -9225,6 +9270,7 @@ function buildAdminObjects() {
 
   // Corkboard (sprint board on top wall)
   adminObjects.push({id:'corkboard', label:'📌 Corkboard', tx:10.5, ty:0, w:2.5, h:1.6});
+  adminObjects.push({id:'neon_sign', label:'💡 Neon Sign', tx:3, ty:0, w:3, h:1});
   adminObjects.push({id:'whiteboard', label:'📝 Whiteboard', tx:17, ty:0, w:3, h:1.6});
 
   // Kanban board
@@ -9307,6 +9353,7 @@ const BUILTIN_POSITIONS = {
   "desk_19": {"tx": 19.5, "ty": 5},
 
   // ═══ WALL DECORATIONS ═══
+  "neon_sign":  {"tx": 3,    "ty": 0},
   "corkboard":  {"tx": 11,   "ty": 0},
   "whiteboard": {"tx": 27.5, "ty": 0},
   "kanban":     {"tx": 22.5, "ty": 0},
@@ -9500,7 +9547,7 @@ function enterAdminMode() {
 
 function toggleSimsMode() {
   simsMode = !simsMode;
-  simsSelectedAgent = null;
+  simsSelectedAgents = new Set();
   simsHoverSpot = null;
   if (simsMode) {
     simsBtn.textContent = '🎮 PLAYING';
@@ -9608,14 +9655,14 @@ canvas.addEventListener('mousedown', e => {
 
 canvas.addEventListener('mousemove', e => {
   // Sims mode: hover detection for spot tooltips
-  if (simsMode && simsSelectedAgent) {
+  if (simsMode && simsSelectedAgents.size > 0) {
     const {tx, ty} = mouseToTile(e);
     simsHoverSpot = null;
-    let bestDist = 9; // 3 tile radius squared
+    let bestDist = 16; // 4 tile radius squared
     for (let i = 0; i < IDLE_SPOTS.length; i++) {
       const s = IDLE_SPOTS[i];
       const holder = idleOccupied[i];
-      if (holder !== undefined && holder !== simsSelectedAgent) continue;
+      if (holder !== undefined && !simsSelectedAgents.has(holder)) continue;
       const dx = tx - s.tx, dy = ty - s.ty;
       const d2 = dx*dx + dy*dy;
       if (d2 < bestDist) { bestDist = d2; simsHoverSpot = {spot: s, idx: i}; }
@@ -9883,6 +9930,7 @@ const CLICK_OBJ_MAP = {
   'jukebox':         'jukebox',
   'pinball':         'pinball',
   'crystal_ball':    'crystal_ball',
+  'neon_sign':       'neon_sign',
   'whiteboard':      'whiteboard',
   'kitchen_table':   'kitchen_table',
   'bookshelf':       'bookshelf',
@@ -9920,6 +9968,7 @@ function findClickableAt(tx, ty) {
     {id:'telescope', w:1, h:2},
     {id:'nap_pod', w:2.5, h:1.5},
     {id:'corkboard', w:2.5, h:1.6},
+    {id:'neon_sign', w:3, h:1},
     {id:'whiteboard', w:3, h:1.6},
     {id:'trophy_cabinet', w:2, h:2.5},
     {id:'lava_lamp', w:1.5, h:2.5},
@@ -9960,47 +10009,57 @@ canvas.addEventListener('click', e => {
     }
 
     if (clickedAgentId) {
-      // Toggle selection: click same agent = deselect, different = switch
-      simsSelectedAgent = (simsSelectedAgent === clickedAgentId) ? null : clickedAgentId;
+      // Toggle agent in/out of multi-selection set
+      if (simsSelectedAgents.has(clickedAgentId)) {
+        simsSelectedAgents.delete(clickedAgentId);
+      } else {
+        simsSelectedAgents.add(clickedAgentId);
+      }
       return;
     }
 
-    // No agent clicked — if we have a selected agent, send them to clicked location
-    if (simsSelectedAgent) {
-      const sp = agentStates[simsSelectedAgent];
-      if (!sp) { simsSelectedAgent = null; return; }
-
-      // Find nearest IDLE_SPOT to clicked tile (within 3 tiles)
-      let bestSpot = null, bestIdx = -1, bestDist = 9;
+    // No agent clicked — send all selected agents to spots near clicked location
+    if (simsSelectedAgents.size > 0) {
+      // Collect available spots within 4 tiles of click, sorted by distance
+      const available = [];
       for (let i = 0; i < IDLE_SPOTS.length; i++) {
         const s = IDLE_SPOTS[i];
         const holder = idleOccupied[i];
-        if (holder !== undefined && holder !== simsSelectedAgent) continue; // taken
+        if (holder !== undefined && !simsSelectedAgents.has(holder)) continue;
         const dx = tx - s.tx, dy = ty - s.ty;
         const d2 = dx*dx + dy*dy;
-        if (d2 < bestDist) { bestDist = d2; bestSpot = s; bestIdx = i; }
+        if (d2 < 16) available.push({spot: s, idx: i, d2});
       }
-
-      if (bestSpot) {
-        // Send agent to that idle spot
-        sp._simsWaiting = false;
-        sp.arrived = false;
-        sp.activityDur = 30 + Math.random() * 30;
-        if (sp.slotIdx >= 0 && idleOccupied[sp.slotIdx] === sp.id) delete idleOccupied[sp.slotIdx];
-        sp.slotIdx = bestIdx;
-        idleOccupied[bestIdx] = sp.id;
-        sp.activityAnim = bestSpot.anim;
-        sp._simsArrivalPending = true; // flag for arrival animation
-        sp.setTarget(bestSpot.tx, bestSpot.ty);
-      } else {
-        // No spot nearby — wander to clicked tile
-        sp._simsWaiting = false;
-        sp.arrived = false;
-        sp.activityDur = 10 + Math.random() * 10;
-        sp._simsArrivalPending = true;
-        sp.setTarget(Math.max(1, Math.min(tx, COLS-2)), Math.max(1, Math.min(ty, ROWS-2)));
+      available.sort((a, b) => a.d2 - b.d2);
+      let spotPtr = 0;
+      for (const agentId of simsSelectedAgents) {
+        const sp = agentStates[agentId];
+        if (!sp) continue;
+        const asgn = available[spotPtr];
+        if (asgn) {
+          sp._simsWaiting = false;
+          sp.arrived = false;
+          sp.activityDur = 30 + Math.random() * 30;
+          if (sp.slotIdx >= 0 && idleOccupied[sp.slotIdx] === sp.id) delete idleOccupied[sp.slotIdx];
+          sp.slotIdx = asgn.idx;
+          idleOccupied[asgn.idx] = sp.id;
+          sp.activityAnim = asgn.spot.anim;
+          sp._simsArrivalPending = true;
+          sp.setTarget(asgn.spot.tx, asgn.spot.ty);
+          spotPtr++;
+        } else {
+          // No spot nearby — wander near clicked tile (staggered)
+          sp._simsWaiting = false;
+          sp.arrived = false;
+          sp.activityDur = 10 + Math.random() * 10;
+          sp._simsArrivalPending = true;
+          sp.setTarget(
+            Math.max(1, Math.min(tx + (Math.random()-0.5)*2, COLS-2)),
+            Math.max(1, Math.min(ty + (Math.random()-0.5)*2, ROWS-2))
+          );
+        }
       }
-      simsSelectedAgent = null;
+      simsSelectedAgents = new Set();
       return;
     }
     return;
@@ -10064,6 +10123,7 @@ canvas.addEventListener('click', e => {
   if (clickAnims.some(a => a.id === hit.id)) return;
   clickAnims.push({id: hit.id, x: hit.cx, y: hit.cy, startTick: globalTick, type: hit.type,
     particles: initClickParticles(hit.type, hit.cx, hit.cy)});
+  if (hit.type === 'neon_sign') neonSignColorIdx = (neonSignColorIdx + 1) % NEON_COLORS.length;
   blip(520, 0.04, 'square', 0.02);
 });
 
@@ -10153,6 +10213,17 @@ function initClickParticles(type, cx, cy) {
     case 'whiteboard':
       // Chalk dust + marker caps burst
       for (let i=0;i<10;i++) p.push({x:cx+(Math.random()-0.5)*35, y:cy+(Math.random()-0.5)*18, vx:(Math.random()-0.5)*2.2, vy:-0.8-Math.random()*2, size:2+Math.random()*4, col:['#ffffff','#aaccff','#ffccaa','#aaffcc','#ffaacc','#ffffff','#e0e0f8'][Math.floor(Math.random()*7)]});
+      break;
+    case 'neon_sign':
+      { const nc = NEON_COLORS[(neonSignColorIdx + 1) % NEON_COLORS.length];
+        for (let i = 0; i < 12; i++) {
+          const angle = (i / 12) * Math.PI * 2;
+          p.push({x: cx + Math.cos(angle)*10, y: cy + Math.sin(angle)*5,
+            vx: Math.cos(angle)*(0.4+Math.random()*1.2),
+            vy: Math.sin(angle)*(0.4+Math.random()*1.2) - 0.8,
+            size: 2+Math.random()*2, col: nc});
+        }
+      }
       break;
     case 'lava_lamp':
       for (let i = 0; i < 8; i++) p.push({x: cx + (Math.random()-0.5)*10, y: cy - 5, vx: (Math.random()-0.5)*1.2, vy: -1.2-Math.random()*1.5, size: 3+Math.random()*4, col: ['#ff6030','#ff8040','#ffaa60'][i%3]});
@@ -10759,6 +10830,28 @@ function drawClickAnims(ctx, tick) {
         }
         break;
       }
+      case 'neon_sign': {
+        // Neon spark burst + color change text
+        const ncol = NEON_COLORS[neonSignColorIdx];
+        for (const p of a.particles) {
+          p.x += p.vx; p.y += p.vy; p.vx *= 0.95; p.vy *= 0.95;
+          ctx.globalAlpha = alpha * (1 - t * 0.7);
+          ctx.fillStyle = p.col;
+          ctx.shadowColor = p.col; ctx.shadowBlur = 8;
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+          ctx.shadowBlur = 0;
+        }
+        if (t < 0.5) {
+          ctx.globalAlpha = alpha * (1 - t * 1.5);
+          ctx.fillStyle = ncol;
+          ctx.shadowColor = ncol; ctx.shadowBlur = 10;
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.textAlign = 'center';
+          ctx.fillText('✨ VIBE!', a.x, a.y - 26 - t * 12); ctx.textAlign = 'left';
+          ctx.shadowBlur = 0;
+        }
+        break;
+      }
       case 'lava_lamp': {
         // Blobs float up when tapped
         for (const p of a.particles) {
@@ -10943,7 +11036,7 @@ document.addEventListener('keydown', e => {
   if (e.key === 'h' || e.key === 'H') heatmapVisible = !heatmapVisible;
   if (e.key === 'p' || e.key === 'P') productivityVisible = !productivityVisible;
   if (e.key === 't' || e.key === 'T') timelineVisible = !timelineVisible;
-  if (e.key === 'Escape' && simsMode && simsSelectedAgent) { simsSelectedAgent = null; }
+  if (e.key === 'Escape' && simsMode && simsSelectedAgents.size > 0) { simsSelectedAgents = new Set(); }
 });
 
 // ════════════════════════════════════════════════════════════════
