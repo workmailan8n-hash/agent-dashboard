@@ -3559,18 +3559,7 @@ function buildObstacleGrid() {
     mark(c, 21);
   }
   // (Activity wall removed — open flow between lounge and activity zone)
-  // Sports wall (row 45)
-  const actDoorL = Math.floor(COLS*0.35), actDoorR = Math.floor(COLS*0.65);
-  for (let c = 1; c < COLS-1; c++) {
-    if (c >= actDoorL && c <= actDoorR) continue;
-    mark(c, 45);
-  }
-  // (Gym/Gaming divider removed — open layout)
-  // Sports/Social divider (col 17, rows 46-54)
-  for (let r = 46; r <= 54; r++) {
-    if (r >= 49 && r <= 51) continue;
-    mark(17, r);
-  }
+  // (Sports wall, gym/gaming divider, sports/social divider all removed — open layout)
 
   const rXobs = PER_ROW * STEP_X + 2;
 
@@ -4731,25 +4720,10 @@ function buildBackground() {
 
   // (Activity zone wall and gym/gaming divider removed — open layout)
 
-  // ── Sports/Social divider (vertical, col 17, rows 46-54, door at 49-51) ──
-  drawVWall(17, 46, 54, 49, 51);
-
-  // ── Sports wall (horizontal, row 45, door in center) ──
-  drawHWall(45, 1, COLS-2, Math.floor(COLS*0.35), Math.floor(COLS*0.65));
+  // (Sports wall and dividers removed — open layout below lounge)
 
   // ── Room labels (small, subtle) ──
-  ctx.fillStyle = '#4a4870'; ctx.font = "5px 'Press Start 2P',monospace";
-  const roomLabels = [
-    [2, 21.5, 'LOUNGE'],
-    [2, 35.5, 'GYM'],
-    [19, 35.5, 'GAMING'],
-    [2, 45.5, 'SPORTS'],
-    [19, 45.5, 'SOCIAL'],
-  ];
-  for (const [lx, ly, label] of roomLabels) {
-    const [rlx, rly] = ts(lx, ly);
-    ctx.fillText(label, rlx, rly + T/2);
-  }
+  // (Room labels removed — clean open layout)
 
   // Nameplate
   const npX=OX+Math.floor((COLS-10)/2)*T, npY=OY+6;
