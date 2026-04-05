@@ -9458,7 +9458,8 @@ function saveAdminPositions() {
   const pos = {};
   for (const obj of adminObjects) { pos[obj.id] = {tx: obj.tx, ty: obj.ty}; }
   localStorage.setItem('admin_positions', JSON.stringify(pos));
-  window._adminPos = pos;
+  // Merge: BUILTIN is base, admin edits override
+  window._adminPos = Object.assign({}, BUILTIN_POSITIONS, pos);
   syncIdleSpotsToAdmin();
   for (const [id, sp] of Object.entries(agentStates)) {
     if (sp.isWorking && sp.slotIdx >= 0 && sp.slotIdx < DESK_SLOTS.length) {
