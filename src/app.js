@@ -2187,6 +2187,95 @@ function drawLavaLamp(ctx, x, y, tick) {
   ctx.restore();
 }
 
+function drawPinballMachine(ctx, x, y, tick) {
+  const t = tick * 0.03;
+  const pW = 20, pH = 44;
+  // Cabinet legs
+  fillR(ctx, x+2, y+pH+2, 4, 6, '#1a1a28');
+  fillR(ctx, x+pW-6, y+pH+2, 4, 6, '#1a1a28');
+  // Main cabinet body (slightly angled top)
+  ctx.save();
+  ctx.shadowColor = '#6040ff60'; ctx.shadowBlur = 10;
+  fillR(ctx, x, y+12, pW, pH-8, '#1a1030');
+  ctx.restore();
+  fillR(ctx, x+1, y+13, pW-2, pH-12, '#22183c');
+  // Backglass top panel (angled)
+  ctx.save();
+  ctx.fillStyle = '#2a1848';
+  ctx.beginPath();
+  ctx.moveTo(x, y+12); ctx.lineTo(x+pW, y+12);
+  ctx.lineTo(x+pW-2, y); ctx.lineTo(x+2, y);
+  ctx.closePath(); ctx.fill();
+  ctx.restore();
+  // Backglass artwork — neon-style
+  ctx.save();
+  const hue = (tick * 1.5) % 360;
+  ctx.globalAlpha = 0.8;
+  ctx.fillStyle = `hsl(${hue},100%,55%)`;
+  fillR(ctx, x+3, y+1, pW-6, 3, `hsl(${hue},100%,55%)`);
+  ctx.fillStyle = `hsl(${(hue+120)%360},100%,55%)`;
+  fillR(ctx, x+3, y+6, pW-6, 3, `hsl(${(hue+120)%360},100%,55%)`);
+  ctx.restore();
+  // Backglass star (center)
+  ctx.save();
+  ctx.globalAlpha = 0.5 + Math.sin(t * 3) * 0.3;
+  ctx.fillStyle = '#ffee40';
+  ctx.beginPath(); ctx.arc(x+pW/2, y+4, 3, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  // Playfield window (glass top)
+  ctx.save(); ctx.shadowColor = '#4020a060'; ctx.shadowBlur = 8;
+  fillR(ctx, x+3, y+16, pW-6, pH-22, '#0a0618');
+  ctx.restore();
+  // Playfield: bumpers
+  const bumpCols = ['#f7768e', '#9ece6a', '#7aa2f7'];
+  for (let bi=0; bi<3; bi++) {
+    const bx = x + 5 + bi * 5, by2 = y + 20 + bi * 4;
+    const bump = 0.6 + Math.sin(t * 4 + bi * 2.1) * 0.3;
+    ctx.save();
+    ctx.globalAlpha = bump;
+    ctx.shadowColor = bumpCols[bi]; ctx.shadowBlur = 6;
+    ctx.fillStyle = bumpCols[bi];
+    ctx.beginPath(); ctx.arc(bx, by2, 3, 0, Math.PI*2); ctx.fill();
+    ctx.restore();
+  }
+  // Ball (animated rolling)
+  const ballX = x + 6 + Math.sin(t * 2.3) * 4;
+  const ballY = y + 32 + Math.cos(t * 1.7) * 4;
+  ctx.save();
+  ctx.shadowColor = '#c0c0ff'; ctx.shadowBlur = 4;
+  ctx.fillStyle = '#d0d0e8';
+  ctx.beginPath(); ctx.arc(ballX, ballY, 2, 0, Math.PI*2); ctx.fill();
+  ctx.restore();
+  // Flippers (animated)
+  const flipL = Math.sin(t * 6) > 0.4 ? -0.3 : 0.15;
+  const flipR = Math.sin(t * 6 + 1.5) > 0.4 ? 0.3 : -0.15;
+  ctx.save();
+  ctx.strokeStyle = '#c0a0ff'; ctx.lineWidth = 3;
+  ctx.shadowColor = '#c0a0ff'; ctx.shadowBlur = 5;
+  // Left flipper
+  ctx.save();
+  ctx.translate(x+5, y+pH-10);
+  ctx.rotate(flipL);
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(7,3); ctx.stroke();
+  ctx.restore();
+  // Right flipper
+  ctx.save();
+  ctx.translate(x+pW-5, y+pH-10);
+  ctx.rotate(flipR);
+  ctx.beginPath(); ctx.moveTo(0,0); ctx.lineTo(-7,3); ctx.stroke();
+  ctx.restore();
+  ctx.restore();
+  // Control panel (bottom)
+  fillR(ctx, x+2, y+pH-6, pW-4, 6, '#2a1840');
+  // Plunger
+  fillR(ctx, x+pW-4, y+pH-4, 3, 4, '#808090');
+  fillR(ctx, x+pW-3, y+pH-2, 1, 2, '#c0c0d0');
+  // Label
+  ctx.fillStyle = '#bb9af7'; ctx.font = "4px monospace"; ctx.textAlign = 'center';
+  ctx.fillText('PINBALL', x+pW/2, y+pH+1);
+  ctx.textAlign = 'left';
+}
+
 function drawJukebox(ctx, x, y, tick) {
   const t = tick * 0.025;
   const jW = 22, jH = 48;
@@ -3283,6 +3372,7 @@ function generateLayout(n) {
   IDLE_SPOTS.push({ tx:21, ty:ACT_ZONE_Y+10, anim:'djing', type:'dj', w:5,
     _objId:'dj_console', _defObjTx:20, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
   IDLE_SPOTS.push({ tx:26, ty:ACT_ZONE_Y+10, anim:'air_guitar', type:'jukebox', w:4, _objId:'jukebox', _defObjTx:25, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
+  IDLE_SPOTS.push({ tx:33, ty:ACT_ZONE_Y+10, anim:'playing_arcade', type:'pinball', w:5, _objId:'pinball', _defObjTx:32, _defObjTy:ACT_ZONE_Y+9, _offsetX:1, _offsetY:1 });
 
   // ══ Zone 2: MAKERS LAB (ACT_ZONE+14, left side) ═══════════════
 
@@ -3505,6 +3595,8 @@ function buildObstacleGrid() {
 
     const [jbObsTx,jbObsTy] = getAdminPos('jukebox', 25, ACT_ZONE_Y+9);
     markRect(jbObsTx, jbObsTy, 2, 2);
+    const [pbObsTx,pbObsTy] = getAdminPos('pinball', 32, ACT_ZONE_Y+9);
+    markRect(pbObsTx, pbObsTy, 2, 2);
   }
 
   // ── Zone 2: MAKERS LAB obstacles (ACT_ZONE+14) ─────
@@ -5068,6 +5160,10 @@ function buildBackground() {
     { const [_jbTx, _jbTy] = getAdminPos('jukebox', 25, ACT_ZONE_Y+9);
       const [jbx, jby] = ts(_jbTx, _jbTy);
       drawJukebox(ctx, jbx - T/2, jby - 8, globalTick); }
+    // ── Pinball Machine (gaming room, col 32 row ACT+9) ────────
+    { const [_pbTx, _pbTy] = getAdminPos('pinball', 32, ACT_ZONE_Y+9);
+      const [pbmx, pbmy] = ts(_pbTx, _pbTy);
+      drawPinballMachine(ctx, pbmx - T/2 + 2, pbmy - 12, globalTick); }
 
     // ── Telescope (makers lab, col 23) ──────────────────────────
     const [_telTx, _telTy] = getAdminPos('telescope', 18, ACT_ZONE_Y+14);
@@ -5934,17 +6030,17 @@ class AgentState {
     this.labelVel += lf*dt;
     this.labelScale = clamp(this.labelScale + this.labelVel*dt, 0, 1.25);
 
-    // ── Detect task completion → celebrate ────────────────────────
+    // ── Detect task completion → celebrate (one-shot) ──────────────
     const working = agentData.status==='working' || agentData.status==='thinking';
-    if (this.prevStatus && this.isWorking && !working && !this.celebrating) {
+    if (this.prevStatus && this.prevStatus !== 'idle' && this.isWorking && !working && !this.celebrating) {
       this.celebrating = true;
       this.celebrateTimer = ANIM.celebrating.frames / ANIM.celebrating.fps;
       PS.confetti(this.sx, this.sy);
       sndState();
     }
-    // ── Detect tool completion → small confetti burst ─────────────
+    // ── Detect tool completion → small confetti burst (one-shot) ──
     const curTool = agentData.currentTool || '';
-    if (this.prevTool && !curTool && working) {
+    if (this.prevTool && this.prevTool !== '' && !curTool && working) {
       PS.confetti(this.sx, this.sy - 16);
       blip(880, .06, 'square', .03);
       setTimeout(() => blip(1100, .05, 'square', .02), 80);
@@ -8232,12 +8328,45 @@ function loop(now) {
     if (simsSelectedAgent && agentStates[simsSelectedAgent]) {
       const sp = agentStates[simsSelectedAgent];
       ctx.save();
-      ctx.strokeStyle = '#9ece6a';
-      ctx.lineWidth = 2;
-      ctx.shadowColor = '#9ece6a';
-      ctx.shadowBlur = 10;
+      // Multi-layer pulsing glow ring
+      const glowPulse = 0.5 + Math.sin(globalTick * 0.12) * 0.35;
+      const ringScale = 1 + Math.sin(globalTick * 0.08) * 0.12;
+      const ringColor = sp.pal ? sp.pal.accent : '#9ece6a';
+      // Outer halo (soft bloom)
+      ctx.globalAlpha = glowPulse * 0.25;
+      ctx.shadowColor = ringColor;
+      ctx.shadowBlur = 20;
+      ctx.strokeStyle = ringColor;
+      ctx.lineWidth = 4;
       ctx.beginPath();
-      ctx.ellipse(sp.sx, sp.sy + 16, 14, 6, 0, 0, Math.PI*2);
+      ctx.ellipse(sp.sx, sp.sy + 16, 20 * ringScale, 8 * ringScale, 0, 0, Math.PI*2);
+      ctx.stroke();
+      // Mid ring
+      ctx.globalAlpha = glowPulse * 0.5;
+      ctx.shadowBlur = 12;
+      ctx.lineWidth = 2.5;
+      ctx.beginPath();
+      ctx.ellipse(sp.sx, sp.sy + 16, 16 * ringScale, 6.5 * ringScale, 0, 0, Math.PI*2);
+      ctx.stroke();
+      // Inner bright ring
+      ctx.globalAlpha = 0.75 + glowPulse * 0.2;
+      ctx.shadowBlur = 8;
+      ctx.lineWidth = 1.5;
+      ctx.strokeStyle = '#ffffff';
+      ctx.beginPath();
+      ctx.ellipse(sp.sx, sp.sy + 16, 14 * ringScale, 5.5 * ringScale, 0, 0, Math.PI*2);
+      ctx.stroke();
+      // Selection chevron above head
+      ctx.globalAlpha = 0.6 + glowPulse * 0.35;
+      ctx.strokeStyle = ringColor;
+      ctx.shadowColor = ringColor;
+      ctx.shadowBlur = 6;
+      ctx.lineWidth = 2;
+      const chevY = sp.sy - 28 - Math.sin(globalTick * 0.1) * 4;
+      ctx.beginPath();
+      ctx.moveTo(sp.sx - 6, chevY + 6);
+      ctx.lineTo(sp.sx, chevY);
+      ctx.lineTo(sp.sx + 6, chevY + 6);
       ctx.stroke();
       ctx.restore();
     }
@@ -8971,6 +9100,7 @@ function buildAdminObjects() {
     adminObjects.push({id:'arcade', label:'🕹 Arcade', tx:16, ty:ACT_ZONE_Y+9, w:2, h:2.5});
     adminObjects.push({id:'dj_console', label:'🎧 DJ Console', tx:20, ty:ACT_ZONE_Y+9, w:2.5, h:1.2});
     adminObjects.push({id:'jukebox', label:'🎵 Jukebox', tx:25, ty:ACT_ZONE_Y+9, w:2, h:2.5});
+    adminObjects.push({id:'pinball', label:'🎱 Pinball', tx:32, ty:ACT_ZONE_Y+9, w:2, h:2.5});
     // Zone 2: MAKERS LAB (ACT_ZONE+14)
     adminObjects.push({id:'server_rack', label:'🖥 Server Rack', tx:2, ty:ACT_ZONE_Y+14, w:2, h:2.2});
     adminObjects.push({id:'printer_3d', label:'🖨 3D Printer', tx:7, ty:ACT_ZONE_Y+14, w:2, h:1.8});
@@ -9106,6 +9236,7 @@ const BUILTIN_POSITIONS = {
   "arcade": {"tx": 27, "ty": 37},
   "dj_console": {"tx": 32, "ty": 37},
   "jukebox": {"tx": 27, "ty": 41},
+  "pinball": {"tx": 32, "ty": 41},
 
   // ═══ SPORTS ROOM (rows 46-54, cols 1-16) — games spread ═══
   "pingpong": {"tx": 2, "ty": 47},
@@ -9606,6 +9737,7 @@ const CLICK_OBJ_MAP = {
   'trophy_cabinet':  'trophy_cabinet',
   'lava_lamp':       'lava_lamp',
   'jukebox':         'jukebox',
+  'pinball':         'pinball',
   'crystal_ball':    'crystal_ball',
   'whiteboard':      'whiteboard',
   'kitchen_table':   'kitchen_table',
