@@ -3233,6 +3233,361 @@ function drawPingPongBall(ctx) {
   ctx.fill();
 }
 
+// ── Ping Pong Mini-Game ──────────────────────────────────────────
+function launchPingPongGame() {
+  const overlay = document.createElement("div");
+  overlay.style.cssText =
+    "position:fixed;inset:0;background:rgba(5,5,15,0.93);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;font-family:'Press Start 2P',monospace;";
+
+  const title = document.createElement("div");
+  title.style.cssText =
+    "color:#7aa2f7;font-size:11px;margin-bottom:14px;text-shadow:0 0 12px #7aa2f7;letter-spacing:2px;";
+  title.textContent = "🏓 PING PONG";
+  overlay.appendChild(title);
+
+  const gc_canvas = document.createElement("canvas");
+  const GW = 580,
+    GH = 280;
+  gc_canvas.width = GW;
+  gc_canvas.height = GH;
+  gc_canvas.style.cssText =
+    "border:2px solid #3a3860;border-radius:4px;cursor:crosshair;display:block;";
+  overlay.appendChild(gc_canvas);
+
+  const instr = document.createElement("div");
+  instr.style.cssText =
+    "color:#a9b1d650;font-size:5px;margin-top:10px;letter-spacing:1px;";
+  instr.textContent = "MOUSE: move paddle  |  CLICK: power hit  |  ESC: exit";
+  overlay.appendChild(instr);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "✕ EXIT";
+  closeBtn.style.cssText =
+    "margin-top:10px;background:#2a2848;color:#f7768e;border:1px solid #f7768e50;padding:5px 14px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:4px;";
+  overlay.appendChild(closeBtn);
+
+  document.body.appendChild(overlay);
+
+  const gc = gc_canvas.getContext("2d");
+  const PW = 8,
+    PH = 56,
+    BR = 5;
+  let mouseY = GH / 2;
+  let powerPending = false;
+  let rafId = null;
+
+  const gs = {
+    ball: { x: GW / 2, y: GH / 2, vx: 0, vy: 0 },
+    playerY: GH / 2 - PH / 2,
+    cpuY: GH / 2 - PH / 2,
+    playerScore: 0,
+    cpuScore: 0,
+    serving: true,
+    winner: null,
+  };
+
+  gc_canvas.addEventListener("mousemove", (e) => {
+    const rect = gc_canvas.getBoundingClientRect();
+    mouseY = (e.clientY - rect.top) * (GH / rect.height);
+  });
+
+  gc_canvas.addEventListener("click", () => {
+    if (gs.winner) {
+      gs.playerScore = 0;
+      gs.cpuScore = 0;
+      gs.winner = null;
+      gs.serving = true;
+      gs.ball.x = GW / 2;
+      gs.ball.y = GH / 2;
+      gs.ball.vx = 0;
+      gs.ball.vy = 0;
+      return;
+    }
+    if (gs.serving) {
+      gs.serving = false;
+      const ang = (Math.random() - 0.5) * 0.6;
+      const dir = Math.random() > 0.5 ? 1 : -1;
+      gs.ball.vx = dir * (3.5 + Math.random() * 1.5);
+      gs.ball.vy = Math.sin(ang) * 4;
+      return;
+    }
+    if (gs.ball.x < 60) powerPending = true;
+  });
+
+  function closeGame() {
+    if (rafId) cancelAnimationFrame(rafId);
+    overlay.remove();
+  }
+  closeBtn.addEventListener("click", closeGame);
+
+  function onKey(e) {
+    if (e.key === "Escape") {
+      closeGame();
+      document.removeEventListener("keydown", onKey);
+    }
+  }
+  document.addEventListener("keydown", onKey);
+
+  function resetBall() {
+    gs.ball.x = GW / 2;
+    gs.ball.y = GH / 2;
+    gs.ball.vx = 0;
+    gs.ball.vy = 0;
+    gs.serving = true;
+  }
+
+  function loop() {
+    gs.playerY = Math.max(0, Math.min(GH - PH, mouseY - PH / 2));
+    const cpuTarget = gs.ball.y - PH / 2;
+    const cpuSpd = 3.2 + gs.playerScore * 0.25;
+    gs.cpuY +=
+      Math.sign(cpuTarget - gs.cpuY) *
+      Math.min(cpuSpd, Math.abs(cpuTarget - gs.cpuY));
+    gs.cpuY = Math.max(0, Math.min(GH - PH, gs.cpuY));
+
+    if (!gs.serving && !gs.winner) {
+      gs.ball.x += gs.ball.vx;
+      gs.ball.y += gs.ball.vy;
+
+      if (gs.ball.y - BR < 0) {
+        gs.ball.y = BR;
+        gs.ball.vy = Math.abs(gs.ball.vy);
+        blip(400, 0.05);
+      }
+      if (gs.ball.y + BR > GH) {
+        gs.ball.y = GH - BR;
+        gs.ball.vy = -Math.abs(gs.ball.vy);
+        blip(400, 0.05);
+      }
+
+      // Player paddle (left)
+      if (
+        gs.ball.vx < 0 &&
+        gs.ball.x - BR < 22 + PW &&
+        gs.ball.x - BR > 18 &&
+        gs.ball.y + BR > gs.playerY &&
+        gs.ball.y - BR < gs.playerY + PH
+      ) {
+        gs.ball.x = 22 + PW + BR;
+        const hit = (gs.ball.y - gs.playerY) / PH - 0.5;
+        const pwr = powerPending ? 1.6 : 1.05;
+        gs.ball.vx = Math.min(Math.abs(gs.ball.vx) * pwr, 14);
+        gs.ball.vy = hit * 9 + (Math.random() - 0.5) * 1.5;
+        powerPending = false;
+        blip(700, 0.08, "square", 0.05);
+      }
+
+      // CPU paddle (right)
+      if (
+        gs.ball.vx > 0 &&
+        gs.ball.x + BR > GW - 22 - PW &&
+        gs.ball.x + BR < GW - 18 &&
+        gs.ball.y + BR > gs.cpuY &&
+        gs.ball.y - BR < gs.cpuY + PH
+      ) {
+        gs.ball.x = GW - 22 - PW - BR;
+        const hit = (gs.ball.y - gs.cpuY) / PH - 0.5;
+        gs.ball.vx = -Math.min(Math.abs(gs.ball.vx) * 1.04, 14);
+        gs.ball.vy = hit * 9 + (Math.random() - 0.5) * 1.5;
+        blip(500, 0.07, "square", 0.04);
+      }
+
+      if (gs.ball.x < 0) {
+        gs.cpuScore++;
+        blip(200, 0.35, "sawtooth", 0.06);
+        resetBall();
+        if (gs.cpuScore >= 5) gs.winner = "CPU WINS";
+      }
+      if (gs.ball.x > GW) {
+        gs.playerScore++;
+        blip(880, 0.18, "square", 0.06);
+        resetBall();
+        if (gs.playerScore >= 5) gs.winner = "YOU WIN!";
+      }
+    }
+
+    // Draw table
+    gc.fillStyle = "#0d2d1a";
+    gc.fillRect(0, 0, GW, GH);
+    gc.strokeStyle = "#ffffff35";
+    gc.lineWidth = 1;
+    gc.strokeRect(8, 8, GW - 16, GH - 16);
+    gc.setLineDash([6, 6]);
+    gc.beginPath();
+    gc.moveTo(GW / 2, 0);
+    gc.lineTo(GW / 2, GH);
+    gc.stroke();
+    gc.setLineDash([]);
+
+    // Net
+    for (let ny = 0; ny < GH; ny += 10) {
+      gc.fillStyle = ny % 20 === 0 ? "#ffffff80" : "#ffffff30";
+      gc.fillRect(GW / 2 - 1, ny, 2, 8);
+    }
+
+    // Paddles
+    gc.shadowBlur = 12;
+    gc.shadowColor = "#7aa2f7";
+    gc.fillStyle = "#7aa2f7";
+    gc.fillRect(22, gs.playerY, PW, PH);
+    gc.shadowColor = "#f7768e";
+    gc.fillStyle = "#f7768e";
+    gc.fillRect(GW - 22 - PW, gs.cpuY, PW, PH);
+    gc.shadowBlur = 0;
+
+    // Ball
+    if (!gs.serving) {
+      gc.shadowColor = "#ffffffa0";
+      gc.shadowBlur = 10;
+      gc.fillStyle = "#f5f5f0";
+      gc.beginPath();
+      gc.arc(gs.ball.x, gs.ball.y, BR, 0, Math.PI * 2);
+      gc.fill();
+      gc.shadowBlur = 0;
+      // trail
+      gc.globalAlpha = 0.3;
+      gc.fillStyle = "#ffffff";
+      gc.beginPath();
+      gc.arc(
+        gs.ball.x - gs.ball.vx * 2,
+        gs.ball.y - gs.ball.vy * 2,
+        BR * 0.6,
+        0,
+        Math.PI * 2,
+      );
+      gc.fill();
+      gc.globalAlpha = 1;
+    } else {
+      const pulse = 0.4 + 0.4 * Math.sin(Date.now() * 0.008);
+      gc.globalAlpha = pulse;
+      gc.fillStyle = "#f5f5f0";
+      gc.beginPath();
+      gc.arc(GW / 2, GH / 2, BR, 0, Math.PI * 2);
+      gc.fill();
+      gc.globalAlpha = 1;
+      gc.fillStyle = "#e0af68";
+      gc.font = "7px 'Press Start 2P',monospace";
+      gc.textAlign = "center";
+      gc.fillText("CLICK TO SERVE", GW / 2, GH / 2 - 22);
+      gc.textAlign = "left";
+    }
+
+    // Scores
+    gc.fillStyle = "#c8d3f5";
+    gc.font = "18px 'Press Start 2P',monospace";
+    gc.textAlign = "center";
+    gc.fillText(gs.playerScore, GW / 4, 38);
+    gc.fillText(gs.cpuScore, (GW * 3) / 4, 38);
+    gc.fillStyle = "#ffffff30";
+    gc.font = "5px 'Press Start 2P',monospace";
+    gc.fillText("YOU", GW / 4, 52);
+    gc.fillText("CPU", (GW * 3) / 4, 52);
+    gc.textAlign = "left";
+
+    // Winner
+    if (gs.winner) {
+      gc.fillStyle = "rgba(5,5,15,0.75)";
+      gc.fillRect(0, 0, GW, GH);
+      gc.fillStyle = gs.playerScore >= 5 ? "#9ece6a" : "#f7768e";
+      gc.font = "22px 'Press Start 2P',monospace";
+      gc.textAlign = "center";
+      gc.shadowColor = gc.fillStyle;
+      gc.shadowBlur = 16;
+      gc.fillText(gs.winner, GW / 2, GH / 2 - 18);
+      gc.shadowBlur = 0;
+      gc.fillStyle = "#a9b1d6";
+      gc.font = "7px 'Press Start 2P',monospace";
+      gc.fillText("CLICK TO PLAY AGAIN", GW / 2, GH / 2 + 20);
+      gc.textAlign = "left";
+    }
+
+    rafId = requestAnimationFrame(loop);
+  }
+
+  loop();
+}
+
+// ── Zen Garden (sand tray with rake) ────────────────────────────
+function drawZenGarden(ctx, x, y, tick) {
+  const tw = T * 2,
+    th = T * 1.4;
+  // Wooden tray frame
+  ctx.save();
+  ctx.shadowColor = "#00000060";
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = "#5a3010";
+  ctx.fillRect(x, y + 6, tw, th);
+  ctx.restore();
+  ctx.fillStyle = "#6e3c14";
+  ctx.fillRect(x + 2, y + 4, tw - 4, th - 2);
+  // Sand fill
+  ctx.fillStyle = "#e8dfc0";
+  ctx.fillRect(x + 4, y + 6, tw - 8, th - 6);
+  // Subtle sand gradient tint
+  const sg = ctx.createLinearGradient(x + 4, y + 6, x + tw - 4, y + th);
+  sg.addColorStop(0, "rgba(255,255,220,0.15)");
+  sg.addColorStop(1, "rgba(180,160,100,0.15)");
+  ctx.fillStyle = sg;
+  ctx.fillRect(x + 4, y + 6, tw - 8, th - 6);
+  // Raked lines (horizontal grooves)
+  ctx.strokeStyle = "#c8b898";
+  ctx.lineWidth = 0.8;
+  for (let li = 0; li < 5; li++) {
+    const ly = y + 9 + li * ((th - 8) / 5);
+    ctx.beginPath();
+    ctx.moveTo(x + 5, ly);
+    ctx.lineTo(x + tw - 5, ly);
+    ctx.stroke();
+  }
+  // Small stones
+  const rocks = [
+    { rx: x + 12, ry: y + 12, r: 4 },
+    { rx: x + tw - 18, ry: y + th - 10, r: 3 },
+    { rx: x + tw / 2 + 6, ry: y + 14, r: 2.5 },
+  ];
+  for (const rk of rocks) {
+    ctx.fillStyle = "#707878";
+    ctx.beginPath();
+    ctx.ellipse(rk.rx, rk.ry, rk.r + 1, rk.r * 0.7, 0, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.fillStyle = "#8a9090";
+    ctx.beginPath();
+    ctx.ellipse(rk.rx - 0.5, rk.ry - 0.5, rk.r, rk.r * 0.6, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Concentric ripple rings around rocks
+    const ring = 0.5 + 0.5 * Math.sin(tick * 0.03 + rk.r);
+    ctx.strokeStyle = `rgba(180,160,120,${ring * 0.25})`;
+    ctx.lineWidth = 0.6;
+    ctx.beginPath();
+    ctx.ellipse(rk.rx, rk.ry, rk.r + 4, (rk.r + 4) * 0.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.ellipse(rk.rx, rk.ry, rk.r + 7, (rk.r + 7) * 0.5, 0, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // Bamboo rake (leaning on right edge)
+  ctx.strokeStyle = "#a06820";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + tw - 6, y + 2);
+  ctx.lineTo(x + tw - 9, y + th + 2);
+  ctx.stroke();
+  // Rake head tines
+  for (let ti = 0; ti < 4; ti++) {
+    ctx.beginPath();
+    ctx.moveTo(x + tw - 10 + ti * 2, y + th - 2);
+    ctx.lineTo(x + tw - 11 + ti * 2, y + th + 4);
+    ctx.stroke();
+  }
+  // Label
+  ctx.fillStyle = "#a08060";
+  ctx.font = "4px 'Press Start 2P',monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("ZEN", x + tw / 2, y + th + 14);
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
 // ── Rubber Duck ─────────────────────────────────────────────────
 function drawRubberDuck(ctx, x, y, tick) {
   ctx.save();
@@ -5981,6 +6336,12 @@ function buildObstacleGrid() {
       ACT_ZONE_Y - 2,
     );
     markRect(vmTx, vmTy, 2, 3);
+  }
+
+  // ── Zen Garden ─────
+  if (ACT_ZONE_Y > 0) {
+    const [zgObsTx, zgObsTy] = getAdminPos("zen_garden", 24, ACT_ZONE_Y + 23);
+    markRect(zgObsTx, zgObsTy, 2, 1.5);
   }
 
   // Zone divider wall removed from obstacle grid — purely visual, agents walk freely
@@ -12772,6 +13133,12 @@ function loop(now) {
     const [cbx, cby] = ts(_cbTx, _cbTy);
     drawCrystalBall(ctx, cbx - T / 2, cby - 8, globalTick);
   }
+  // Zen Garden (bottom zone, relaxation corner)
+  if (ACT_ZONE_Y > 0) {
+    const [_zgTx, _zgTy] = getAdminPos("zen_garden", 24, ACT_ZONE_Y + 23);
+    const [zgx, zgy] = ts(_zgTx, _zgTy);
+    drawZenGarden(ctx, zgx - T / 2, zgy - 8, globalTick);
+  }
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -14285,6 +14652,15 @@ function buildAdminObjects() {
       w: 2,
       h: 2.5,
     });
+  if (ACT_ZONE_Y > 0)
+    adminObjects.push({
+      id: "zen_garden",
+      label: "🪨 Zen Garden",
+      tx: 24,
+      ty: ACT_ZONE_Y + 23,
+      w: 2,
+      h: 1.5,
+    });
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -14496,6 +14872,7 @@ const BUILTIN_POSITIONS = {
   conf_table: { tx: 12, ty: 62 },
   espresso_bar: { tx: 20, ty: 63 },
   photo_booth: { tx: 16, ty: 53 },
+  zen_garden: { tx: 24, ty: 63 },
 };
 
 // Apply custom positions to actual game objects
@@ -15156,6 +15533,7 @@ const CLICK_OBJ_MAP = {
   gym: "gym",
   rowing_machine: "rowing_machine",
   photo_booth: "photo_booth",
+  zen_garden: "zen_garden",
 };
 
 // Dynamic: desks and couches
@@ -15199,6 +15577,7 @@ function findClickableAt(tx, ty) {
     { id: "gym", w: 5, h: 4 },
     { id: "rowing_machine", w: 2.5, h: 1.5 },
     { id: "photo_booth", w: 2, h: 2.5 },
+    { id: "zen_garden", w: 2, h: 1.5 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++)
@@ -15387,6 +15766,11 @@ canvas.addEventListener("click", (e) => {
 
   const hit = findClickableAt(tx, ty);
   if (!hit) return;
+  if (hit.type === "pingpong") {
+    launchPingPongGame();
+    blip(660, 0.1, "square", 0.04);
+    return;
+  }
   if (clickAnims.some((a) => a.id === hit.id)) return;
   clickAnims.push({
     id: hit.id,
@@ -15717,6 +16101,19 @@ function initClickParticles(type, cx, cy) {
             "#40ffff",
           ][i % 7],
         });
+      break;
+    case "zen_garden":
+      for (let i = 0; i < 10; i++) {
+        const ang = (i / 10) * Math.PI * 2;
+        p.push({
+          x: cx + Math.cos(ang) * 10,
+          y: cy + Math.sin(ang) * 5,
+          vx: Math.cos(ang) * (0.3 + Math.random() * 0.8),
+          vy: Math.sin(ang) * (0.3 + Math.random() * 0.8) - 0.5,
+          size: 2 + Math.random() * 2,
+          col: ["#e8dfc0", "#c8b898", "#d4c8a0", "#b8a880"][i % 4],
+        });
+      }
       break;
     case "photo_booth":
       // Camera flash burst + polaroid cards flying out
@@ -16591,6 +16988,43 @@ function drawClickAnims(ctx, tick) {
           ctx.font = "6px 'Press Start 2P',monospace";
           ctx.textAlign = "center";
           ctx.fillText("🔮 " + fortune, a.x, a.y - 30 - t * 14);
+          ctx.textAlign = "left";
+        }
+        break;
+      }
+      case "zen_garden": {
+        // Ripple rings radiating outward
+        const rings = 3;
+        for (let ri = 0; ri < rings; ri++) {
+          const rDelay = ri * 0.25;
+          if (t < rDelay) continue;
+          const rt = Math.min((t - rDelay) / 0.5, 1);
+          const rr = rt * 28;
+          ctx.globalAlpha = alpha * (1 - rt) * 0.6;
+          ctx.strokeStyle = "#c8b898";
+          ctx.lineWidth = 1.5 - rt;
+          ctx.beginPath();
+          ctx.ellipse(a.x, a.y + 4, rr, rr * 0.5, 0, 0, Math.PI * 2);
+          ctx.stroke();
+        }
+        for (const p of a.particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          ctx.globalAlpha = alpha * (1 - t * 0.8);
+          ctx.fillStyle = p.col;
+          ctx.fillRect(
+            Math.round(p.x - p.size / 2),
+            Math.round(p.y - p.size / 2),
+            p.size,
+            p.size,
+          );
+        }
+        if (t > 0.15 && t < 0.65) {
+          ctx.globalAlpha = alpha * Math.min(1, 1 - (t - 0.15) / 0.5);
+          ctx.fillStyle = "#9ece6a";
+          ctx.font = "8px 'Press Start 2P',monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("CALM", a.x, a.y - 18);
           ctx.textAlign = "left";
         }
         break;
