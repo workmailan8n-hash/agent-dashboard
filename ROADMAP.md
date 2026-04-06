@@ -58,7 +58,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Playable ping pong (click paddle to hit)
 - [x] Snake on arcade machine (arrow keys)
 - [x] Darts with scoring (click to aim + throw)
-- [ ] Leaderboard panel for scores
+- [x] Leaderboard panel for scores
 
 ## Day 7 — Refactor Sprint
 - [ ] Split index.html into modules (agents.js, objects.js, admin.js)

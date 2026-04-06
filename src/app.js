@@ -3396,13 +3396,21 @@ function launchPingPongGame() {
         gs.cpuScore++;
         blip(200, 0.35, "sawtooth", 0.06);
         resetBall();
-        if (gs.cpuScore >= 5) gs.winner = "CPU WINS";
+        if (gs.cpuScore >= 5) {
+          gs.winner = "CPU WINS";
+          if (typeof window.saveGameScore === "function")
+            window.saveGameScore("pingpong", gs.playerScore);
+        }
       }
       if (gs.ball.x > GW) {
         gs.playerScore++;
         blip(880, 0.18, "square", 0.06);
         resetBall();
-        if (gs.playerScore >= 5) gs.winner = "YOU WIN!";
+        if (gs.playerScore >= 5) {
+          gs.winner = "YOU WIN!";
+          if (typeof window.saveGameScore === "function")
+            window.saveGameScore("pingpong", gs.playerScore);
+        }
       }
     }
 
@@ -3649,6 +3657,8 @@ function launchSnakeGame() {
     }
     if (gs.snake.some((s) => s.x === head.x && s.y === head.y)) {
       gs.dead = true;
+      if (gs.score > 0 && typeof window.saveGameScore === "function")
+        window.saveGameScore("snake", gs.score);
       blip(150, 0.3, "sawtooth", 0.12);
       return;
     }
@@ -4137,6 +4147,8 @@ function launchDartsGame() {
         gs.throwAnim = null;
         if (gs.dartsLeft <= 0) {
           gs.phase = "gameover";
+          if (gs.totalScore > 0 && typeof window.saveGameScore === "function")
+            window.saveGameScore("darts", gs.totalScore);
         } else {
           gs.phase = "aiming";
         }
@@ -4359,6 +4371,127 @@ function drawNewtonsCradle(ctx, x, y, tick) {
   ctx.font = "4px 'Press Start 2P',monospace";
   ctx.textAlign = "center";
   ctx.fillText("CRADLE", cx, y + fh + 16);
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
+// ── Gumball Machine ──────────────────────────────────────────────
+function drawGumballMachine(ctx, x, y, tick) {
+  ctx.save();
+  const cx = x + T * 0.7;
+  // Stand leg
+  ctx.fillStyle = "#5a3820";
+  ctx.fillRect(cx - 3, y + T * 1.1, 6, T * 0.5);
+  // Base plate
+  ctx.fillStyle = "#7a4a28";
+  ctx.fillRect(cx - 10, y + T * 1.55, 20, 5);
+  // Dispenser housing (lower cylinder)
+  ctx.fillStyle = "#cc2222";
+  ctx.beginPath();
+  ctx.ellipse(cx, y + T * 1.05, 10, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#cc2222";
+  ctx.fillRect(cx - 10, y + T * 0.72, 20, T * 0.34);
+  ctx.fillStyle = "#991a1a";
+  ctx.fillRect(cx - 10, y + T * 0.72, 20, 3);
+  // Coin slot (tiny slit on side)
+  ctx.fillStyle = "#441010";
+  ctx.fillRect(cx + 6, y + T * 0.82, 5, 2);
+  // Glass globe
+  const globeR = T * 0.6;
+  const globeY = y + T * 0.7 - globeR;
+  // Globe shadow/depth
+  const globeGrad = ctx.createRadialGradient(
+    cx - globeR * 0.3,
+    globeY - globeR * 0.2,
+    globeR * 0.1,
+    cx,
+    globeY,
+    globeR,
+  );
+  globeGrad.addColorStop(0, "rgba(255,255,255,0.18)");
+  globeGrad.addColorStop(0.55, "rgba(160,210,240,0.25)");
+  globeGrad.addColorStop(1, "rgba(80,140,200,0.45)");
+  ctx.fillStyle = globeGrad;
+  ctx.beginPath();
+  ctx.arc(cx, globeY, globeR, 0, Math.PI * 2);
+  ctx.fill();
+  // Gumballs inside globe (colorful circles)
+  const GBALL_COLORS = [
+    "#f7768e",
+    "#9ece6a",
+    "#e0af68",
+    "#7aa2f7",
+    "#bb9af7",
+    "#ff9e64",
+    "#2ac3de",
+  ];
+  const ballData = [
+    { ox: -8, oy: 10 },
+    { ox: 4, oy: 12 },
+    { ox: -3, oy: 18 },
+    { ox: 8, oy: 16 },
+    { ox: -10, oy: 18 },
+    { ox: 1, oy: 4 },
+    { ox: -5, oy: 7 },
+    { ox: 9, oy: 8 },
+    { ox: -1, oy: 22 },
+    { ox: 6, oy: 21 },
+    { ox: -7, oy: 14 },
+    { ox: 11, oy: 20 },
+  ];
+  ctx.save();
+  ctx.beginPath();
+  ctx.arc(cx, globeY, globeR - 2, 0, Math.PI * 2);
+  ctx.clip();
+  ballData.forEach((b, i) => {
+    const wobble = Math.sin(tick * 0.015 + i * 1.3) * 0.8;
+    const bx = cx + b.ox + wobble;
+    const by = globeY + b.oy - globeR * 0.05;
+    const col = GBALL_COLORS[i % GBALL_COLORS.length];
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.2)";
+    ctx.beginPath();
+    ctx.arc(bx + 0.5, by + 0.8, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Ball
+    ctx.fillStyle = col;
+    ctx.beginPath();
+    ctx.arc(bx, by, 3.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Highlight
+    ctx.fillStyle = "rgba(255,255,255,0.35)";
+    ctx.beginPath();
+    ctx.arc(bx - 1, by - 1, 1.2, 0, Math.PI * 2);
+    ctx.fill();
+  });
+  ctx.restore();
+  // Globe rim (top cap)
+  ctx.fillStyle = "#cc2222";
+  ctx.beginPath();
+  ctx.ellipse(cx, globeY - globeR + 3, 8, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Globe glass shine overlay
+  ctx.save();
+  ctx.globalAlpha = 0.22 + 0.06 * Math.sin(tick * 0.04);
+  ctx.fillStyle = "#ffffff";
+  ctx.beginPath();
+  ctx.ellipse(
+    cx - globeR * 0.28,
+    globeY - globeR * 0.3,
+    globeR * 0.22,
+    globeR * 0.35,
+    -0.5,
+    0,
+    Math.PI * 2,
+  );
+  ctx.fill();
+  ctx.restore();
+  // Label
+  ctx.fillStyle = "#e0af68";
+  ctx.font = "4px 'Press Start 2P',monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("GUMBALL", cx, y + T * 1.7);
   ctx.textAlign = "left";
   ctx.restore();
 }
@@ -13955,6 +14088,11 @@ function loop(now) {
     const [ncx, ncy] = ts(_ncTx, _ncTy);
     drawNewtonsCradle(ctx, ncx - T / 2, ncy - 4, globalTick);
   }
+  {
+    const [_gbTx, _gbTy] = getAdminPos("gumball_machine", 36, 61);
+    const [gbx, gby] = ts(_gbTx, _gbTy);
+    drawGumballMachine(ctx, gbx - T / 2, gby - 4, globalTick);
+  }
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -16370,6 +16508,7 @@ const CLICK_OBJ_MAP = {
   zen_garden: "zen_garden",
   terrarium: "terrarium",
   newtons_cradle: "newtons_cradle",
+  gumball_machine: "gumball_machine",
 };
 
 // Dynamic: desks and couches
@@ -16416,6 +16555,7 @@ function findClickableAt(tx, ty) {
     { id: "zen_garden", w: 2, h: 1.5 },
     { id: "terrarium", w: 1.8, h: 1.4 },
     { id: "newtons_cradle", w: 1.5, h: 1.5 },
+    { id: "gumball_machine", w: 1.5, h: 2 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++)
@@ -16933,6 +17073,26 @@ function initClickParticles(type, cx, cy) {
           col: "#b0b0c0",
         });
       break;
+    case "gumball_machine": {
+      const GCOLS = [
+        "#f7768e",
+        "#9ece6a",
+        "#e0af68",
+        "#7aa2f7",
+        "#bb9af7",
+        "#ff9e64",
+      ];
+      for (let i = 0; i < 8; i++)
+        p.push({
+          x: cx + (Math.random() - 0.5) * 10,
+          y: cy - 10,
+          vx: (Math.random() - 0.5) * 3.5,
+          vy: -2.5 - Math.random() * 2,
+          size: 4 + Math.random() * 2,
+          col: GCOLS[Math.floor(Math.random() * GCOLS.length)],
+        });
+      break;
+    }
     case "jukebox":
       // Music notes burst
       for (let i = 0; i < 10; i++)
@@ -17817,6 +17977,29 @@ function drawClickAnims(ctx, tick) {
           ctx.globalAlpha = alpha * (t < 0.35 ? 1 : 1 - (t - 0.35) / 0.2);
           ctx.textAlign = "center";
           ctx.fillText("clack!", a.x, a.y - 20);
+          ctx.textAlign = "left";
+        }
+        break;
+      }
+      case "gumball_machine": {
+        // Colorful gumballs arc out
+        for (const p of a.particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.12;
+          p.vx *= 0.97;
+          ctx.globalAlpha = alpha * (1 - t * 0.7);
+          ctx.fillStyle = p.col;
+          ctx.beginPath();
+          ctx.arc(Math.round(p.x), Math.round(p.y), p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (t < 0.5) {
+          ctx.globalAlpha = alpha * (1 - t * 1.8);
+          ctx.fillStyle = "#e0af68";
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("25¢", a.x, a.y - 22 - t * 12);
           ctx.textAlign = "left";
         }
         break;

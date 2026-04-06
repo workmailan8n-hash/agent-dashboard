@@ -19,6 +19,19 @@
 </div>
 
 <div id="settings-backdrop"></div>
+<div id="leaderboard-backdrop"></div>
+<div id="leaderboard-panel">
+  <div class="lb-header">
+    <span>🏆 LEADERBOARD</span>
+    <button class="lb-close" id="lb-close">×</button>
+  </div>
+  <div class="lb-tabs">
+    <button class="lb-tab active" data-game="snake">🐍 SNAKE</button>
+    <button class="lb-tab" data-game="darts">🎯 DARTS</button>
+    <button class="lb-tab" data-game="pingpong">🏓 PING PONG</button>
+  </div>
+  <div class="lb-body" id="lb-body"></div>
+</div>
 <div id="settings-panel">
   <div class="settings-header">
     <span>⚙ SETTINGS</span>
@@ -38,6 +51,7 @@
     <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">📋 TASKS</button>
   </div>
   <span id="agent-count">0 agents</span>
+  <button id="btn-leaderboard">🏆 TOP</button>
   <button id="btn-settings">⚙ SET</button>
   <a id="public-url" class="loading" href="#" target="_blank">⏳ tunnel...</a>
 </header>
