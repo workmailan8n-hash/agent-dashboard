@@ -1,6 +1,15 @@
 @echo off
 cd /d C:\AI\agent-dashboard
 
+REM Ensure dashboard is up before sprint (agent will curl /api/tg-feedback)
+curl -s -o nul -m 2 http://localhost:3737/api/health
+if errorlevel 1 (
+  echo [sprint.bat] dashboard not running, starting in background...
+  start "Agent Dashboard" /min cmd /c "node server.js"
+  REM give it a few seconds to bind to port + open serveo tunnel
+  timeout /t 6 /nobreak > nul
+)
+
 REM Timestamped log file (rotated, no overwriting)
 for /f "tokens=2 delims==" %%a in ('wmic OS Get localdatetime /value') do set "dt=%%a"
 set "ts=%dt:~0,4%-%dt:~4,2%-%dt:~6,2%_%dt:~8,2%-%dt:~10,2%"
