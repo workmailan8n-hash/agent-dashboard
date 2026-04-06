@@ -55,7 +55,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Activity queue — assign next task before current finishes
 
 ## Day 7 — Mini-Games
-- [ ] Playable ping pong (click paddle to hit)
+- [x] Playable ping pong (click paddle to hit)
 - [ ] Snake on arcade machine (arrow keys)
 - [ ] Darts with scoring (click to aim + throw)
 - [ ] Leaderboard panel for scores
