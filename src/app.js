@@ -3507,6 +3507,275 @@ function launchPingPongGame() {
   loop();
 }
 
+// ── Snake Mini-Game (on arcade machine) ─────────────────────────
+function launchSnakeGame() {
+  const overlay = document.createElement("div");
+  overlay.style.cssText =
+    "position:fixed;inset:0;background:rgba(5,5,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;font-family:'Press Start 2P',monospace;";
+
+  const title = document.createElement("div");
+  title.style.cssText =
+    "color:#9ece6a;font-size:11px;margin-bottom:10px;text-shadow:0 0 12px #9ece6a;letter-spacing:2px;";
+  title.textContent = "🐍 SNAKE";
+  overlay.appendChild(title);
+
+  const scoreEl = document.createElement("div");
+  scoreEl.style.cssText =
+    "color:#e0af68;font-size:7px;margin-bottom:8px;letter-spacing:1px;";
+  scoreEl.textContent = "SCORE: 0  HI: 0";
+  overlay.appendChild(scoreEl);
+
+  const gc = document.createElement("canvas");
+  const COLS = 24,
+    ROWS = 18,
+    CS = 16;
+  const GW = COLS * CS,
+    GH = ROWS * CS;
+  gc.width = GW;
+  gc.height = GH;
+  gc.style.cssText =
+    "border:2px solid #3a3860;border-radius:4px;display:block;background:#0a0f0a;";
+  overlay.appendChild(gc);
+
+  const instr = document.createElement("div");
+  instr.style.cssText =
+    "color:#a9b1d650;font-size:5px;margin-top:8px;letter-spacing:1px;";
+  instr.textContent = "ARROW KEYS / WASD: move  |  ESC: exit";
+  overlay.appendChild(instr);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "✕ EXIT";
+  closeBtn.style.cssText =
+    "margin-top:8px;background:#2a2848;color:#f7768e;border:1px solid #f7768e50;padding:5px 14px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:4px;";
+  overlay.appendChild(closeBtn);
+
+  document.body.appendChild(overlay);
+
+  const ctx2 = gc.getContext("2d");
+  let hiScore = parseInt(localStorage.getItem("snake_hi") || "0");
+  let rafId = null;
+  let gs = null;
+
+  function mkFood(snake) {
+    let pos;
+    do {
+      pos = {
+        x: Math.floor(Math.random() * COLS),
+        y: Math.floor(Math.random() * ROWS),
+      };
+    } while (snake.some((s) => s.x === pos.x && s.y === pos.y));
+    return pos;
+  }
+
+  function startGame() {
+    const startX = Math.floor(COLS / 2),
+      startY = Math.floor(ROWS / 2);
+    gs = {
+      snake: [
+        { x: startX, y: startY },
+        { x: startX - 1, y: startY },
+        { x: startX - 2, y: startY },
+      ],
+      dir: { x: 1, y: 0 },
+      nextDir: { x: 1, y: 0 },
+      score: 0,
+      frame: 0,
+      speed: 8,
+      dead: false,
+      started: false,
+    };
+    gs.food = mkFood(gs.snake);
+    render();
+  }
+
+  function closeGame() {
+    if (rafId) cancelAnimationFrame(rafId);
+    document.removeEventListener("keydown", onKey);
+    overlay.remove();
+  }
+  closeBtn.addEventListener("click", closeGame);
+
+  function onKey(e) {
+    if (e.key === "Escape") {
+      closeGame();
+      return;
+    }
+    if (!gs) return;
+    if (gs.dead) {
+      startGame();
+      return;
+    }
+    if (
+      !gs.started &&
+      [
+        "ArrowUp",
+        "ArrowDown",
+        "ArrowLeft",
+        "ArrowRight",
+        "w",
+        "a",
+        "s",
+        "d",
+      ].includes(e.key)
+    ) {
+      gs.started = true;
+    }
+    const dirs = {
+      ArrowUp: { x: 0, y: -1 },
+      w: { x: 0, y: -1 },
+      ArrowDown: { x: 0, y: 1 },
+      s: { x: 0, y: 1 },
+      ArrowLeft: { x: -1, y: 0 },
+      a: { x: -1, y: 0 },
+      ArrowRight: { x: 1, y: 0 },
+      d: { x: 1, y: 0 },
+    };
+    const nd = dirs[e.key];
+    if (nd && !(nd.x === -gs.dir.x && nd.y === -gs.dir.y)) {
+      gs.nextDir = nd;
+      e.preventDefault();
+    }
+  }
+  document.addEventListener("keydown", onKey);
+
+  function update() {
+    if (!gs.started || gs.dead) return;
+    gs.dir = gs.nextDir;
+    const head = { x: gs.snake[0].x + gs.dir.x, y: gs.snake[0].y + gs.dir.y };
+    if (head.x < 0 || head.x >= COLS || head.y < 0 || head.y >= ROWS) {
+      gs.dead = true;
+      blip(150, 0.3, "sawtooth", 0.12);
+      return;
+    }
+    if (gs.snake.some((s) => s.x === head.x && s.y === head.y)) {
+      gs.dead = true;
+      blip(150, 0.3, "sawtooth", 0.12);
+      return;
+    }
+    gs.snake.unshift(head);
+    if (head.x === gs.food.x && head.y === gs.food.y) {
+      gs.score++;
+      if (gs.score > hiScore) {
+        hiScore = gs.score;
+        localStorage.setItem("snake_hi", hiScore);
+      }
+      gs.speed = Math.max(3, 8 - Math.floor(gs.score / 5));
+      gs.food = mkFood(gs.snake);
+      blip(700, 0.08, "square", 0.04);
+    } else {
+      gs.snake.pop();
+    }
+    scoreEl.textContent = "SCORE: " + gs.score + "  HI: " + hiScore;
+  }
+
+  function render() {
+    ctx2.clearRect(0, 0, GW, GH);
+    // Grid dots
+    ctx2.fillStyle = "#111a11";
+    for (let gy = 0; gy < ROWS; gy++)
+      for (let gx = 0; gx < COLS; gx++)
+        ctx2.fillRect(gx * CS + CS / 2 - 1, gy * CS + CS / 2 - 1, 2, 2);
+    if (!gs) return;
+    // Food (pulsing apple)
+    const pulse = 0.7 + 0.3 * Math.sin(Date.now() * 0.005);
+    ctx2.fillStyle = "#f7768e";
+    ctx2.globalAlpha = pulse;
+    ctx2.beginPath();
+    ctx2.arc(
+      gs.food.x * CS + CS / 2,
+      gs.food.y * CS + CS / 2,
+      CS / 2 - 2,
+      0,
+      Math.PI * 2,
+    );
+    ctx2.fill();
+    ctx2.globalAlpha = 1;
+    // Snake body
+    for (let i = gs.snake.length - 1; i >= 0; i--) {
+      const seg = gs.snake[i];
+      const t = i / gs.snake.length;
+      ctx2.fillStyle = gs.dead
+        ? "#556055"
+        : i === 0
+          ? "#9ece6a"
+          : `hsl(${100 - t * 20},${60 - t * 20}%,${40 - t * 10}%)`;
+      const pad = i === 0 ? 1 : 2;
+      ctx2.fillRect(
+        seg.x * CS + pad,
+        seg.y * CS + pad,
+        CS - pad * 2,
+        CS - pad * 2,
+      );
+      if (i === 0 && !gs.dead) {
+        ctx2.fillStyle = "#1a1a28";
+        if (gs.dir.x !== 0) {
+          ctx2.fillRect(
+            seg.x * CS + CS / 2 + gs.dir.x * 3,
+            seg.y * CS + CS / 2 - 3,
+            2,
+            2,
+          );
+          ctx2.fillRect(
+            seg.x * CS + CS / 2 + gs.dir.x * 3,
+            seg.y * CS + CS / 2 + 1,
+            2,
+            2,
+          );
+        } else {
+          ctx2.fillRect(
+            seg.x * CS + CS / 2 - 3,
+            seg.y * CS + CS / 2 + gs.dir.y * 3,
+            2,
+            2,
+          );
+          ctx2.fillRect(
+            seg.x * CS + CS / 2 + 1,
+            seg.y * CS + CS / 2 + gs.dir.y * 3,
+            2,
+            2,
+          );
+        }
+      }
+    }
+    // Overlay messages
+    if (!gs.started && !gs.dead) {
+      ctx2.fillStyle = "rgba(0,0,0,0.55)";
+      ctx2.fillRect(0, GH / 2 - 24, GW, 48);
+      ctx2.fillStyle = "#9ece6a";
+      ctx2.font = "8px 'Press Start 2P',monospace";
+      ctx2.textAlign = "center";
+      ctx2.fillText("PRESS ANY ARROW", GW / 2, GH / 2 - 6);
+      ctx2.fillText("KEY TO START", GW / 2, GH / 2 + 10);
+      ctx2.textAlign = "left";
+    }
+    if (gs.dead) {
+      ctx2.fillStyle = "rgba(0,0,0,0.65)";
+      ctx2.fillRect(0, GH / 2 - 28, GW, 56);
+      ctx2.fillStyle = "#f7768e";
+      ctx2.font = "10px 'Press Start 2P',monospace";
+      ctx2.textAlign = "center";
+      ctx2.fillText("GAME OVER", GW / 2, GH / 2 - 8);
+      ctx2.fillStyle = "#e0af68";
+      ctx2.font = "6px 'Press Start 2P',monospace";
+      ctx2.fillText("SCORE: " + gs.score, GW / 2, GH / 2 + 8);
+      ctx2.fillStyle = "#a9b1d6";
+      ctx2.font = "5px 'Press Start 2P',monospace";
+      ctx2.fillText("PRESS ANY KEY TO RETRY", GW / 2, GH / 2 + 22);
+      ctx2.textAlign = "left";
+    }
+  }
+
+  function loop() {
+    gs.frame++;
+    if (gs.frame % gs.speed === 0) update();
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+
+  startGame();
+  rafId = requestAnimationFrame(loop);
+}
+
 // ── Zen Garden (sand tray with rake) ────────────────────────────
 function drawZenGarden(ctx, x, y, tick) {
   const tw = T * 2,
@@ -3640,6 +3909,92 @@ function drawRubberDuck(ctx, x, y, tick) {
   ctx.font = "4px 'Press Start 2P',monospace";
   ctx.textAlign = "center";
   ctx.fillText("QUACK", x + T / 2, y + T + 20);
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
+// ── Terrarium (glass vivarium with gecko) ───────────────────────
+function drawTerrarium(ctx, x, y, tick) {
+  ctx.save();
+  const tw = T * 1.6,
+    th = T * 1.2;
+  const cx = x + tw / 2,
+    cy = y + th / 2;
+  // Glass box back wall (dark green tint)
+  ctx.fillStyle = "#0d1a10";
+  ctx.fillRect(x + 2, y + 2, tw - 4, th - 4);
+  // Sand floor (bottom strip)
+  ctx.fillStyle = "#c8a060";
+  ctx.fillRect(x + 2, y + th - 8, tw - 4, 6);
+  // Sand texture dots
+  ctx.fillStyle = "#a07840";
+  for (let i = 0; i < 5; i++) ctx.fillRect(x + 4 + i * 6, y + th - 6, 2, 2);
+  // Small cactus
+  ctx.fillStyle = "#3a8040";
+  ctx.fillRect(x + 6, y + th - 14, 3, 10); // trunk
+  ctx.fillRect(x + 3, y + th - 12, 3, 3); // left arm
+  ctx.fillRect(x + 9, y + th - 11, 3, 3); // right arm
+  ctx.fillStyle = "#2a6030";
+  ctx.fillRect(x + 7, y + th - 15, 1, 2); // spine
+  // Gecko (lizard) body — bobs slightly
+  const bob = Math.sin(tick * 0.04) * 1.5;
+  const gx = x + tw - 20,
+    gy = y + th - 14 + bob;
+  ctx.fillStyle = "#70c840";
+  ctx.beginPath();
+  ctx.ellipse(gx + 8, gy + 4, 7, 4, 0.2, 0, Math.PI * 2); // body
+  ctx.fill();
+  ctx.fillStyle = "#58a030";
+  ctx.beginPath();
+  ctx.ellipse(gx + 13, gy + 3, 4, 3, 0.1, 0, Math.PI * 2); // head
+  ctx.fill();
+  // Tail
+  ctx.strokeStyle = "#70c840";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(gx + 2, gy + 5);
+  ctx.quadraticCurveTo(
+    gx - 4,
+    gy + 8,
+    gx - 7,
+    gy + 5 + Math.sin(tick * 0.06) * 3,
+  );
+  ctx.stroke();
+  // Legs
+  ctx.strokeStyle = "#58a030";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(gx + 5, gy + 6);
+  ctx.lineTo(gx + 3, gy + 10);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(gx + 10, gy + 6);
+  ctx.lineTo(gx + 12, gy + 10);
+  ctx.stroke();
+  // Eye
+  ctx.fillStyle = "#1a1a28";
+  ctx.beginPath();
+  ctx.arc(gx + 15, gy + 2, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffffff80";
+  ctx.beginPath();
+  ctx.arc(gx + 15.4, gy + 1.6, 0.5, 0, Math.PI * 2);
+  ctx.fill();
+  // Glass frame
+  ctx.strokeStyle = "#506870";
+  ctx.lineWidth = 2;
+  ctx.strokeRect(x + 2, y + 2, tw - 4, th - 4);
+  // Glass sheen
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = "#a0d8f0";
+  ctx.fillRect(x + 3, y + 3, 4, th - 6);
+  ctx.fillRect(x + 3, y + 3, tw - 6, 3);
+  ctx.globalAlpha = 1;
+  // Label
+  ctx.fillStyle = "#506870";
+  ctx.font = "4px 'Press Start 2P',monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("TERRARIUM", cx, y + th + 13);
   ctx.textAlign = "left";
   ctx.restore();
 }
@@ -13139,6 +13494,12 @@ function loop(now) {
     const [zgx, zgy] = ts(_zgTx, _zgTy);
     drawZenGarden(ctx, zgx - T / 2, zgy - 8, globalTick);
   }
+  // Terrarium (gecko vivarium, bottom corner)
+  {
+    const [_ttTx, _ttTy] = getAdminPos("terrarium", 30, 61);
+    const [ttx, tty] = ts(_ttTx, _ttTy);
+    drawTerrarium(ctx, ttx - T / 2, tty - 4, globalTick);
+  }
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -14661,6 +15022,14 @@ function buildAdminObjects() {
       w: 2,
       h: 1.5,
     });
+  adminObjects.push({
+    id: "terrarium",
+    label: "🦎 Terrarium",
+    tx: 30,
+    ty: 61,
+    w: 1.8,
+    h: 1.4,
+  });
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -14873,6 +15242,7 @@ const BUILTIN_POSITIONS = {
   espresso_bar: { tx: 20, ty: 63 },
   photo_booth: { tx: 16, ty: 53 },
   zen_garden: { tx: 24, ty: 63 },
+  terrarium: { tx: 30, ty: 61 },
 };
 
 // Apply custom positions to actual game objects
@@ -15534,6 +15904,7 @@ const CLICK_OBJ_MAP = {
   rowing_machine: "rowing_machine",
   photo_booth: "photo_booth",
   zen_garden: "zen_garden",
+  terrarium: "terrarium",
 };
 
 // Dynamic: desks and couches
@@ -15578,6 +15949,7 @@ function findClickableAt(tx, ty) {
     { id: "rowing_machine", w: 2.5, h: 1.5 },
     { id: "photo_booth", w: 2, h: 2.5 },
     { id: "zen_garden", w: 2, h: 1.5 },
+    { id: "terrarium", w: 1.8, h: 1.4 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++)
@@ -15769,6 +16141,11 @@ canvas.addEventListener("click", (e) => {
   if (hit.type === "pingpong") {
     launchPingPongGame();
     blip(660, 0.1, "square", 0.04);
+    return;
+  }
+  if (hit.type === "arcade") {
+    launchSnakeGame();
+    blip(440, 0.1, "square", 0.04);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
@@ -16060,6 +16437,18 @@ function initClickParticles(type, cx, cy) {
             "#ffffff",
             "#ffd700",
           ][Math.floor(Math.random() * 7)],
+        });
+      break;
+    case "terrarium":
+      // Little gecko footprints scatter
+      for (let i = 0; i < 6; i++)
+        p.push({
+          x: cx + (Math.random() - 0.5) * 20,
+          y: cy + (Math.random() - 0.5) * 12,
+          vx: (Math.random() - 0.5) * 2,
+          vy: -1 - Math.random() * 1.5,
+          size: 2 + Math.random() * 2,
+          col: ["#70c840", "#9ece6a", "#58a030", "#b0f060"][i % 4],
         });
       break;
     case "jukebox":
@@ -16903,6 +17292,27 @@ function drawClickAnims(ctx, tick) {
           ctx.font = "6px 'Press Start 2P',monospace";
           ctx.textAlign = "center";
           ctx.fillText("✨ ZEN", a.x, a.y - 25 - t * 14);
+          ctx.textAlign = "left";
+        }
+        break;
+      }
+      case "terrarium": {
+        // Gecko particles bounce up
+        for (const p of a.particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.05;
+          ctx.globalAlpha = alpha * (1 - t * 0.8);
+          ctx.fillStyle = p.col;
+          ctx.fillRect(Math.round(p.x), Math.round(p.y), p.size, p.size);
+        }
+        // "HI!" text pop
+        if (t < 0.55) {
+          ctx.globalAlpha = alpha * (1 - t * 1.5);
+          ctx.fillStyle = "#9ece6a";
+          ctx.font = "bold 10px 'Press Start 2P',monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("HI! 🦎", a.x, a.y - 18 - t * 16);
           ctx.textAlign = "left";
         }
         break;
