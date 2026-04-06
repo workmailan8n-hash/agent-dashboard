@@ -57,7 +57,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 ## Day 7 — Mini-Games
 - [x] Playable ping pong (click paddle to hit)
 - [x] Snake on arcade machine (arrow keys)
-- [ ] Darts with scoring (click to aim + throw)
+- [x] Darts with scoring (click to aim + throw)
 - [ ] Leaderboard panel for scores
 
 ## Day 7 — Refactor Sprint
