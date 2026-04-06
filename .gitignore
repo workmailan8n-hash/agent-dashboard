@@ -8,3 +8,5 @@ seed_tasks.js
 .claude/settings.local.json
 
 .vercel
+sprint-logs/
+sprint-usage.csv
