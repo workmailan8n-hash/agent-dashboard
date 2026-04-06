@@ -52,7 +52,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Selected agent highlighted with glow ring
 - [x] Cancel/recall agent back to couch
 - [x] Multiple agents can be directed simultaneously
-- [ ] Activity queue — assign next task before current finishes
+- [x] Activity queue — assign next task before current finishes
 
 ## Day 7 — Mini-Games
 - [ ] Playable ping pong (click paddle to hit)
