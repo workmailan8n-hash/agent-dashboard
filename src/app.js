@@ -3776,6 +3776,379 @@ function launchSnakeGame() {
   rafId = requestAnimationFrame(loop);
 }
 
+// ── Darts Mini-Game ──────────────────────────────────────────────
+function launchDartsGame() {
+  const overlay = document.createElement("div");
+  overlay.style.cssText =
+    "position:fixed;inset:0;background:rgba(5,5,15,0.95);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:1000;font-family:'Press Start 2P',monospace;";
+
+  const title = document.createElement("div");
+  title.style.cssText =
+    "color:#f7768e;font-size:11px;margin-bottom:10px;text-shadow:0 0 12px #f7768e;letter-spacing:2px;";
+  title.textContent = "🎯 DARTS";
+  overlay.appendChild(title);
+
+  const scoreEl = document.createElement("div");
+  scoreEl.style.cssText =
+    "color:#e0af68;font-size:7px;margin-bottom:8px;letter-spacing:1px;";
+  scoreEl.textContent = "SCORE: 0  HI: 0  DARTS: 3";
+  overlay.appendChild(scoreEl);
+
+  const gc = document.createElement("canvas");
+  const GW = 400,
+    GH = 400;
+  gc.width = GW;
+  gc.height = GH;
+  gc.style.cssText =
+    "border:2px solid #3a3860;border-radius:4px;cursor:crosshair;display:block;background:#0a0a14;";
+  overlay.appendChild(gc);
+
+  const instr = document.createElement("div");
+  instr.style.cssText =
+    "color:#a9b1d650;font-size:5px;margin-top:8px;letter-spacing:1px;";
+  instr.textContent =
+    "CLICK to throw when crosshair is on target  |  SPACE/ENTER also works  |  ESC: exit";
+  overlay.appendChild(instr);
+
+  const closeBtn = document.createElement("button");
+  closeBtn.textContent = "✕ EXIT";
+  closeBtn.style.cssText =
+    "margin-top:8px;background:#2a2848;color:#f7768e;border:1px solid #f7768e50;padding:5px 14px;font-family:inherit;font-size:6px;cursor:pointer;border-radius:4px;";
+  overlay.appendChild(closeBtn);
+
+  document.body.appendChild(overlay);
+
+  const ctx2 = gc.getContext("2d");
+  const CX = GW / 2,
+    CY = GH / 2,
+    BOARD_R = 175;
+  let hiScore = parseInt(localStorage.getItem("darts_hi") || "0");
+  let rafId = null;
+
+  const gs = {
+    dartsLeft: 3,
+    totalScore: 0,
+    darts: [],
+    crosshair: { x: CX, y: CY - 20, vx: 2.5, vy: 1.8 },
+    phase: "aiming",
+    throwAnim: null,
+    lastScore: null,
+    lastScoreTime: 0,
+  };
+
+  function getDartScore(dx, dy) {
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    const r = BOARD_R;
+    if (dist <= r * 0.04) return 50;
+    if (dist <= r * 0.08) return 25;
+    if (dist <= r * 0.18) return 20;
+    if (dist <= r * 0.35) return 15;
+    if (dist <= r * 0.5) return 10;
+    if (dist <= r * 0.65) return 5;
+    if (dist <= r * 0.8) return 3;
+    if (dist <= r * 1.0) return 1;
+    return 0;
+  }
+
+  function drawBoard() {
+    ctx2.save();
+    ctx2.shadowColor = "#f7768e30";
+    ctx2.shadowBlur = 20;
+    ctx2.fillStyle = "#2a1a08";
+    ctx2.beginPath();
+    ctx2.arc(CX, CY, BOARD_R + 10, 0, Math.PI * 2);
+    ctx2.fill();
+    ctx2.restore();
+    const rings = [
+      [BOARD_R, "#101010"],
+      [BOARD_R * 0.95, "#1a6030"],
+      [BOARD_R * 0.85, "#cc2020"],
+      [BOARD_R * 0.65, "#1a6030"],
+      [BOARD_R * 0.5, "#cc2020"],
+      [BOARD_R * 0.35, "#1a6030"],
+      [BOARD_R * 0.18, "#e8d870"],
+      [BOARD_R * 0.08, "#101010"],
+      [BOARD_R * 0.04, "#cc2020"],
+    ];
+    for (const [r, c] of rings) {
+      ctx2.fillStyle = c;
+      ctx2.beginPath();
+      ctx2.arc(CX, CY, r, 0, Math.PI * 2);
+      ctx2.fill();
+    }
+    ctx2.strokeStyle = "rgba(255,255,255,0.12)";
+    ctx2.lineWidth = 0.8;
+    for (let i = 0; i < 20; i++) {
+      const angle = (i / 20) * Math.PI * 2 - Math.PI / 20;
+      ctx2.beginPath();
+      ctx2.moveTo(
+        CX + Math.cos(angle) * BOARD_R * 0.08,
+        CY + Math.sin(angle) * BOARD_R * 0.08,
+      );
+      ctx2.lineTo(
+        CX + Math.cos(angle) * BOARD_R,
+        CY + Math.sin(angle) * BOARD_R,
+      );
+      ctx2.stroke();
+    }
+    ctx2.fillStyle = "#f0e8d0";
+    ctx2.beginPath();
+    ctx2.arc(CX, CY, 4, 0, Math.PI * 2);
+    ctx2.fill();
+    const lbls = [
+      ["50", 0],
+      ["25", BOARD_R * 0.06],
+      ["20", BOARD_R * 0.27],
+      ["15", BOARD_R * 0.44],
+      ["10", BOARD_R * 0.58],
+      ["5", BOARD_R * 0.73],
+      ["3", BOARD_R * 0.88],
+    ];
+    ctx2.font = "5px 'Press Start 2P',monospace";
+    ctx2.textAlign = "center";
+    for (const [lbl, offset] of lbls) {
+      if (offset < BOARD_R * 0.06) {
+        ctx2.fillStyle = "#fff";
+        ctx2.fillText(lbl, CX, CY + 3);
+        continue;
+      }
+      ctx2.fillStyle = "rgba(255,255,255,0.5)";
+      ctx2.fillText(lbl, CX + offset + 6, CY - 4);
+    }
+    ctx2.textAlign = "left";
+  }
+
+  function drawLandedDarts() {
+    for (const d of gs.darts) {
+      ctx2.fillStyle = "#e0af68";
+      ctx2.fillRect(d.x - 1, d.y + 2, 2, 12);
+      ctx2.fillStyle = "#c0c0c0";
+      ctx2.fillRect(d.x - 1, d.y - 2, 2, 4);
+      ctx2.fillStyle = "#f7768e";
+      ctx2.fillRect(d.x - 3, d.y + 12, 2, 5);
+      ctx2.fillRect(d.x + 1, d.y + 12, 2, 5);
+    }
+  }
+
+  function render() {
+    ctx2.clearRect(0, 0, GW, GH);
+    drawBoard();
+    drawLandedDarts();
+
+    if (gs.phase === "aiming") {
+      const ch = gs.crosshair;
+      const pulse = 0.7 + 0.3 * Math.sin(Date.now() * 0.008);
+      ctx2.strokeStyle = `rgba(247,118,142,${pulse})`;
+      ctx2.lineWidth = 1.5;
+      const cs = 16;
+      ctx2.beginPath();
+      ctx2.moveTo(ch.x - cs, ch.y);
+      ctx2.lineTo(ch.x - 4, ch.y);
+      ctx2.moveTo(ch.x + 4, ch.y);
+      ctx2.lineTo(ch.x + cs, ch.y);
+      ctx2.moveTo(ch.x, ch.y - cs);
+      ctx2.lineTo(ch.x, ch.y - 4);
+      ctx2.moveTo(ch.x, ch.y + 4);
+      ctx2.lineTo(ch.x, ch.y + cs);
+      ctx2.stroke();
+      ctx2.beginPath();
+      ctx2.arc(ch.x, ch.y, 6, 0, Math.PI * 2);
+      ctx2.stroke();
+    }
+
+    if (gs.throwAnim && gs.phase === "throwing") {
+      const ta = gs.throwAnim;
+      const t = Math.min(ta.t, 1);
+      const tx = ta.sx + (ta.ex - ta.sx) * t;
+      const ty2 = ta.sy + (ta.ey - ta.sy) * t;
+      const ang = Math.atan2(ta.ey - ta.sy, ta.ex - ta.sx);
+      ctx2.save();
+      ctx2.translate(tx, ty2);
+      ctx2.rotate(ang);
+      ctx2.fillStyle = "#e0af68";
+      ctx2.fillRect(-14, -1, 18, 2);
+      ctx2.fillStyle = "#c0c0c0";
+      ctx2.fillRect(4, -1.5, 4, 3);
+      ctx2.fillStyle = "#f7768e";
+      ctx2.fillRect(-14, -3, 5, 2);
+      ctx2.fillRect(-14, 1, 5, 2);
+      ctx2.restore();
+    }
+
+    if (gs.lastScore !== null) {
+      const age = Date.now() - gs.lastScoreTime;
+      if (age < 1400) {
+        const alpha = Math.max(0, 1 - age / 1400);
+        ctx2.save();
+        ctx2.globalAlpha = alpha;
+        ctx2.fillStyle =
+          gs.lastScore >= 25
+            ? "#f7768e"
+            : gs.lastScore >= 10
+              ? "#e0af68"
+              : "#9ece6a";
+        ctx2.font = `bold ${Math.round(12 + gs.lastScore * 0.15)}px 'Press Start 2P',monospace`;
+        ctx2.textAlign = "center";
+        ctx2.fillText("+" + gs.lastScore, CX, 50 - age * 0.015);
+        ctx2.textAlign = "left";
+        ctx2.restore();
+      } else {
+        gs.lastScore = null;
+      }
+    }
+
+    if (gs.phase === "gameover") {
+      ctx2.fillStyle = "rgba(0,0,0,0.72)";
+      ctx2.fillRect(0, CY - 70, GW, 130);
+      ctx2.fillStyle = "#f7768e";
+      ctx2.font = "14px 'Press Start 2P',monospace";
+      ctx2.textAlign = "center";
+      ctx2.fillText("ROUND OVER", CX, CY - 36);
+      ctx2.fillStyle = "#e0af68";
+      ctx2.font = "9px 'Press Start 2P',monospace";
+      ctx2.fillText(
+        "SCORE: " + gs.totalScore + "  HI: " + hiScore,
+        CX,
+        CY - 14,
+      );
+      const grade =
+        gs.totalScore >= 100
+          ? "BULLSEYE MASTER!"
+          : gs.totalScore >= 50
+            ? "SHARP SHOOTER!"
+            : gs.totalScore >= 25
+              ? "DECENT THROW!"
+              : "KEEP PRACTICING!";
+      ctx2.fillStyle = "#bb9af7";
+      ctx2.font = "6px 'Press Start 2P',monospace";
+      ctx2.fillText(grade, CX, CY + 6);
+      ctx2.fillStyle = "#9ece6a";
+      ctx2.font = "5px 'Press Start 2P',monospace";
+      ctx2.fillText("CLICK TO PLAY AGAIN", CX, CY + 28);
+      ctx2.textAlign = "left";
+    }
+
+    scoreEl.textContent =
+      "SCORE: " +
+      gs.totalScore +
+      "  HI: " +
+      hiScore +
+      "  DARTS: " +
+      gs.dartsLeft;
+  }
+
+  function updateCrosshair() {
+    if (gs.phase !== "aiming") return;
+    const ch = gs.crosshair;
+    ch.x += ch.vx;
+    ch.y += ch.vy;
+    ch.vx += (Math.random() - 0.5) * 0.25;
+    ch.vy += (Math.random() - 0.5) * 0.25;
+    const spd = Math.sqrt(ch.vx * ch.vx + ch.vy * ch.vy);
+    if (spd > 4.5) {
+      ch.vx *= 3.8 / spd;
+      ch.vy *= 3.8 / spd;
+    }
+    if (spd < 1.2) {
+      ch.vx *= 1.8;
+      ch.vy *= 1.8;
+    }
+    const dist = Math.sqrt((ch.x - CX) ** 2 + (ch.y - CY) ** 2);
+    if (dist > BOARD_R * 0.9) {
+      ch.vx += (CX - ch.x) * 0.025;
+      ch.vy += (CY - ch.y) * 0.025;
+    }
+  }
+
+  function throwDart() {
+    if (gs.phase !== "aiming") return;
+    const ch = gs.crosshair;
+    const jit = 6 * (1 - gs.totalScore / 200);
+    const ex = Math.max(
+      CX - BOARD_R,
+      Math.min(CX + BOARD_R, ch.x + (Math.random() - 0.5) * jit),
+    );
+    const ey = Math.max(
+      CY - BOARD_R,
+      Math.min(CY + BOARD_R, ch.y + (Math.random() - 0.5) * jit),
+    );
+    gs.throwAnim = { sx: CX, sy: GH + 50, ex, ey, t: 0 };
+    gs.phase = "throwing";
+    blip(300, 0.04, "triangle", 0.03);
+  }
+
+  gc.addEventListener("click", () => {
+    if (gs.phase === "gameover") {
+      gs.dartsLeft = 3;
+      gs.totalScore = 0;
+      gs.darts = [];
+      gs.lastScore = null;
+      gs.phase = "aiming";
+      gs.crosshair = { x: CX, y: CY - 20, vx: 2.5, vy: 1.8 };
+      return;
+    }
+    throwDart();
+  });
+
+  function closeGame() {
+    if (rafId) cancelAnimationFrame(rafId);
+    document.removeEventListener("keydown", onDartsKey);
+    overlay.remove();
+  }
+  closeBtn.addEventListener("click", closeGame);
+
+  function onDartsKey(e) {
+    if (e.key === "Escape") {
+      closeGame();
+      return;
+    }
+    if (e.key === " " || e.key === "Enter") {
+      if (gs.phase === "gameover") {
+        gs.dartsLeft = 3;
+        gs.totalScore = 0;
+        gs.darts = [];
+        gs.lastScore = null;
+        gs.phase = "aiming";
+        gs.crosshair = { x: CX, y: CY - 20, vx: 2.5, vy: 1.8 };
+      } else {
+        throwDart();
+      }
+      e.preventDefault();
+    }
+  }
+  document.addEventListener("keydown", onDartsKey);
+
+  function loop() {
+    updateCrosshair();
+    if (gs.phase === "throwing" && gs.throwAnim) {
+      gs.throwAnim.t += 0.045;
+      if (gs.throwAnim.t >= 1) {
+        const ta = gs.throwAnim;
+        const sc = getDartScore(ta.ex - CX, ta.ey - CY);
+        gs.darts.push({ x: ta.ex, y: ta.ey, score: sc });
+        gs.totalScore += sc;
+        gs.lastScore = sc;
+        gs.lastScoreTime = Date.now();
+        if (gs.totalScore > hiScore) {
+          hiScore = gs.totalScore;
+          localStorage.setItem("darts_hi", hiScore);
+        }
+        gs.dartsLeft--;
+        gs.throwAnim = null;
+        if (gs.dartsLeft <= 0) {
+          gs.phase = "gameover";
+        } else {
+          gs.phase = "aiming";
+        }
+        blip(sc >= 25 ? 880 : sc >= 10 ? 660 : 440, 0.08, "square", 0.06);
+      }
+    }
+    render();
+    rafId = requestAnimationFrame(loop);
+  }
+  loop();
+}
+
 // ── Zen Garden (sand tray with rake) ────────────────────────────
 function drawZenGarden(ctx, x, y, tick) {
   const tw = T * 2,
@@ -3909,6 +4282,83 @@ function drawRubberDuck(ctx, x, y, tick) {
   ctx.font = "4px 'Press Start 2P',monospace";
   ctx.textAlign = "center";
   ctx.fillText("QUACK", x + T / 2, y + T + 20);
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
+// ── Newton's Cradle ──────────────────────────────────────────────
+function drawNewtonsCradle(ctx, x, y, tick) {
+  ctx.save();
+  const fw = T * 1.4,
+    fh = T * 0.9;
+  const cx = x + fw / 2;
+  // Base
+  ctx.fillStyle = "#3a2810";
+  ctx.fillRect(x + 2, y + fh + 2, fw - 4, 6);
+  // Frame legs
+  ctx.strokeStyle = "#8a6840";
+  ctx.lineWidth = 2;
+  // Left upright
+  ctx.beginPath();
+  ctx.moveTo(x + 6, y + fh + 2);
+  ctx.lineTo(x + 6, y + 4);
+  ctx.stroke();
+  // Right upright
+  ctx.beginPath();
+  ctx.moveTo(x + fw - 6, y + fh + 2);
+  ctx.lineTo(x + fw - 6, y + 4);
+  ctx.stroke();
+  // Top bar
+  ctx.beginPath();
+  ctx.moveTo(x + 4, y + 4);
+  ctx.lineTo(x + fw - 4, y + 4);
+  ctx.stroke();
+  // 5 balls on strings
+  const nBalls = 5;
+  const ballR = 4;
+  const spacing = (fw - 16) / (nBalls - 1);
+  const strLen = fh - 8;
+  // Cradle swing: leftmost and rightmost alternate
+  const swingT = tick * 0.08;
+  const maxAng = 0.55;
+  const leftSwing = Math.sin(swingT) > 0 ? Math.sin(swingT) * maxAng : 0;
+  const rightSwing = Math.sin(swingT) < 0 ? Math.sin(swingT) * maxAng : 0;
+  for (let i = 0; i < nBalls; i++) {
+    const bx0 = x + 8 + i * spacing;
+    let ang = 0;
+    if (i === 0) ang = leftSwing;
+    else if (i === nBalls - 1) ang = rightSwing;
+    const bx = bx0 + Math.sin(ang) * strLen;
+    const by = y + 4 + Math.cos(ang) * strLen;
+    // String
+    ctx.strokeStyle = "#c8c0a0";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.moveTo(bx0, y + 4);
+    ctx.lineTo(bx, by);
+    ctx.stroke();
+    // Ball
+    const grad = ctx.createRadialGradient(
+      bx - 1.5,
+      by - 1.5,
+      0.5,
+      bx,
+      by,
+      ballR,
+    );
+    grad.addColorStop(0, "#e0e0e8");
+    grad.addColorStop(0.4, "#b0b0c0");
+    grad.addColorStop(1, "#606070");
+    ctx.fillStyle = grad;
+    ctx.beginPath();
+    ctx.arc(bx, by, ballR, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  // Label
+  ctx.fillStyle = "#8a7060";
+  ctx.font = "4px 'Press Start 2P',monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("CRADLE", cx, y + fh + 16);
   ctx.textAlign = "left";
   ctx.restore();
 }
@@ -13500,6 +13950,11 @@ function loop(now) {
     const [ttx, tty] = ts(_ttTx, _ttTy);
     drawTerrarium(ctx, ttx - T / 2, tty - 4, globalTick);
   }
+  {
+    const [_ncTx, _ncTy] = getAdminPos("newtons_cradle", 33, 61);
+    const [ncx, ncy] = ts(_ncTx, _ncTy);
+    drawNewtonsCradle(ctx, ncx - T / 2, ncy - 4, globalTick);
+  }
 
   // Kanban board (live tasks)
   drawKanban(ctx);
@@ -15030,6 +15485,14 @@ function buildAdminObjects() {
     w: 1.8,
     h: 1.4,
   });
+  adminObjects.push({
+    id: "newtons_cradle",
+    label: "⚖️ Newton's Cradle",
+    tx: 33,
+    ty: 61,
+    w: 1.5,
+    h: 1.5,
+  });
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -15243,6 +15706,7 @@ const BUILTIN_POSITIONS = {
   photo_booth: { tx: 16, ty: 53 },
   zen_garden: { tx: 24, ty: 63 },
   terrarium: { tx: 30, ty: 61 },
+  newtons_cradle: { tx: 33, ty: 61 },
 };
 
 // Apply custom positions to actual game objects
@@ -15905,6 +16369,7 @@ const CLICK_OBJ_MAP = {
   photo_booth: "photo_booth",
   zen_garden: "zen_garden",
   terrarium: "terrarium",
+  newtons_cradle: "newtons_cradle",
 };
 
 // Dynamic: desks and couches
@@ -15950,6 +16415,7 @@ function findClickableAt(tx, ty) {
     { id: "photo_booth", w: 2, h: 2.5 },
     { id: "zen_garden", w: 2, h: 1.5 },
     { id: "terrarium", w: 1.8, h: 1.4 },
+    { id: "newtons_cradle", w: 1.5, h: 1.5 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++)
@@ -16146,6 +16612,11 @@ canvas.addEventListener("click", (e) => {
   if (hit.type === "arcade") {
     launchSnakeGame();
     blip(440, 0.1, "square", 0.04);
+    return;
+  }
+  if (hit.type === "darts") {
+    launchDartsGame();
+    blip(550, 0.12, "square", 0.04);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
@@ -16449,6 +16920,17 @@ function initClickParticles(type, cx, cy) {
           vy: -1 - Math.random() * 1.5,
           size: 2 + Math.random() * 2,
           col: ["#70c840", "#9ece6a", "#58a030", "#b0f060"][i % 4],
+        });
+      break;
+    case "newtons_cradle":
+      for (let i = 0; i < 5; i++)
+        p.push({
+          x: cx + (i - 2) * 8,
+          y: cy - 4,
+          vx: (i - 2) * 0.4,
+          vy: -1.2 - Math.abs(i - 2) * 0.3,
+          size: 3,
+          col: "#b0b0c0",
         });
       break;
     case "jukebox":
@@ -17313,6 +17795,28 @@ function drawClickAnims(ctx, tick) {
           ctx.font = "bold 10px 'Press Start 2P',monospace";
           ctx.textAlign = "center";
           ctx.fillText("HI! 🦎", a.x, a.y - 18 - t * 16);
+          ctx.textAlign = "left";
+        }
+        break;
+      }
+      case "newtons_cradle": {
+        // Balls flying outward
+        ctx.globalAlpha = alpha;
+        for (const p of a.particles) {
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vy += 0.08;
+          ctx.fillStyle = p.col;
+          ctx.beginPath();
+          ctx.arc(Math.round(p.x), Math.round(p.y), p.size, 0, Math.PI * 2);
+          ctx.fill();
+        }
+        if (t > 0.15 && t < 0.55) {
+          ctx.fillStyle = "#c8c8d8";
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.globalAlpha = alpha * (t < 0.35 ? 1 : 1 - (t - 0.35) / 0.2);
+          ctx.textAlign = "center";
+          ctx.fillText("clack!", a.x, a.y - 20);
           ctx.textAlign = "left";
         }
         break;
