@@ -17,6 +17,7 @@ import {
   drawRecordPlayer,
   drawPopcornMachine,
   drawPhotoBooth,
+  drawRetroTelephone,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
@@ -13243,6 +13244,19 @@ function loop(now) {
       pboy - 16,
       globalTick,
       drawPhotoBooth,
+    );
+  }
+  // Retro Telephone (kitchen/break room area)
+  {
+    const [_rtTx, _rtTy] = getAdminPos("retro_telephone", 28, 4);
+    const [rtx, rty] = ts(_rtTx, _rtTy);
+    drawObjectCached(
+      ctx,
+      "retro_telephone",
+      rtx - T / 2,
+      rty - 4,
+      globalTick,
+      drawRetroTelephone,
     );
   }
 

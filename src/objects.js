@@ -1307,3 +1307,117 @@ export function drawPhotoBooth(ctx, x, y, tick) {
   ctx.textAlign = "left";
   ctx.restore();
 }
+
+// ── Retro Telephone ──────────────────────────────────────────────
+export function drawRetroTelephone(ctx, x, y, tick) {
+  ctx.save();
+
+  const bw = 28,
+    bh = 18;
+  // Body — dark gray rounded base
+  ctx.fillStyle = "#2a2a2a";
+  ctx.beginPath();
+  ctx.roundRect(x, y + 8, bw, bh, 3);
+  ctx.fill();
+  // Body highlight
+  ctx.fillStyle = "#3a3a3a";
+  ctx.beginPath();
+  ctx.roundRect(x + 2, y + 9, bw - 4, 4, 2);
+  ctx.fill();
+
+  // Dial — circular with number dots, slight rotation animation
+  const dialAngle = Math.sin(tick * 0.04) * 0.08;
+  const dialCx = x + bw / 2 + 2;
+  const dialCy = y + 17;
+  ctx.save();
+  ctx.translate(dialCx, dialCy);
+  ctx.rotate(dialAngle);
+  // Dial outer ring
+  ctx.fillStyle = "#1a1a1a";
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.strokeStyle = "#555555";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, 0, Math.PI * 2);
+  ctx.stroke();
+  // Dial center
+  ctx.fillStyle = "#333333";
+  ctx.beginPath();
+  ctx.arc(0, 0, 3, 0, Math.PI * 2);
+  ctx.fill();
+  // Number holes around dial
+  for (let i = 0; i < 10; i++) {
+    const ang = (i / 10) * Math.PI * 2 - Math.PI / 2;
+    const hx = Math.cos(ang) * 4.5;
+    const hy = Math.sin(ang) * 4.5;
+    ctx.fillStyle = "#111111";
+    ctx.beginPath();
+    ctx.arc(hx, hy, 0.8, 0, Math.PI * 2);
+    ctx.fill();
+  }
+  ctx.restore();
+
+  // Handset — curved piece in cradle with wobble
+  const wobble = Math.sin(tick * 0.05) * 1.5;
+  ctx.fillStyle = "#1e1e1e";
+  ctx.save();
+  ctx.translate(x + 4, y + 8 + wobble);
+  // Left ear piece
+  ctx.beginPath();
+  ctx.ellipse(0, 0, 4, 3, 0.3, 0, Math.PI * 2);
+  ctx.fill();
+  // Handset bar
+  ctx.strokeStyle = "#1e1e1e";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(2, 1);
+  ctx.quadraticCurveTo(10, -3, 18, 1);
+  ctx.stroke();
+  // Right ear piece
+  ctx.beginPath();
+  ctx.ellipse(20, 0, 4, 3, -0.3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Cord — curly line on left side
+  ctx.strokeStyle = "#2a2a2a";
+  ctx.lineWidth = 1;
+  for (let ci = 0; ci < 4; ci++) {
+    const cx2 = x - 2;
+    const csy = y + 14 + ci * 3;
+    ctx.beginPath();
+    ctx.arc(
+      cx2 - (ci % 2 === 0 ? 2 : 0),
+      csy,
+      1.5,
+      0,
+      Math.PI * (ci % 2 === 0 ? 1 : -1),
+    );
+    ctx.stroke();
+  }
+
+  // Ring indicator — flashes when (tick >> 6) % 8 === 0
+  if ((tick >> 6) % 8 === 0) {
+    const pulse = 0.5 + 0.5 * Math.sin(tick * 0.3);
+    ctx.fillStyle = `rgba(255,${(80 + pulse * 100) | 0},0,${0.7 + pulse * 0.3})`;
+    ctx.beginPath();
+    ctx.arc(x + bw - 5, y + 11, 3, 0, Math.PI * 2);
+    ctx.fill();
+    // Outer ring glow
+    ctx.strokeStyle = `rgba(255,200,0,${pulse * 0.5})`;
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.arc(x + bw - 5, y + 11, 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Label below
+  ctx.fillStyle = "#606060";
+  ctx.font = "4px 'Press Start 2P', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("PHONE", x + bw / 2, y + bh + 20);
+  ctx.textAlign = "left";
+  ctx.restore();
+}
