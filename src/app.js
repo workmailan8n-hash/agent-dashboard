@@ -18,6 +18,7 @@ import {
   drawPopcornMachine,
   drawPhotoBooth,
   drawRetroTelephone,
+  drawTrophyCabinet,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
@@ -13260,6 +13261,20 @@ function loop(now) {
     );
   }
 
+  // Trophy Cabinet (near main office wall)
+  {
+    const [_tcTx, _tcTy] = getAdminPos("trophy_cabinet", 5, 2);
+    const [tcx, tcy] = ts(_tcTx, _tcTy);
+    drawObjectCached(
+      ctx,
+      "trophy_cabinet",
+      tcx - T / 2,
+      tcy - 8,
+      globalTick,
+      drawTrophyCabinet,
+    );
+  }
+
   // Kanban board (live tasks)
   drawKanban(ctx);
 
@@ -14797,6 +14812,14 @@ function buildAdminObjects() {
     w: 1.5,
     h: 1.5,
   });
+  adminObjects.push({
+    id: "trophy_cabinet",
+    label: "🏆 Trophy Cabinet",
+    tx: 5,
+    ty: 2,
+    w: 1.8,
+    h: 2,
+  });
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -15012,6 +15035,7 @@ const BUILTIN_POSITIONS = {
   terrarium: { tx: 30, ty: 61 },
   newtons_cradle: { tx: 33, ty: 61 },
   popcorn_machine: { tx: 17, ty: 57 },
+  trophy_cabinet: { tx: 5, ty: 2 },
 };
 
 // Apply custom positions to actual game objects
@@ -16330,6 +16354,27 @@ function initClickParticles(type, cx, cy) {
             "#ffffd0",
             "#d0f0ff",
             "#ffd0e8",
+          ][i % 6],
+        });
+      }
+      break;
+    case "trophy_cabinet":
+      // Gold star burst + sparkles
+      for (let i = 0; i < 14; i++) {
+        const ang = (i / 14) * Math.PI * 2;
+        p.push({
+          x: cx + Math.cos(ang) * 6,
+          y: cy + Math.sin(ang) * 4,
+          vx: Math.cos(ang) * (0.6 + Math.random() * 1.8),
+          vy: Math.sin(ang) * (0.6 + Math.random() * 1.8) - 1.8,
+          size: 3 + Math.random() * 5,
+          col: [
+            "#ffd700",
+            "#ffffc0",
+            "#ffaa00",
+            "#ffffff",
+            "#ffd700",
+            "#c0a000",
           ][i % 6],
         });
       }

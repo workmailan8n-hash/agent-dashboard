@@ -2346,6 +2346,297 @@ class PizzaDelivery {
 
 const pizzaDelivery = new PizzaDelivery();
 
+// ════════════════════════════════════════════════════════════════
+//  CLEANING CREW  🧹  (23:00 daily)
+// ════════════════════════════════════════════════════════════════
+class CleaningCrew {
+  constructor() {
+    this.state = "idle";
+    this.tx = 0;
+    this.ty = 0;
+    this.sx = 0;
+    this.sy = 0;
+    this._lastDay = -1;
+    this._mopTimer = 0;
+    this._waitTimer = 0;
+    this._speed = 2.8; // tiles/sec
+    this._spotIndex = 0;
+    this._facingLeft = false;
+    // Mop sweep angle for animation
+    this._mopAngle = 0;
+    // Spots to clean: spread across the office
+    this._spots = null;
+  }
+
+  _buildSpots() {
+    // 4 cleaning spots spread across the room
+    const cx = Math.floor(COLS * 0.5);
+    const cy = Math.floor(ROWS * 0.35);
+    return [
+      { tx: Math.floor(COLS * 0.25), ty: cy },
+      { tx: cx, ty: cy - 2 },
+      { tx: Math.floor(COLS * 0.7), ty: cy + 3 },
+      { tx: Math.floor(COLS * 0.15), ty: cy + 5 },
+    ];
+  }
+
+  _screenPos() {
+    this.sx = OX + this.tx * T;
+    this.sy = OY + this.ty * T;
+  }
+
+  _moveTo(targetTx, targetTy, dt) {
+    const dx = targetTx - this.tx;
+    const dy = targetTy - this.ty;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 0.05) {
+      this.tx = targetTx;
+      this.ty = targetTy;
+      this._screenPos();
+      return true;
+    }
+    const step = this._speed * dt;
+    if (dist <= step) {
+      this.tx = targetTx;
+      this.ty = targetTy;
+      this._screenPos();
+      return true;
+    }
+    this._facingLeft = dx < 0;
+    this.tx += (dx / dist) * step;
+    this.ty += (dy / dist) * step;
+    this._screenPos();
+    return false;
+  }
+
+  update(dt, tick) {
+    const entryTx = COLS - 0.5;
+    const entryTy =
+      KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW + 1.5 : Math.floor(ROWS * 0.38);
+
+    if (this.state === "idle") {
+      const now = new Date();
+      const today = now.getDate();
+      if (
+        now.getHours() === 23 &&
+        now.getMinutes() === 0 &&
+        this._lastDay !== today
+      ) {
+        this._lastDay = today;
+        this._spots = this._buildSpots();
+        this._spotIndex = 0;
+        this.tx = entryTx;
+        this.ty = entryTy;
+        this._screenPos();
+        this.state = "entering";
+        this._waitTimer = 0.6;
+        S.doorAnim.target = 1;
+        S.doorAnim.timer = 1.5;
+      }
+    } else if (this.state === "entering") {
+      this._waitTimer -= dt;
+      if (this._waitTimer <= 0) {
+        this.state = "walking";
+      }
+    } else if (this.state === "walking") {
+      const spot = this._spots[this._spotIndex];
+      const arrived = this._moveTo(spot.tx, spot.ty, dt);
+      if (arrived) {
+        this.state = "mopping";
+        this._mopTimer = 3.5 + Math.random();
+      }
+    } else if (this.state === "mopping") {
+      this._mopAngle = Math.sin(tick * 0.14) * 0.55;
+      this._mopTimer -= dt;
+      if (this._mopTimer <= 0) {
+        this._spotIndex++;
+        if (this._spotIndex >= this._spots.length) {
+          this.state = "leaving";
+          S.doorAnim.target = 1;
+          S.doorAnim.timer = 1.5;
+        } else {
+          this.state = "walking";
+        }
+      }
+    } else if (this.state === "leaving") {
+      const arrived = this._moveTo(entryTx, entryTy, dt);
+      if (arrived) {
+        this.state = "done";
+        S.doorAnim.target = 0;
+        S.doorAnim.timer = 0;
+      }
+    } else if (this.state === "done") {
+      this.state = "idle";
+    }
+  }
+
+  draw(ctx, tick) {
+    if (this.state === "idle" || this.state === "entering") return;
+
+    ctx.save();
+
+    const cx = this.sx;
+    const cy = this.sy;
+    const bob = this.state === "mopping" ? 0 : Math.sin(tick * 0.15) * 1.5;
+    const by = cy + bob;
+    const isMoving = this.state === "walking" || this.state === "leaving";
+    const isMopping = this.state === "mopping";
+
+    // Flip horizontally when facing left
+    if (this._facingLeft) {
+      ctx.translate(cx, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-cx, 0);
+    }
+
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.15)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 12, 10, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs (walk animation)
+    const legSwing = isMoving ? Math.sin(tick * 0.17) * 5 : 0;
+    ctx.fillStyle = "#2a3a5a";
+    ctx.fillRect((cx - 5) | 0, (by + 8) | 0, 4, (8 + legSwing * 0.3) | 0);
+    ctx.fillRect((cx + 1) | 0, (by + 8) | 0, 4, (8 - legSwing * 0.3) | 0);
+
+    // Body — teal janitor uniform
+    ctx.fillStyle = "#1a7a6a";
+    ctx.fillRect((cx - 8) | 0, (by - 4) | 0, 16, 14);
+    // Uniform pocket
+    ctx.fillStyle = "#158060";
+    ctx.fillRect((cx + 2) | 0, (by + 1) | 0, 4, 4);
+    ctx.fillStyle = "#0a5040";
+    ctx.fillRect((cx + 3) | 0, (by + 2) | 0, 2, 2);
+
+    // Arms
+    ctx.fillStyle = "#1a7a6a";
+    // Left arm — holds mop
+    if (isMopping) {
+      ctx.fillRect((cx - 12) | 0, (by - 3) | 0, 4, 9);
+    } else {
+      const swing = isMoving ? Math.sin(tick * 0.17 + Math.PI) * 4 : 0;
+      ctx.fillRect((cx - 12) | 0, (by - 2 + swing * 0.2) | 0, 4, 9);
+    }
+    // Right arm — holds mop stick
+    ctx.fillStyle = "#1a7a6a";
+    ctx.fillRect((cx + 8) | 0, (by - 3) | 0, 4, 9);
+
+    // Hands
+    ctx.fillStyle = "#d4956e";
+    ctx.fillRect((cx - 13) | 0, (by + 5) | 0, 4, 3);
+    ctx.fillRect((cx + 9) | 0, (by + 5) | 0, 4, 3);
+
+    // Head — skin
+    ctx.fillStyle = "#d4956e";
+    ctx.beginPath();
+    ctx.ellipse(cx, by - 10, 6, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = "#1a1a2e";
+    ctx.fillRect((cx - 3) | 0, (by - 11) | 0, 2, 2);
+    ctx.fillRect((cx + 1) | 0, (by - 11) | 0, 2, 2);
+
+    // Mouth — focused expression
+    ctx.strokeStyle = "#1a1a2e";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.moveTo(cx - 2, by - 7);
+    ctx.lineTo(cx + 2, by - 7);
+    ctx.stroke();
+
+    // Cap — teal with brim
+    ctx.fillStyle = "#0a5040";
+    ctx.fillRect((cx - 8) | 0, (by - 17) | 0, 16, 5);
+    ctx.fillStyle = "#0d6050";
+    ctx.fillRect((cx - 7) | 0, (by - 18) | 0, 14, 2);
+    // Brim
+    ctx.fillStyle = "#083530";
+    ctx.fillRect((cx - 10) | 0, (by - 13) | 0, 20, 2);
+
+    // ── Mop ──────────────────────────────────────────────────────
+    const mopBaseX = cx + 10;
+    const mopBaseY = by - 2;
+    ctx.save();
+    ctx.translate(mopBaseX, mopBaseY);
+    if (isMopping) {
+      ctx.rotate(this._mopAngle);
+    }
+    // Stick
+    ctx.strokeStyle = "#8b6914";
+    ctx.lineWidth = 2;
+    ctx.beginPath();
+    ctx.moveTo(0, 0);
+    ctx.lineTo(0, 28);
+    ctx.stroke();
+    // Mop head (fluffy)
+    const mhY = 28;
+    ctx.fillStyle = "#d4c080";
+    for (let i = -3; i <= 3; i++) {
+      ctx.fillRect((i * 2 - 1) | 0, mhY, 3, isMopping ? 6 : 5);
+    }
+    ctx.fillStyle = "#c0a850";
+    ctx.fillRect(-7 | 0, mhY, 14, 2);
+    ctx.restore();
+
+    // Bucket (only when walking to spot or mopping)
+    if (isMopping || this.state === "walking") {
+      const bkX = cx - 16;
+      const bkY = by + 6;
+      // Bucket body
+      ctx.fillStyle = "#e0c000";
+      ctx.beginPath();
+      ctx.moveTo(bkX, bkY);
+      ctx.lineTo(bkX + 10, bkY);
+      ctx.lineTo(bkX + 8, bkY + 8);
+      ctx.lineTo(bkX + 2, bkY + 8);
+      ctx.closePath();
+      ctx.fill();
+      // Water surface
+      ctx.fillStyle = "rgba(80,160,220,0.7)";
+      ctx.fillRect((bkX + 1) | 0, (bkY + 1) | 0, 8, 3);
+      // Handle
+      ctx.strokeStyle = "#aaa000";
+      ctx.lineWidth = 1;
+      ctx.beginPath();
+      ctx.arc(bkX + 5, bkY, 3, Math.PI, 0);
+      ctx.stroke();
+    }
+
+    // Speech bubble when mopping
+    if (isMopping && (tick >> 7) % 6 === 0) {
+      const bubX = cx;
+      const bubY = by - 44;
+      ctx.fillStyle = "#f0f8ff";
+      ctx.strokeStyle = "#2080b0";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(bubX - 26, bubY - 10, 52, 16, 4);
+      ctx.fill();
+      ctx.stroke();
+      ctx.beginPath();
+      ctx.moveTo(bubX - 4, bubY + 6);
+      ctx.lineTo(bubX, bubY + 13);
+      ctx.lineTo(bubX + 6, bubY + 6);
+      ctx.fillStyle = "#f0f8ff";
+      ctx.fill();
+      ctx.strokeStyle = "#2080b0";
+      ctx.stroke();
+      ctx.fillStyle = "#003366";
+      ctx.font = "5px 'Press Start 2P', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText("CLEAN!", bubX, bubY + 3);
+      ctx.textAlign = "left";
+    }
+
+    ctx.restore();
+  }
+}
+
+const cleaningCrew = new CleaningCrew();
+
 export {
   drawCat,
   CatState,
@@ -2355,4 +2646,5 @@ export {
   drawGoose,
   bowlRefills,
   pizzaDelivery,
+  cleaningCrew,
 };

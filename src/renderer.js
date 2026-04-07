@@ -73,7 +73,13 @@ import {
   drawDartAnimation,
   drawAquariumFish,
 } from "./drawChars.js";
-import { cat, goose, bowlRefills, pizzaDelivery } from "./creatures.js";
+import {
+  cat,
+  goose,
+  bowlRefills,
+  pizzaDelivery,
+  cleaningCrew,
+} from "./creatures.js";
 import { renderCard, updateUI } from "./ui.js";
 import {
   drawAdminOverlay,
@@ -511,6 +517,7 @@ function loop(now) {
   cat.update(dt, globalTick);
   goose.update(dt, globalTick);
   pizzaDelivery.update(dt, globalTick);
+  cleaningCrew.update(dt, globalTick);
 
   // ── Ping pong ball physics ──────────────────────────────────────
   {
@@ -887,6 +894,7 @@ function loop(now) {
   cat.draw(ctx, globalTick);
   goose.draw(ctx, globalTick);
   pizzaDelivery.draw(ctx, globalTick);
+  cleaningCrew.draw(ctx, globalTick);
   PS.draw(ctx);
 
   // Phase 2: all overlays strictly on top

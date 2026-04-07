@@ -1421,3 +1421,145 @@ export function drawRetroTelephone(ctx, x, y, tick) {
   ctx.textAlign = "left";
   ctx.restore();
 }
+
+// ── Trophy Cabinet ────────────────────────────────────────────────
+export function drawTrophyCabinet(ctx, x, y, tick) {
+  ctx.save();
+
+  const cw = 44,
+    ch = 52;
+
+  // Cabinet body — dark walnut wood
+  ctx.fillStyle = "#4a2c0a";
+  ctx.fillRect(x | 0, (y + 4) | 0, cw, ch);
+
+  // Wood grain highlight
+  ctx.fillStyle = "#5a3614";
+  for (let gi = 0; gi < 3; gi++) {
+    ctx.fillRect((x + 4 + gi * 14) | 0, (y + 8) | 0, 2, ch - 8);
+  }
+
+  // Glass door panel
+  ctx.fillStyle = "rgba(160,200,255,0.18)";
+  ctx.fillRect((x + 4) | 0, (y + 8) | 0, cw - 8, ch - 12);
+  // Glass shine
+  ctx.fillStyle = "rgba(255,255,255,0.14)";
+  ctx.fillRect((x + 5) | 0, (y + 9) | 0, 6, ch - 14);
+
+  // Door frame
+  ctx.strokeStyle = "#6b3a10";
+  ctx.lineWidth = 2;
+  ctx.strokeRect((x + 4) | 0, (y + 8) | 0, cw - 8, ch - 12);
+
+  // Cabinet top
+  ctx.fillStyle = "#3a1e06";
+  ctx.fillRect((x - 2) | 0, (y + 2) | 0, cw + 4, 5);
+  // Cabinet base
+  ctx.fillStyle = "#3a1e06";
+  ctx.fillRect((x - 2) | 0, (y + ch) | 0, cw + 4, 5);
+
+  // ── Shelf lines ────────────────────────────────────────────────
+  ctx.fillStyle = "#6b3a10";
+  ctx.fillRect((x + 4) | 0, (y + 26) | 0, cw - 8, 2);
+  ctx.fillRect((x + 4) | 0, (y + 44) | 0, cw - 8, 2);
+
+  // ── Trophies ──────────────────────────────────────────────────
+  // Gold trophy (top shelf, center)
+  const goldX = x + cw / 2;
+  const goldY = y + 20;
+  const goldBob = Math.sin(tick * 0.06) * 1.5;
+  _drawTrophy(ctx, goldX, goldY + goldBob, "#ffd700", "#e6a000", tick, 0);
+
+  // Silver trophy (middle shelf, left)
+  const silverX = x + 14;
+  const silverY = y + 38;
+  const silverBob = Math.sin(tick * 0.06 + 1.2) * 1.2;
+  _drawTrophy(ctx, silverX, silverY + silverBob, "#c0c0c0", "#909090", tick, 1);
+
+  // Bronze trophy (middle shelf, right)
+  const bronzeX = x + 30;
+  const bronzeY = y + 38;
+  const bronzeBob = Math.sin(tick * 0.06 + 2.4) * 1.2;
+  _drawTrophy(ctx, bronzeX, bronzeY + bronzeBob, "#cd7f32", "#9e5a0a", tick, 2);
+
+  // ── Sparkles on trophies (animated) ───────────────────────────
+  const sparkPhase = (tick * 0.08) % (Math.PI * 2);
+  const sparkles = [
+    { bx: goldX - 4, by: goldY - 12 },
+    { bx: goldX + 4, by: goldY - 8 },
+    { bx: silverX - 3, by: silverY - 10 },
+    { bx: bronzeX + 2, by: bronzeY - 9 },
+  ];
+  for (let si = 0; si < sparkles.length; si++) {
+    const alpha = 0.4 + 0.6 * Math.abs(Math.sin(sparkPhase + si * 1.1));
+    const sz = 1.5 + Math.abs(Math.sin(sparkPhase + si * 0.8)) * 2;
+    ctx.save();
+    ctx.globalAlpha = alpha;
+    ctx.fillStyle = "#ffffa0";
+    ctx.translate(sparkles[si].bx, sparkles[si].by - goldBob * 0.5);
+    // 4-point star
+    ctx.beginPath();
+    ctx.moveTo(0, -sz);
+    ctx.lineTo(sz * 0.3, -sz * 0.3);
+    ctx.lineTo(sz, 0);
+    ctx.lineTo(sz * 0.3, sz * 0.3);
+    ctx.lineTo(0, sz);
+    ctx.lineTo(-sz * 0.3, sz * 0.3);
+    ctx.lineTo(-sz, 0);
+    ctx.lineTo(-sz * 0.3, -sz * 0.3);
+    ctx.closePath();
+    ctx.fill();
+    ctx.restore();
+  }
+
+  // Door handle
+  ctx.fillStyle = "#c8a040";
+  ctx.beginPath();
+  ctx.arc((x + cw / 2) | 0, (y + 28) | 0, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Label
+  ctx.fillStyle = "#c8a040";
+  ctx.font = "4px 'Press Start 2P', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("TROPHIES", x + cw / 2, y + ch + 16);
+  ctx.textAlign = "left";
+
+  ctx.restore();
+}
+
+function _drawTrophy(ctx, cx, cy, colorTop, colorBase, tick, idx) {
+  // Cup
+  ctx.fillStyle = colorTop;
+  ctx.beginPath();
+  ctx.moveTo(cx - 6, cy);
+  ctx.lineTo(cx + 6, cy);
+  ctx.lineTo(cx + 4, cy - 10);
+  ctx.lineTo(cx - 4, cy - 10);
+  ctx.closePath();
+  ctx.fill();
+  // Cup shine
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.fillRect((cx - 3) | 0, (cy - 9) | 0, 2, 6);
+  // Handles
+  ctx.strokeStyle = colorTop;
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.arc(cx - 6, cy - 5, 3, 0.5 * Math.PI, 1.5 * Math.PI);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.arc(cx + 6, cy - 5, 3, -0.5 * Math.PI, 0.5 * Math.PI);
+  ctx.stroke();
+  // Stem
+  ctx.fillStyle = colorBase;
+  ctx.fillRect((cx - 2) | 0, cy | 0, 4, 4);
+  // Base
+  ctx.fillStyle = colorBase;
+  ctx.fillRect((cx - 5) | 0, (cy + 4) | 0, 10, 3);
+  // Star on cup
+  ctx.fillStyle = "#ffffc0";
+  ctx.font = "5px serif";
+  ctx.textAlign = "center";
+  ctx.fillText("★", cx, cy - 3);
+  ctx.textAlign = "left";
+}
