@@ -16,6 +16,7 @@ import {
   drawCrystalBall,
   drawRecordPlayer,
   drawPopcornMachine,
+  drawPhotoBooth,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
@@ -13229,6 +13230,19 @@ function loop(now) {
       pmy - 8,
       globalTick,
       drawPopcornMachine,
+    );
+  }
+  // Photo Booth (recreation zone, col 16 row ACT+9)
+  if (ACT_ZONE_Y > 0) {
+    const [_pboTx, _pboTy] = getAdminPos("photo_booth", 16, ACT_ZONE_Y + 9);
+    const [pbox, pboy] = ts(_pboTx, _pboTy);
+    drawObjectCached(
+      ctx,
+      "photo_booth",
+      pbox - T / 2,
+      pboy - 16,
+      globalTick,
+      drawPhotoBooth,
     );
   }
 

@@ -1118,3 +1118,192 @@ export function drawPopcornMachine(ctx, x, y, tick) {
     }
   }
 }
+
+// ── Photo Booth (curtained kiosk, animated flash & iris) ─────────
+export function drawPhotoBooth(ctx, x, y, tick) {
+  ctx.save();
+  const bW = T * 1.5, // booth width  (~48px)
+    bH = T * 2.5; // booth height (~80px)
+  const cx = x + bW / 2;
+
+  // ── Drop shadow ──────────────────────────────────────────────────
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.ellipse(cx, y + bH + 4, bW / 2 - 2, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Booth body (dark frame) ──────────────────────────────────────
+  fillR(ctx, x, y, bW, bH, "#1a1a2a");
+  fillR(ctx, x + 2, y + 2, bW - 4, bH - 4, "#22223a");
+
+  // ── Top marquee sign ─────────────────────────────────────────────
+  const signH = 14;
+  fillR(ctx, x + 1, y + 1, bW - 2, signH, "#8b0000");
+  fillR(ctx, x + 2, y + 2, bW - 4, signH - 2, "#aa1010");
+  // Tiny pixel border dots on sign
+  for (let di = 0; di < 5; di++) {
+    const dotX = x + 4 + di * 8;
+    const flashDot = Math.sin(tick * 0.12 + di * 1.2) > 0.3;
+    fillR(ctx, dotX, y + 2, 3, 3, flashDot ? "#ffe840" : "#884400");
+  }
+  // PHOTO label text
+  ctx.save();
+  ctx.fillStyle = "#ffe840";
+  ctx.font = "bold 5px 'Press Start 2P', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("PHOTO", cx, y + 11);
+  ctx.textAlign = "left";
+  ctx.restore();
+
+  // ── Camera section (upper half of booth interior) ─────────────────
+  const camSectionY = y + signH + 2;
+  const camSectionH = bH * 0.42;
+  fillR(ctx, x + 3, camSectionY, bW - 6, camSectionH, "#16162a");
+
+  // Flash bulb (top-right corner of camera section)
+  const flashPulse = 0.5 + 0.5 * Math.sin(tick * 0.07);
+  const isFlashing = Math.sin(tick * 0.04) > 0.85;
+  ctx.save();
+  ctx.globalAlpha = isFlashing ? 0.95 : 0.35 + flashPulse * 0.35;
+  ctx.shadowColor = "#ffffc0";
+  ctx.shadowBlur = isFlashing ? 18 : 8;
+  ctx.fillStyle = isFlashing ? "#ffffff" : "#e8e060";
+  ctx.beginPath();
+  ctx.arc(x + bW - 11, camSectionY + 8, 5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Flash bulb ring
+  ctx.strokeStyle = "#c0c040";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(x + bW - 11, camSectionY + 8, 6, 0, Math.PI * 2);
+  ctx.stroke();
+
+  // Camera lens (center of camera section, circular with iris)
+  const lensX = x + 16,
+    lensY = camSectionY + camSectionH / 2;
+  const lensR = 9;
+  // Iris breathing animation
+  const irisBreath = 0.5 + 0.5 * Math.sin(tick * 0.035);
+  const irisR = 4 + irisBreath * 2;
+
+  // Outer lens barrel
+  ctx.save();
+  ctx.shadowColor = "#00000080";
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = "#303040";
+  ctx.beginPath();
+  ctx.arc(lensX, lensY, lensR + 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+  // Lens glass (dark blue-grey)
+  ctx.fillStyle = "#1a2030";
+  ctx.beginPath();
+  ctx.arc(lensX, lensY, lensR, 0, Math.PI * 2);
+  ctx.fill();
+  // Iris petals (6 blades)
+  ctx.save();
+  ctx.globalAlpha = 0.75;
+  for (let ip = 0; ip < 6; ip++) {
+    const ang = (ip / 6) * Math.PI * 2 + tick * 0.008;
+    ctx.fillStyle = "#2a3050";
+    ctx.beginPath();
+    ctx.ellipse(
+      lensX + Math.cos(ang) * (irisR * 0.55),
+      lensY + Math.sin(ang) * (irisR * 0.55),
+      irisR * 0.5,
+      irisR * 0.28,
+      ang,
+      0,
+      Math.PI * 2,
+    );
+    ctx.fill();
+  }
+  ctx.restore();
+  // Inner lens (bright pupil)
+  const pupilR = lensR - irisR * 0.7;
+  ctx.fillStyle = "#0a0a18";
+  ctx.beginPath();
+  ctx.arc(lensX, lensY, Math.max(pupilR, 1.5), 0, Math.PI * 2);
+  ctx.fill();
+  // Lens highlight
+  ctx.save();
+  ctx.globalAlpha = 0.55;
+  ctx.fillStyle = "#c0d8ff";
+  ctx.beginPath();
+  ctx.ellipse(lensX - 3, lensY - 3, 3, 2, -0.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // ── Curtain section (lower half of booth) ─────────────────────────
+  const curtainY = y + signH + 2 + camSectionH + 2;
+  const curtainH = bH - signH - camSectionH - 8;
+  // Dark curtain base
+  fillR(ctx, x + 3, curtainY, bW - 6, curtainH, "#3a0a0a");
+  // Alternating stripe panels (5 stripes)
+  const stripeW = Math.floor((bW - 6) / 5);
+  for (let si = 0; si < 5; si++) {
+    if (si % 2 === 0) {
+      fillR(ctx, x + 3 + si * stripeW, curtainY, stripeW, curtainH, "#5a1010");
+    }
+  }
+  // Tie-back rope (horizontal line at 60% down curtain)
+  const tieY = curtainY + curtainH * 0.55;
+  ctx.strokeStyle = "#c8a050";
+  ctx.lineWidth = 1.5;
+  ctx.beginPath();
+  ctx.moveTo(x + 3, tieY);
+  ctx.lineTo(x + bW - 3, tieY);
+  ctx.stroke();
+  // Tie-back knot at center
+  fillR(ctx, cx - 3, tieY - 3, 6, 6, "#c8a050");
+  fillR(ctx, cx - 2, tieY - 4, 4, 8, "#e0b860");
+
+  // Curtain fold highlights (scalloped top edge)
+  ctx.fillStyle = "#7a2020";
+  for (let fi = 0; fi < 4; fi++) {
+    const foldX = x + 3 + fi * stripeW + stripeW / 2;
+    ctx.beginPath();
+    ctx.arc(foldX, curtainY, stripeW / 2, Math.PI, 0);
+    ctx.fill();
+  }
+
+  // ── Film strip emerging from right side ──────────────────────────
+  const filmX = x + bW - 1;
+  const filmY = y + signH + 8;
+  const filmW = 10,
+    filmH = 32;
+  // Film strip base (dark)
+  fillR(ctx, filmX, filmY, filmW, filmH, "#1a1a18");
+  fillR(ctx, filmX + 1, filmY + 1, filmW - 2, filmH - 2, "#282820");
+  // Sprocket holes (left edge of strip)
+  for (let sp = 0; sp < 4; sp++) {
+    fillR(ctx, filmX + 1, filmY + 3 + sp * 7, 2, 4, "#1a1a18");
+  }
+  // 3 mini photo frames on strip
+  const photoColors = ["#4060a0", "#806030", "#407050"];
+  for (let ph = 0; ph < 3; ph++) {
+    const pfY = filmY + 2 + ph * 10;
+    // Photo frame
+    fillR(ctx, filmX + 4, pfY, filmW - 5, 8, "#0a0a0a");
+    // Tiny photo content (solid color block with lighter center)
+    fillR(ctx, filmX + 5, pfY + 1, filmW - 7, 6, photoColors[ph]);
+    fillR(ctx, filmX + 6, pfY + 2, filmW - 10, 4, photoColors[ph] + "cc");
+  }
+
+  // ── Outer frame trim ─────────────────────────────────────────────
+  ctx.strokeStyle = "#404058";
+  ctx.lineWidth = 1.5;
+  ctx.strokeRect(x + 0.75, y + 0.75, bW - 1.5, bH - 1.5);
+
+  // ── Label under booth ─────────────────────────────────────────────
+  ctx.fillStyle = "#aa8080";
+  ctx.font = "4px 'Press Start 2P', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("BOOTH", cx, y + bH + 14);
+  ctx.textAlign = "left";
+  ctx.restore();
+}

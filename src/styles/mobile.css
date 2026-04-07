@@ -1,43 +1,217 @@
-@media (max-width: 600px) {
-  body { padding: 8px; gap: 8px; }
-
-  header {
-    flex-wrap: wrap;
-    gap: 8px;
-    padding-bottom: 8px;
+/* ── Tablet breakpoint (≤ 900px) ──────────────────────────── */
+@media (max-width: 900px) {
+  body {
+    padding: 10px;
+    gap: 10px;
   }
 
-  .logo { font-size: 8px; }
-  #agent-count { font-size: 6px; }
+  header {
+    max-width: 100%;
+    gap: 8px;
+  }
+
+  canvas#office {
+    max-width: 100%;
+  }
+
+  #task-view {
+    max-width: 100%;
+  }
+
+  #settings-panel,
+  #leaderboard-panel {
+    width: 280px;
+  }
+}
+
+/* ── Mobile breakpoint (≤ 640px) ──────────────────────────── */
+@media (max-width: 640px) {
+  body {
+    padding: 6px;
+    gap: 6px;
+    align-items: stretch;
+  }
+
+  /* ── Header ── */
+  header {
+    flex-wrap: wrap;
+    gap: 6px;
+    padding-bottom: 8px;
+    max-width: 100%;
+  }
+
+  .logo {
+    font-size: 7px;
+    flex: 1 1 auto;
+  }
+
+  #agent-count {
+    font-size: 5px;
+    white-space: nowrap;
+  }
 
   #public-url {
     font-size: 5px;
-    flex: 1;
+    flex: 1 1 100%;
+    order: 10;
     overflow: hidden;
     text-overflow: ellipsis;
     white-space: nowrap;
-    order: 10;
+    margin-left: 0;
+    max-width: 100%;
   }
 
-  .view-tabs { display: none; }
-
-  canvas#office {
-    max-width: none;
-    border: none;
+  /* Keep tabs visible but compact */
+  .view-tabs {
+    flex: 1 1 auto;
+    gap: 4px;
   }
 
+  .tab-btn {
+    min-height: 36px;
+    padding: 4px 8px;
+    font-size: 5px;
+  }
+
+  #btn-leaderboard,
+  #btn-settings {
+    min-height: 36px;
+    min-width: 36px;
+    padding: 4px 8px;
+    font-size: 5px;
+  }
+
+  /* ── Canvas ── */
   .canvas-wrapper {
     width: 100%;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
     border: 2px solid var(--color-border);
+    scroll-snap-type: x mandatory;
   }
 
+  canvas#office {
+    max-width: none;
+    border: none;
+    display: block;
+  }
+
+  /* ── Grid / mood ── */
   #grid {
     grid-template-columns: 1fr !important;
+    width: 100%;
+  }
+
+  /* ── Task view ── */
+  #task-view {
+    max-width: 100%;
+  }
+
+  .task-add-form {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+  }
+
+  .task-input {
+    width: 100%;
+  }
+
+  .task-select {
+    width: 100%;
+    min-height: 36px;
+  }
+
+  .task-add-btn {
+    min-height: 36px;
+    width: 100%;
+  }
+
+  /* ── Panels — full-width centered on mobile ── */
+  #settings-panel,
+  #leaderboard-panel {
+    position: fixed;
+    top: auto;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    width: 100%;
+    max-height: 80vh;
+    overflow-y: auto;
+    border-radius: 8px 8px 0 0;
+    border-top: 2px solid var(--color-accent);
+    border-left: none;
+    border-right: none;
+    border-bottom: none;
+  }
+
+  #leaderboard-panel {
+    border-top-color: #e0af68;
+  }
+
+  .lb-body {
+    max-height: 50vh;
+  }
+
+  /* ── Loading ── */
+  .loading-bar-outer {
+    width: calc(100vw - 48px);
+    max-width: 320px;
+  }
+
+  .loading-logo {
+    font-size: 10px;
+  }
+  .loading-text {
+    font-size: 7px;
+  }
+
+  /* ── Connection indicator ── */
+  .conn {
+    bottom: 6px;
+    right: 8px;
+  }
+}
+
+/* ── Small phone breakpoint (≤ 420px) ─────────────────────── */
+@media (max-width: 420px) {
+  body {
+    padding: 4px;
+    gap: 4px;
+  }
+
+  .logo {
+    font-size: 6px;
   }
 
   .tab-btn {
-    min-height: 44px;
+    font-size: 4px;
+    padding: 4px 6px;
+  }
+
+  #btn-leaderboard,
+  #btn-settings {
+    font-size: 4px;
+    padding: 3px 6px;
+  }
+
+  .loading-logo {
+    font-size: 8px;
+  }
+
+  .task-section-title {
+    font-size: 5px;
+  }
+
+  .task-item {
+    font-size: 5px;
+    padding: 7px 8px;
+  }
+
+  .mm-label {
+    font-size: 5px;
+  }
+  .mm-level {
+    font-size: 8px;
   }
 }
