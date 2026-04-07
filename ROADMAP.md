@@ -61,8 +61,8 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Leaderboard panel for scores
 
 ## Day 7 — Refactor Sprint
-- [ ] Split index.html into modules (agents.js, objects.js, admin.js)
-- [ ] Performance: cache static sprites to offscreen canvas
+- [x] Split index.html into modules (agents.js, objects.js, admin.js)
+- [x] Performance: cache static sprites to offscreen canvas
 - [ ] Memory leak audit
 - [ ] Mobile responsive CSS
 
