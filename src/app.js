@@ -15,6 +15,7 @@ import {
   drawJukebox,
   drawCrystalBall,
   drawRecordPlayer,
+  drawPopcornMachine,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
@@ -216,6 +217,8 @@ class ParticleSystem {
       p.update(dt);
       return p.alive;
     });
+    // Hard cap — drop oldest particles first to prevent unbounded growth
+    if (this.ps.length > 500) this.ps.splice(0, this.ps.length - 500);
   }
   draw(ctx) {
     for (const p of this.ps) p.draw(ctx);
@@ -3105,15 +3108,13 @@ function launchPingPongGame() {
 
   function closeGame() {
     if (rafId) cancelAnimationFrame(rafId);
+    document.removeEventListener("keydown", onKey);
     overlay.remove();
   }
   closeBtn.addEventListener("click", closeGame);
 
   function onKey(e) {
-    if (e.key === "Escape") {
-      closeGame();
-      document.removeEventListener("keydown", onKey);
-    }
+    if (e.key === "Escape") closeGame();
   }
   document.addEventListener("keydown", onKey);
 
@@ -12669,9 +12670,10 @@ function loop(now) {
   // ── Sync ─────────────────────────────────────────────────────
   for (const id of Object.keys(agentStates)) {
     if (!agentsData[id]) {
-      // Release any held idle slot
+      // Release any held idle slot (including queued reservations)
       for (const k of Object.keys(idleOccupied)) {
-        if (idleOccupied[k] === id) delete idleOccupied[k];
+        const v = idleOccupied[k];
+        if (v === id || v === "__queued_" + id) delete idleOccupied[k];
       }
       PS.puff(
         agentStates[id].sx,
@@ -13215,6 +13217,19 @@ function loop(now) {
     );
     const [vmx, vmy] = ts(_vmTx, _vmTy);
     drawVendingMachine(ctx, vmx - T / 2, vmy - 6, globalTick);
+  }
+  // Popcorn Machine (activity zone snack corner)
+  if (ACT_ZONE_Y > 0) {
+    const [_pmTx, _pmTy] = getAdminPos("popcorn_machine", 17, ACT_ZONE_Y + 17);
+    const [pmx, pmy] = ts(_pmTx, _pmTy);
+    drawObjectCached(
+      ctx,
+      "popcorn_machine",
+      pmx - T / 2,
+      pmy - 8,
+      globalTick,
+      drawPopcornMachine,
+    );
   }
 
   // Kanban board (live tasks)
@@ -14968,6 +14983,7 @@ const BUILTIN_POSITIONS = {
   zen_garden: { tx: 24, ty: 63 },
   terrarium: { tx: 30, ty: 61 },
   newtons_cradle: { tx: 33, ty: 61 },
+  popcorn_machine: { tx: 17, ty: 57 },
 };
 
 // Apply custom positions to actual game objects

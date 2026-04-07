@@ -984,3 +984,137 @@ export function drawRecordPlayer(ctx, x, y, tick) {
   ctx.textAlign = "left";
   ctx.restore();
 }
+
+// ── Popcorn Machine (movie-style, animated kernels & glow) ─────────
+export function drawPopcornMachine(ctx, x, y, tick) {
+  // Shadow
+  ctx.save();
+  ctx.globalAlpha = 0.18;
+  ctx.fillStyle = "#000";
+  ctx.beginPath();
+  ctx.ellipse(x + 18, y + 52, 13, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Legs
+  ctx.fillStyle = "#7a0000";
+  ctx.fillRect(x + 7, y + 46, 4, 7);
+  ctx.fillRect(x + 24, y + 46, 4, 7);
+
+  // Base tray
+  ctx.fillStyle = "#c0c0c0";
+  ctx.fillRect(x + 4, y + 42, 28, 5);
+  ctx.fillStyle = "#909090";
+  ctx.fillRect(x + 4, y + 45, 28, 2);
+
+  // Body frame (red)
+  ctx.fillStyle = "#cc1010";
+  ctx.fillRect(x + 4, y + 8, 28, 35);
+
+  // White vertical stripes
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(x + 9, y + 8, 6, 35);
+  ctx.fillRect(x + 21, y + 8, 6, 35);
+
+  // Glass window (dark backing)
+  ctx.fillStyle = "#100800";
+  ctx.fillRect(x + 6, y + 11, 24, 27);
+
+  // Inner warm glow
+  const glow = 0.28 + Math.sin(tick * 0.06) * 0.07;
+  ctx.save();
+  ctx.globalAlpha = glow;
+  const ig = ctx.createRadialGradient(x + 18, y + 25, 0, x + 18, y + 25, 14);
+  ig.addColorStop(0, "#ffe060");
+  ig.addColorStop(0.5, "#ff8820");
+  ig.addColorStop(1, "transparent");
+  ctx.fillStyle = ig;
+  ctx.fillRect(x + 6, y + 11, 24, 27);
+  ctx.restore();
+
+  // Animated popcorn kernels inside
+  const pcols = ["#f8e840", "#f0c030", "#fff8d0", "#e8b820", "#ffe890"];
+  for (let pi = 0; pi < 9; pi++) {
+    const px2 = x + 9 + (pi % 3) * 7 + Math.sin(tick * 0.03 + pi * 1.3) * 1.2;
+    const py2 =
+      y + 19 + Math.floor(pi / 3) * 7 + Math.cos(tick * 0.04 + pi * 0.8) * 1;
+    ctx.fillStyle = pcols[pi % pcols.length];
+    ctx.beginPath();
+    ctx.arc(px2 | 0, py2 | 0, 2.5, 0, Math.PI * 2);
+    ctx.fill();
+    // Extra fluffy bump
+    ctx.beginPath();
+    ctx.arc((px2 + 2) | 0, (py2 - 1) | 0, 1.5, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Glass left-edge reflection
+  ctx.save();
+  ctx.globalAlpha = 0.22;
+  ctx.fillStyle = "#ffffff";
+  ctx.fillRect(x + 7, y + 12, 3, 25);
+  ctx.restore();
+
+  // Top canopy (striped tent)
+  ctx.fillStyle = "#cc1010";
+  ctx.beginPath();
+  ctx.moveTo(x + 1, y + 10);
+  ctx.lineTo(x + 35, y + 10);
+  ctx.lineTo(x + 30, y + 2);
+  ctx.lineTo(x + 6, y + 2);
+  ctx.closePath();
+  ctx.fill();
+
+  ctx.fillStyle = "#ffffff";
+  // Stripe 1
+  ctx.beginPath();
+  ctx.moveTo(x + 7, y + 10);
+  ctx.lineTo(x + 13, y + 10);
+  ctx.lineTo(x + 11, y + 2);
+  ctx.lineTo(x + 6, y + 2);
+  ctx.closePath();
+  ctx.fill();
+  // Stripe 2
+  ctx.beginPath();
+  ctx.moveTo(x + 20, y + 10);
+  ctx.lineTo(x + 26, y + 10);
+  ctx.lineTo(x + 24, y + 2);
+  ctx.lineTo(x + 19, y + 2);
+  ctx.closePath();
+  ctx.fill();
+
+  // Gold finial
+  ctx.fillStyle = "#ffcc00";
+  ctx.fillRect(x + 16, y - 5, 4, 7);
+  ctx.beginPath();
+  ctx.arc(x + 18, y - 5, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ffee88";
+  ctx.beginPath();
+  ctx.arc(x + 17, y - 6, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // POPCORN label on base
+  ctx.save();
+  ctx.fillStyle = "#cc1010";
+  ctx.font = "bold 4px 'Press Start 2P', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("POP!", x + 18, y + 40);
+  ctx.restore();
+
+  // Animated popcorn bits floating up (2 staggered streams)
+  for (let si = 0; si < 2; si++) {
+    const st = (tick * 0.9 + si * 12) % 22;
+    if (st < 9) {
+      const alpha = 0.7 - st * 0.07;
+      ctx.save();
+      ctx.globalAlpha = alpha;
+      ctx.fillStyle = si === 0 ? "#f8e840" : "#fff8d0";
+      const bx = x + 12 + si * 10 + Math.sin(tick * 0.12 + si * 2) * 2;
+      ctx.beginPath();
+      ctx.arc(bx, y - 3 - st * 0.9, 2, 0, Math.PI * 2);
+      ctx.fill();
+      ctx.restore();
+    }
+  }
+}

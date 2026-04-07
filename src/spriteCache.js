@@ -25,6 +25,7 @@ const SPRITE_CONFIGS = {
   newtons_cradle: { w: 56, h: 56, padX: 4, padY: 4 },
   gumball: { w: 56, h: 68, padX: 4, padY: 4 },
   record_player: { w: 56, h: 60, padX: 4, padY: 4 },
+  popcorn_machine: { w: 40, h: 64, padX: 4, padY: 8 },
 };
 
 /**

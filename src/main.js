@@ -84,6 +84,7 @@ import "./app.js";
   function dismiss() {
     if (dismissed) return;
     dismissed = true;
+    JSON.parse = origParse; // restore native JSON.parse
     bar.style.width = "100%";
     setTimeout(() => {
       screen.classList.add("hidden");
