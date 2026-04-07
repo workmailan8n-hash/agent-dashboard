@@ -14960,7 +14960,7 @@ const BUILTIN_POSITIONS = {
   desk_19: { tx: 19.5, ty: 5 },
 
   // ═══ WALL DECORATIONS ═══
-  neon_sign: { tx: 3, ty: 0 },
+  neon_sign: { tx: 3, ty: 0.5 },
   corkboard: { tx: 11, ty: 0 },
   whiteboard: { tx: 27.5, ty: 0 },
   kanban: { tx: 22.5, ty: 0 },
@@ -14976,7 +14976,7 @@ const BUILTIN_POSITIONS = {
   lava_lamp: { tx: 30, ty: 18 },
   plant_0: { tx: 1.5, ty: 19.5 },
   plant_1: { tx: 26.5, ty: 22.5 },
-  vending: { tx: 32.5, ty: 22 },
+  vending: { tx: 28, ty: 12 },
 
   // ═══ KITCHEN ═══
   kitchen_counter: { tx: 25, ty: 10 },
@@ -15035,7 +15035,6 @@ const BUILTIN_POSITIONS = {
   terrarium: { tx: 30, ty: 61 },
   newtons_cradle: { tx: 33, ty: 61 },
   popcorn_machine: { tx: 17, ty: 57 },
-  trophy_cabinet: { tx: 5, ty: 2 },
 };
 
 // Apply custom positions to actual game objects
