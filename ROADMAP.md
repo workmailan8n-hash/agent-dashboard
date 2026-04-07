@@ -68,7 +68,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 
 ## Day 8 — NPCs & Events
 - [x] Pizza delivery person at 12:00 (walks in, leaves box)
-- [ ] Cleaning crew at 23:00 (mops floors, empties trash)
+- [x] Cleaning crew at 23:00 (mops floors, empties trash)
 - [ ] Random visitor (walks around, leaves)
 - [ ] Mail delivery (drops letters on desks)
 
