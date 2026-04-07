@@ -64,7 +64,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Split index.html into modules (agents.js, objects.js, admin.js)
 - [x] Performance: cache static sprites to offscreen canvas
 - [x] Memory leak audit
-- [ ] Mobile responsive CSS
+- [x] Mobile responsive CSS
 
 ## Day 8 — NPCs & Events
 - [ ] Pizza delivery person at 12:00 (walks in, leaves box)
