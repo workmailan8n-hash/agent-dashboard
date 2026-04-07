@@ -856,3 +856,131 @@ export function drawCrystalBall(ctx, x, y, tick) {
   ctx.textAlign = "left";
   ctx.restore();
 }
+
+// ── Record Player (spinning vinyl turntable) ─────────────────────
+export function drawRecordPlayer(ctx, x, y, tick) {
+  ctx.save();
+  const t = tick * 0.04; // rotation speed
+  const pw = 44,
+    ph = 36; // platter base dimensions
+  const cx = x + pw / 2,
+    cy = y + ph / 2 + 4;
+
+  // Wooden cabinet base
+  ctx.fillStyle = "#5a3010";
+  ctx.fillRect(x, y + ph - 2, pw, 10);
+  ctx.fillStyle = "#7a4820";
+  ctx.fillRect(x + 2, y + ph, pw - 4, 7);
+
+  // Platter mat (felt)
+  ctx.save();
+  ctx.shadowColor = "#00000050";
+  ctx.shadowBlur = 6;
+  ctx.fillStyle = "#1a1a28";
+  ctx.beginPath();
+  ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Spinning vinyl record
+  ctx.save();
+  ctx.translate(cx, cy);
+  ctx.rotate(t);
+
+  // Grooves (concentric rings)
+  for (let r = 16; r > 7; r -= 2) {
+    ctx.strokeStyle = r % 4 === 0 ? "#2a2a38" : "#222230";
+    ctx.lineWidth = 0.8;
+    ctx.beginPath();
+    ctx.arc(0, 0, r, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+
+  // Label circle (center of record)
+  const labelGrad = ctx.createRadialGradient(0, 0, 0, 0, 0, 6);
+  labelGrad.addColorStop(0, "#e04020");
+  labelGrad.addColorStop(1, "#a02010");
+  ctx.fillStyle = labelGrad;
+  ctx.beginPath();
+  ctx.arc(0, 0, 6, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tiny label lines
+  ctx.strokeStyle = "#ff806080";
+  ctx.lineWidth = 0.6;
+  for (let li = 0; li < 3; li++) {
+    ctx.beginPath();
+    ctx.moveTo(-4, -3 + li * 2.5);
+    ctx.lineTo(4, -3 + li * 2.5);
+    ctx.stroke();
+  }
+
+  // Spindle hole
+  ctx.fillStyle = "#0a0a18";
+  ctx.beginPath();
+  ctx.arc(0, 0, 1.2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore(); // end vinyl rotation
+
+  // Record shine overlay (static)
+  ctx.save();
+  ctx.globalAlpha = 0.12 + 0.04 * Math.sin(tick * 0.06);
+  const shineGrad = ctx.createRadialGradient(cx - 6, cy - 6, 1, cx, cy, 18);
+  shineGrad.addColorStop(0, "#ffffff");
+  shineGrad.addColorStop(1, "transparent");
+  ctx.fillStyle = shineGrad;
+  ctx.beginPath();
+  ctx.arc(cx, cy, 18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+
+  // Tonearm pivot point (top-right of platter)
+  const pivotX = x + pw - 4,
+    pivotY = y + 4;
+  const armAngle = -0.52 + Math.sin(tick * 0.008) * 0.06; // subtle sway
+  const armLen = 22;
+  const armEndX = pivotX + Math.cos(armAngle) * armLen;
+  const armEndY = pivotY + Math.sin(armAngle) * armLen;
+
+  // Tonearm shadow
+  ctx.save();
+  ctx.globalAlpha = 0.2;
+  ctx.strokeStyle = "#000";
+  ctx.lineWidth = 3;
+  ctx.beginPath();
+  ctx.moveTo(pivotX + 1, pivotY + 1);
+  ctx.lineTo(armEndX + 1, armEndY + 1);
+  ctx.stroke();
+  ctx.restore();
+
+  // Tonearm body
+  ctx.strokeStyle = "#c0c0d0";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(pivotX, pivotY);
+  ctx.lineTo(armEndX, armEndY);
+  ctx.stroke();
+
+  // Cartridge head (end of arm)
+  ctx.fillStyle = "#909090";
+  ctx.fillRect(armEndX - 3, armEndY - 1, 5, 3);
+
+  // Pivot dot
+  ctx.fillStyle = "#a0a0b0";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 3, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#e0e0f0";
+  ctx.beginPath();
+  ctx.arc(pivotX, pivotY, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Label
+  ctx.fillStyle = "#a08060";
+  ctx.font = "bold 4px 'Press Start 2P', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("VINYL", cx, y + ph + 18);
+  ctx.textAlign = "left";
+  ctx.restore();
+}

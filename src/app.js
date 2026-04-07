@@ -14,7 +14,9 @@ import {
   drawHammock,
   drawJukebox,
   drawCrystalBall,
+  drawRecordPlayer,
 } from "./objects.js";
+import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
 
 // ════════════════════════════════════════════════════════════════
@@ -8438,19 +8440,40 @@ function buildBackground() {
     {
       const [_hmTx, _hmTy] = getAdminPos("hammock", 29, ACT_ZONE_Y + 11);
       const [hmx, hmy] = ts(_hmTx, _hmTy);
-      drawHammock(ctx, hmx - T / 2, hmy + 4, globalTick);
+      drawObjectCached(
+        ctx,
+        "hammock",
+        hmx - T / 2,
+        hmy + 4,
+        globalTick,
+        drawHammock,
+      );
     }
     // ── Jukebox (gaming room, col 25) ──────────────────────────
     {
       const [_jbTx, _jbTy] = getAdminPos("jukebox", 25, ACT_ZONE_Y + 9);
       const [jbx, jby] = ts(_jbTx, _jbTy);
-      drawJukebox(ctx, jbx - T / 2, jby - 8, globalTick);
+      drawObjectCached(
+        ctx,
+        "jukebox",
+        jbx - T / 2,
+        jby - 8,
+        globalTick,
+        drawJukebox,
+      );
     }
     // ── Pinball Machine (gaming room, col 32 row ACT+9) ────────
     {
       const [_pbTx, _pbTy] = getAdminPos("pinball", 32, ACT_ZONE_Y + 9);
       const [pbmx, pbmy] = ts(_pbTx, _pbTy);
-      drawPinballMachine(ctx, pbmx - T / 2 + 2, pbmy - 12, globalTick);
+      drawObjectCached(
+        ctx,
+        "pinball",
+        pbmx - T / 2 + 2,
+        pbmy - 12,
+        globalTick,
+        drawPinballMachine,
+      );
     }
 
     // ── Telescope (makers lab, col 23) ──────────────────────────
@@ -13081,7 +13104,14 @@ function loop(now) {
       10.5,
     );
     const [rdx, rdy] = ts(_rdTx, _rdTy);
-    drawRubberDuck(ctx, rdx - T / 2, rdy, globalTick);
+    drawObjectCached(
+      ctx,
+      "rubber_duck",
+      rdx - T / 2,
+      rdy,
+      globalTick,
+      drawRubberDuck,
+    );
   }
   // Lava lamp (animated blobs in right zone)
   {
@@ -13091,35 +13121,90 @@ function loop(now) {
       4.5,
     );
     const [llx, lly] = ts(_llTx, _llTy);
-    drawLavaLamp(ctx, llx - T / 2, lly - 8, globalTick);
+    drawObjectCached(
+      ctx,
+      "lava_lamp",
+      llx - T / 2,
+      lly - 8,
+      globalTick,
+      drawLavaLamp,
+    );
   }
   // Crystal Ball (activity zone oracle)
   if (ACT_ZONE_Y > 0) {
     const [_cbTx, _cbTy] = getAdminPos("crystal_ball", 15, ACT_ZONE_Y + 17);
     const [cbx, cby] = ts(_cbTx, _cbTy);
-    drawCrystalBall(ctx, cbx - T / 2, cby - 8, globalTick);
+    drawObjectCached(
+      ctx,
+      "crystal_ball",
+      cbx - T / 2,
+      cby - 8,
+      globalTick,
+      drawCrystalBall,
+    );
   }
   // Zen Garden (bottom zone, relaxation corner)
   if (ACT_ZONE_Y > 0) {
     const [_zgTx, _zgTy] = getAdminPos("zen_garden", 24, ACT_ZONE_Y + 23);
     const [zgx, zgy] = ts(_zgTx, _zgTy);
-    drawZenGarden(ctx, zgx - T / 2, zgy - 8, globalTick);
+    drawObjectCached(
+      ctx,
+      "zen_garden",
+      zgx - T / 2,
+      zgy - 8,
+      globalTick,
+      drawZenGarden,
+    );
   }
   // Terrarium (gecko vivarium, bottom corner)
   {
     const [_ttTx, _ttTy] = getAdminPos("terrarium", 30, 61);
     const [ttx, tty] = ts(_ttTx, _ttTy);
-    drawTerrarium(ctx, ttx - T / 2, tty - 4, globalTick);
+    drawObjectCached(
+      ctx,
+      "terrarium",
+      ttx - T / 2,
+      tty - 4,
+      globalTick,
+      drawTerrarium,
+    );
   }
   {
     const [_ncTx, _ncTy] = getAdminPos("newtons_cradle", 33, 61);
     const [ncx, ncy] = ts(_ncTx, _ncTy);
-    drawNewtonsCradle(ctx, ncx - T / 2, ncy - 4, globalTick);
+    drawObjectCached(
+      ctx,
+      "newtons_cradle",
+      ncx - T / 2,
+      ncy - 4,
+      globalTick,
+      drawNewtonsCradle,
+    );
   }
   {
     const [_gbTx, _gbTy] = getAdminPos("gumball_machine", 36, 61);
     const [gbx, gby] = ts(_gbTx, _gbTy);
-    drawGumballMachine(ctx, gbx - T / 2, gby - 4, globalTick);
+    drawObjectCached(
+      ctx,
+      "gumball",
+      gbx - T / 2,
+      gby - 4,
+      globalTick,
+      drawGumballMachine,
+    );
+  }
+  // Record Player (lounge area, spins vinyl)
+  {
+    const [_rpTx, _rpTy] = getAdminPos("record_player", 20, ACT_ZONE_Y + 23);
+    const [rpx, rpy] = ts(_rpTx, _rpTy);
+    drawObjectCached(
+      ctx,
+      "record_player",
+      rpx - T / 2,
+      rpy - 4,
+      globalTick,
+      drawRecordPlayer,
+    );
   }
   // Vending machine (break room snacks)
   {
