@@ -70,7 +70,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Pizza delivery person at 12:00 (walks in, leaves box)
 - [x] Cleaning crew at 23:00 (mops floors, empties trash)
 - [x] Random visitor (walks around, leaves)
-- [ ] Mail delivery (drops letters on desks)
+- [x] Mail delivery (drops letters on desks)
 
 ## Day 9 — Office Events
 - [ ] Party mode trigger (balloons, confetti, music notes, dancing)
