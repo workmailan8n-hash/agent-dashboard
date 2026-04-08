@@ -388,7 +388,7 @@ const server = http.createServer((req, res) => {
   if (method === "GET" && url === "/api/tg-feedback")
     return handleGetTgFeedback(req, res, lastTgFeedback);
 
-  if (method === "POST" && url === "/railway-webhook")
+  if (method === "POST" && url.split("?")[0] === "/railway-webhook")
     return handleRailwayWebhook(req, res);
 
   if (method === "GET" && url === "/api/layout")
