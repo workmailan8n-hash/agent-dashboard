@@ -29,7 +29,7 @@ export const BUILTIN_POSITIONS = {
   desk_19: { tx: 19.5, ty: 5 },
 
   // ═══ WALL DECORATIONS ═══
-  neon_sign: { tx: 17, ty: 0 },
+  neon_sign: { tx: 28, ty: 44.5 },
   corkboard: { tx: 12, ty: 0 },
   whiteboard: { tx: 27.5, ty: 0 },
   kanban: { tx: 22.5, ty: 0 },
