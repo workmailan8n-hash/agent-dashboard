@@ -2637,6 +2637,246 @@ class CleaningCrew {
 
 const cleaningCrew = new CleaningCrew();
 
+// ════════════════════════════════════════════════════════════════
+//  RANDOM VISITOR  👤  (random timer: 15-60 real-time minutes)
+// ════════════════════════════════════════════════════════════════
+class RandomVisitor {
+  constructor() {
+    this.state = "idle";
+    this.tx = 0;
+    this.ty = 0;
+    this.sx = 0;
+    this.sy = 0;
+    this._speed = 3.0; // tiles/sec
+    this._facingLeft = false;
+    this._pauseTimer = 0;
+    this._enterTimer = 0;
+    this._wpIndex = 0;
+    this._waypoints = null;
+    this._speechIndex = 0;
+    this._skinTone = "#f5c5a0";
+    // Schedule first visit 15-60 minutes from now
+    this._nextVisitTime = Date.now() + (15 + Math.random() * 45) * 60 * 1000;
+    this._speeches = [
+      "Nice office!",
+      "Wow!",
+      "Cool setup!",
+      "Where's coffee?",
+      "Impressive!",
+      "Love it here!",
+    ];
+  }
+
+  _buildWaypoints() {
+    const all = [
+      { tx: COLS * 0.45, ty: ROWS * 0.35 },
+      { tx: COLS * 0.25, ty: ROWS * 0.6 },
+      { tx: COLS * 0.5, ty: ROWS * 0.5 },
+      { tx: COLS * 0.3, ty: ROWS * 0.4 },
+    ];
+    // Pick 2 random distinct waypoints
+    const a = Math.floor(Math.random() * all.length);
+    let b = Math.floor(Math.random() * (all.length - 1));
+    if (b >= a) b++;
+    return [all[a], all[b]];
+  }
+
+  _screenPos() {
+    this.sx = OX + this.tx * T;
+    this.sy = OY + this.ty * T;
+  }
+
+  _moveTo(targetTx, targetTy, dt) {
+    const dx = targetTx - this.tx;
+    const dy = targetTy - this.ty;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist < 0.05) {
+      this.tx = targetTx;
+      this.ty = targetTy;
+      this._screenPos();
+      return true;
+    }
+    const step = this._speed * dt;
+    if (dist <= step) {
+      this.tx = targetTx;
+      this.ty = targetTy;
+      this._screenPos();
+      return true;
+    }
+    this._facingLeft = dx < 0;
+    this.tx += (dx / dist) * step;
+    this.ty += (dy / dist) * step;
+    this._screenPos();
+    return false;
+  }
+
+  update(dt, tick) {
+    const entryTx = COLS - 0.5;
+    const entryTy = KITCHEN_DOOR_ROW + 1.5;
+
+    if (this.state === "idle") {
+      if (Date.now() >= this._nextVisitTime) {
+        const skins = ["#f5c5a0", "#d4956a", "#8b5e3c"];
+        this._skinTone = skins[Math.floor(Math.random() * skins.length)];
+        this._waypoints = this._buildWaypoints();
+        this._wpIndex = 0;
+        this._speechIndex = 0;
+        this.tx = entryTx;
+        this.ty = entryTy;
+        this._facingLeft = true;
+        this._screenPos();
+        this.state = "entering";
+        this._enterTimer = 0.5;
+        S.doorAnim.target = 1;
+        S.doorAnim.timer = 1.5;
+      }
+    } else if (this.state === "entering") {
+      this._enterTimer -= dt;
+      if (this._enterTimer <= 0) {
+        this.state = "walking_to_wp";
+      }
+    } else if (this.state === "walking_to_wp") {
+      const wp = this._waypoints[this._wpIndex];
+      const arrived = this._moveTo(wp.tx, wp.ty, dt);
+      if (arrived) {
+        this.state = "pausing";
+        this._pauseTimer = 3 + Math.random();
+      }
+    } else if (this.state === "pausing") {
+      this._pauseTimer -= dt;
+      if (this._pauseTimer <= 0) {
+        this._wpIndex++;
+        if (this._wpIndex >= this._waypoints.length) {
+          this.state = "leaving";
+          S.doorAnim.target = 1;
+          S.doorAnim.timer = 1.5;
+        } else {
+          this._speechIndex = (this._speechIndex + 1) % this._speeches.length;
+          this.state = "walking_to_wp";
+        }
+      }
+    } else if (this.state === "leaving") {
+      const arrived = this._moveTo(entryTx, entryTy, dt);
+      if (arrived) {
+        this.state = "done";
+        S.doorAnim.target = 0;
+        S.doorAnim.timer = 0;
+      }
+    } else if (this.state === "done") {
+      // Schedule next visit 15-60 minutes from now
+      this._nextVisitTime = Date.now() + (15 + Math.random() * 45) * 60 * 1000;
+      this.state = "idle";
+    }
+  }
+
+  draw(ctx, tick) {
+    if (this.state === "idle" || this.state === "entering") return;
+
+    ctx.save();
+
+    const cx = this.sx;
+    const cy = this.sy;
+    const isMoving = this.state === "walking_to_wp" || this.state === "leaving";
+    const bob = isMoving ? Math.sin(tick * 0.18) * 2 : 0;
+    const by = cy + bob;
+
+    // Flip when leaving (facing right toward door)
+    if (!this._facingLeft) {
+      ctx.translate(cx, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-cx, 0);
+    }
+
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 12, 10, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs (walk animation)
+    const legSwing = isMoving ? Math.sin(tick * 0.18) * 5 : 0;
+    ctx.fillStyle = "#666688";
+    ctx.fillRect((cx - 5) | 0, (by + 8) | 0, 4, (8 + legSwing * 0.3) | 0);
+    ctx.fillRect((cx + 1) | 0, (by + 8) | 0, 4, (8 - legSwing * 0.3) | 0);
+
+    // Body — casual blue jacket
+    ctx.fillStyle = "#3a7bd5";
+    ctx.fillRect((cx - 8) | 0, (by - 4) | 0, 16, 14);
+    // Jacket collar
+    ctx.fillStyle = "#2a5bb0";
+    ctx.fillRect((cx - 2) | 0, (by - 4) | 0, 4, 5);
+
+    // Arms
+    ctx.fillStyle = "#3a7bd5";
+    ctx.fillRect((cx - 12) | 0, (by - 2) | 0, 4, 9);
+    ctx.fillRect((cx + 8) | 0, (by - 2) | 0, 4, 9);
+
+    // Hands — skin tone
+    ctx.fillStyle = this._skinTone;
+    ctx.fillRect((cx - 13) | 0, (by + 6) | 0, 4, 3);
+    ctx.fillRect((cx + 9) | 0, (by + 6) | 0, 4, 3);
+
+    // Head — skin tone
+    ctx.fillStyle = this._skinTone;
+    ctx.beginPath();
+    ctx.ellipse(cx, by - 10, 6, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Hair — brown
+    ctx.fillStyle = "#6a3a1a";
+    ctx.fillRect((cx - 6) | 0, (by - 17) | 0, 12, 5);
+    ctx.beginPath();
+    ctx.ellipse(cx, by - 17, 6, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = "#2a1808";
+    ctx.fillRect((cx - 3) | 0, (by - 11) | 0, 2, 2);
+    ctx.fillRect((cx + 1) | 0, (by - 11) | 0, 2, 2);
+
+    // Smile
+    ctx.strokeStyle = "#2a1808";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, by - 8, 3, 0, Math.PI);
+    ctx.stroke();
+
+    // Speech bubble — only when pausing
+    if (this.state === "pausing") {
+      const speech = this._speeches[this._speechIndex % this._speeches.length];
+      const bubX = cx;
+      const bubY = by - 44;
+      const textW = Math.max(speech.length * 4.5, 40);
+      ctx.fillStyle = "#fffde0";
+      ctx.strokeStyle = "#c0a000";
+      ctx.lineWidth = 1.5;
+      ctx.beginPath();
+      ctx.roundRect(bubX - textW / 2 - 4, bubY - 10, textW + 8, 16, 4);
+      ctx.fill();
+      ctx.stroke();
+      // Tail
+      ctx.beginPath();
+      ctx.moveTo(bubX - 4, bubY + 6);
+      ctx.lineTo(bubX, bubY + 13);
+      ctx.lineTo(bubX + 6, bubY + 6);
+      ctx.fillStyle = "#fffde0";
+      ctx.fill();
+      ctx.strokeStyle = "#c0a000";
+      ctx.stroke();
+      // Text
+      ctx.fillStyle = "#664400";
+      ctx.font = "5px 'Press Start 2P', monospace";
+      ctx.textAlign = "center";
+      ctx.fillText(speech, bubX, bubY + 3);
+      ctx.textAlign = "left";
+    }
+
+    ctx.restore();
+  }
+}
+
+const randomVisitor = new RandomVisitor();
+
 export {
   drawCat,
   CatState,
@@ -2647,4 +2887,5 @@ export {
   bowlRefills,
   pizzaDelivery,
   cleaningCrew,
+  randomVisitor,
 };

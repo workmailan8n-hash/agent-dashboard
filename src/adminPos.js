@@ -87,6 +87,7 @@ export const BUILTIN_POSITIONS = {
   pinball: { tx: 21.5, ty: 52 },
   trophy_cabinet: { tx: 24.5, ty: 46 },
   bookshelf: { tx: 26.5, ty: 46 },
+  slot_machine: { tx: 1, ty: 50 },
 
   // ═══ GYM & SPORTS ═══
   gym: { tx: 2, ty: 56 },

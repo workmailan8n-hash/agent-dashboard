@@ -19,6 +19,7 @@ import {
   drawPhotoBooth,
   drawRetroTelephone,
   drawTrophyCabinet,
+  drawSlotMachine,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
@@ -6190,6 +6191,9 @@ function buildObstacleGrid() {
 
     const [telObsTx, telObsTy] = getAdminPos("telescope", 18, ACT_ZONE_Y + 14);
     markRect(telObsTx, telObsTy, 1, 2);
+
+    const [smObsTx, smObsTy] = getAdminPos("slot_machine", 1, 50);
+    markRect(smObsTx, smObsTy, 1.5, 2);
   }
 
   // ── Zone 3: CAFE obstacles (ACT_ZONE+14) ─────
@@ -13096,6 +13100,18 @@ function loop(now) {
       drawGumballMachine,
     );
   }
+  {
+    const [_smTx, _smTy] = getAdminPos("slot_machine", 1, 50);
+    const [smx, smy] = ts(_smTx, _smTy);
+    drawObjectCached(
+      ctx,
+      "slot_machine",
+      smx - T / 2,
+      smy - 4,
+      globalTick,
+      drawSlotMachine,
+    );
+  }
   // Record Player (lounge area, spins vinyl)
   {
     const [_rpTx, _rpTy] = getAdminPos("record_player", 20, ACT_ZONE_Y + 23);
@@ -14760,6 +14776,14 @@ function buildAdminObjects() {
     w: 1.8,
     h: 2,
   });
+  adminObjects.push({
+    id: "slot_machine",
+    label: "🎰 Slot Machine",
+    tx: 1,
+    ty: 50,
+    w: 1.5,
+    h: 2,
+  });
 
   // Kanban board
   const rXkb = PER_ROW * STEP_X + 2;
@@ -15543,6 +15567,7 @@ const CLICK_OBJ_MAP = {
   terrarium: "terrarium",
   newtons_cradle: "newtons_cradle",
   gumball_machine: "gumball_machine",
+  slot_machine: "slot_machine",
 };
 
 // Dynamic: desks and couches
@@ -15590,6 +15615,7 @@ function findClickableAt(tx, ty) {
     { id: "terrarium", w: 1.8, h: 1.4 },
     { id: "newtons_cradle", w: 1.5, h: 1.5 },
     { id: "gumball_machine", w: 1.5, h: 2 },
+    { id: "slot_machine", w: 1.5, h: 2 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++)
@@ -16222,6 +16248,23 @@ function initClickParticles(type, cx, cy) {
         });
       }
       break;
+    case "slot_machine": {
+      // Coins burst out
+      const COIN_COLS = ["#ffd700", "#ffee44", "#ffaa00", "#ffffc0", "#e0b000"];
+      for (let i = 0; i < 12; i++) {
+        const ang = (Math.random() - 0.5) * Math.PI;
+        const speed = 1.5 + Math.random() * 2.5;
+        p.push({
+          x: cx + (Math.random() - 0.5) * 12,
+          y: cy + 8,
+          vx: Math.cos(ang) * speed,
+          vy: -Math.abs(Math.sin(ang) * speed) - 1,
+          size: 3 + Math.random() * 2,
+          col: COIN_COLS[i % COIN_COLS.length],
+        });
+      }
+      break;
+    }
   }
   return p;
 }
@@ -17220,6 +17263,41 @@ function drawClickAnims(ctx, tick) {
             pw - 2,
             ph - 4,
           );
+        }
+        break;
+      }
+      case "slot_machine": {
+        for (const p of a.particles) {
+          p.vy += 0.12; // gravity
+          p.x += p.vx;
+          p.y += p.vy;
+          p.vx *= 0.97;
+          if (p.y > a.y + 20) {
+            p.vy *= -0.5;
+            p.y = a.y + 20;
+          } // bounce
+          ctx.fillStyle = p.col;
+          ctx.globalAlpha = alpha * (1 - t * 0.7);
+          ctx.beginPath();
+          ctx.ellipse(
+            Math.round(p.x),
+            Math.round(p.y),
+            p.size,
+            p.size * 0.6,
+            0,
+            0,
+            Math.PI * 2,
+          );
+          ctx.fill();
+        }
+        // WIN text
+        if (t < 0.5) {
+          ctx.globalAlpha = alpha * (1 - t * 2);
+          ctx.fillStyle = "#ffd700";
+          ctx.font = "7px 'Press Start 2P',monospace";
+          ctx.textAlign = "center";
+          ctx.fillText("JACKPOT!", a.x, a.y - 20);
+          ctx.textAlign = "left";
         }
         break;
       }

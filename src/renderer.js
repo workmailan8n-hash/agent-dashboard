@@ -79,6 +79,7 @@ import {
   bowlRefills,
   pizzaDelivery,
   cleaningCrew,
+  randomVisitor,
 } from "./creatures.js";
 import { renderCard, updateUI } from "./ui.js";
 import {
@@ -518,6 +519,7 @@ function loop(now) {
   goose.update(dt, globalTick);
   pizzaDelivery.update(dt, globalTick);
   cleaningCrew.update(dt, globalTick);
+  randomVisitor.update(dt, globalTick);
 
   // ── Ping pong ball physics ──────────────────────────────────────
   {
@@ -895,6 +897,7 @@ function loop(now) {
   goose.draw(ctx, globalTick);
   pizzaDelivery.draw(ctx, globalTick);
   cleaningCrew.draw(ctx, globalTick);
+  randomVisitor.draw(ctx, globalTick);
   PS.draw(ctx);
 
   // Phase 2: all overlays strictly on top

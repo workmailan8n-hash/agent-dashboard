@@ -1528,6 +1528,105 @@ export function drawTrophyCabinet(ctx, x, y, tick) {
   ctx.restore();
 }
 
+export function drawSlotMachine(ctx, x, y, tick) {
+  const tw = T * 1.2;
+  const th = T * 2;
+  ctx.save();
+
+  // Shadow
+  ctx.fillStyle = "rgba(0,0,0,0.22)";
+  ctx.beginPath();
+  ctx.ellipse(x + tw / 2, y + th + 3, tw * 0.45, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Cabinet body
+  ctx.fillStyle = "#1a0a2e";
+  ctx.beginPath();
+  ctx.roundRect(x, y, tw, th, 4);
+  ctx.fill();
+
+  // Top trim
+  ctx.fillStyle = "#2a0a4e";
+  ctx.fillRect((x + 2) | 0, (y + 2) | 0, (tw - 4) | 0, 6);
+
+  // "SLOTS" label
+  ctx.fillStyle = "#ffee44";
+  ctx.font = "5px 'Press Start 2P', monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("SLOTS", (x + tw / 2) | 0, (y + 8) | 0);
+  ctx.textAlign = "left";
+
+  // Side light dots (blinking)
+  const litCols = ["#ff4488", "#44ffaa", "#ffaa22", "#44aaff"];
+  for (let li = 0; li < 4; li++) {
+    const ly = y + 14 + li * 7;
+    const blink = (tick + li * 7) % 20 < 10;
+    ctx.fillStyle = blink ? litCols[li % litCols.length] : "#330033";
+    ctx.beginPath();
+    ctx.arc((x + 3) | 0, ly | 0, 2, 0, Math.PI * 2);
+    ctx.fill();
+    ctx.beginPath();
+    ctx.arc((x + tw - 3) | 0, ly | 0, 2, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Three symbol windows
+  const symbols = ["7", "★", "♥", "♦", "BAR"];
+  const winW = 12;
+  const winH = 14;
+  const winY = y + 14;
+  const totalWinW = 3 * winW + 2 * 3; // 3 windows + 2 gaps of 3px
+  const winStartX = x + (tw - totalWinW) / 2;
+  for (let wi = 0; wi < 3; wi++) {
+    const wx = winStartX + wi * (winW + 3);
+    // Window background
+    ctx.fillStyle = "#000011";
+    ctx.fillRect(wx | 0, winY | 0, winW, winH);
+    // White border
+    ctx.strokeStyle = "#ffffff";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(wx | 0, winY | 0, winW, winH);
+    // Symbol
+    const symIdx = Math.floor((tick * 0.05 + wi) % 5);
+    const sym = symbols[symIdx];
+    const symCols = ["#ff4444", "#ffee44", "#ff4488", "#ff4488", "#aaffaa"];
+    ctx.fillStyle = symCols[symIdx];
+    ctx.font = sym === "BAR" ? "4px 'Press Start 2P', monospace" : "8px serif";
+    ctx.textAlign = "center";
+    ctx.fillText(sym, (wx + winW / 2) | 0, (winY + winH - 3) | 0);
+    ctx.textAlign = "left";
+  }
+
+  // Coin tray at bottom
+  ctx.fillStyle = "#2a0a4e";
+  ctx.fillRect((x + 4) | 0, (y + th - 8) | 0, (tw - 8) | 0, 6);
+  ctx.strokeStyle = "#6644aa";
+  ctx.lineWidth = 1;
+  ctx.strokeRect((x + 4) | 0, (y + th - 8) | 0, (tw - 8) | 0, 6);
+
+  // Handle on right side
+  const hx = x + tw;
+  const hy = y + th * 0.45;
+  // Stick
+  ctx.strokeStyle = "#888888";
+  ctx.lineWidth = 2;
+  ctx.beginPath();
+  ctx.moveTo(hx, hy);
+  ctx.lineTo(hx + 5, hy + 8);
+  ctx.stroke();
+  // Red knob
+  ctx.fillStyle = "#dd2222";
+  ctx.beginPath();
+  ctx.arc((hx + 5) | 0, (hy + 9) | 0, 4, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = "#ff6644";
+  ctx.beginPath();
+  ctx.arc((hx + 4) | 0, (hy + 8) | 0, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  ctx.restore();
+}
+
 function _drawTrophy(ctx, cx, cy, colorTop, colorBase, tick, idx) {
   // Cup
   ctx.fillStyle = colorTop;
