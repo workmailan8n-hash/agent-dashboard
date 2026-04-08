@@ -32,21 +32,41 @@ export const OBJECT_SIZES = {
   kitchen_table: { w: 4, h: 3 },
   fridge: { w: 1, h: 1.5 },
   vending: { w: 1.5, h: 2.5 },
+  // Wall decorations
+  neon_sign: { w: 3, h: 1 },
+  corkboard: { w: 2.5, h: 1.6 },
+  whiteboard: { w: 3, h: 1.6 },
+  lava_lamp: { w: 1.5, h: 2.5 },
   // Activity / sports / social / makers / cafe
   gym: { w: 5, h: 4 },
+  rowing_machine: { w: 2.5, h: 1.5 },
   basketball: { w: 2, h: 2 },
   tv: { w: 4, h: 3 },
   gaming_sofa: { w: 4, h: 1.5 },
   arcade: { w: 2, h: 2.5 },
   dj_console: { w: 2.5, h: 1.2 },
+  jukebox: { w: 2, h: 2.5 },
+  pinball: { w: 2, h: 2.5 },
   pingpong: { w: 6, h: 3 },
   foosball: { w: 3, h: 1.5 },
+  photo_booth: { w: 2, h: 2.5 },
+  trophy_cabinet: { w: 2, h: 2.5 },
+  crystal_ball: { w: 2, h: 2.5 },
   conf_table: { w: 6, h: 3 },
   espresso_bar: { w: 3, h: 1.5 },
   bookshelf: { w: 4.5, h: 3.5 },
   server_rack: { w: 2, h: 2.2 },
   printer_3d: { w: 2, h: 1.8 },
   telescope: { w: 1, h: 2 },
+  // Right panel extras
+  rubber_duck: { w: 2, h: 2 },
+  // Bottom zone
+  nap_pod: { w: 2.5, h: 1.5 },
+  zen_garden: { w: 2, h: 1.5 },
+  terrarium: { w: 1.8, h: 1.4 },
+  newtons_cradle: { w: 1.5, h: 1.5 },
+  popcorn_machine: { w: 1.5, h: 2 },
+  gumball_machine: { w: 1.5, h: 2 },
 };
 
 // Strip trailing _N index to get base type.
@@ -95,17 +115,19 @@ export function intersectsAnyWall(aabb, walls) {
 }
 
 // ── Canonical layout walls (matches BUILTIN_POSITIONS layout) ────
-// COLS=35, ROWS=55, kitchen partition col 23, lounge wall row 21.
+// COLS=35, ROWS=70 (runtime minimum per generateLayout), kitchen col 23, lounge row 21.
+// Wall-mounted decorations (clock, kanban, darts, etc.) sit at ty:0 and are intentionally
+// flush with the top boundary — top wall is placed at y:-1..0 so they do not false-fire.
 export const CANONICAL_COLS = 35;
-export const CANONICAL_ROWS = 55;
+export const CANONICAL_ROWS = 70;
 
 export function buildCanonicalWalls(
   COLS = CANONICAL_COLS,
   ROWS = CANONICAL_ROWS,
 ) {
   const walls = [];
-  // Top wall
-  walls.push({ x1: 0, y1: 0, x2: COLS, y2: 1, label: "top wall" });
+  // Top wall — placed above y:0 so wall-mounted objects (ty:0) don't trigger false positives
+  walls.push({ x1: 0, y1: -1, x2: COLS, y2: 0, label: "top wall" });
   // Bottom wall
   walls.push({ x1: 0, y1: ROWS - 1, x2: COLS, y2: ROWS, label: "bottom wall" });
   // Left wall

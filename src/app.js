@@ -22,6 +22,11 @@ import {
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
+import {
+  BUILTIN_POSITIONS,
+  getAdminPos,
+  applyCustomPositions,
+} from "./adminPos.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -8012,113 +8017,6 @@ function buildBackground() {
     // Frame top rim
     fillR(ctx, aqx - 1, aqy - 2, aqW + 2, 4, "#606070");
 
-    // ── 4. Trophy Cabinet (right zone, row 12) ──────────────────
-    const [_tcbTx, _tcbTy] = getAdminPos("trophy_cabinet", rX + 0.3, 12);
-    const [tcbx, tcby] = ts(_tcbTx, _tcbTy);
-    const tcbW = T * 2,
-      tcbH = T * 2.5;
-    // Cabinet body shadow
-    ctx.save();
-    ctx.shadowColor = "#00000070";
-    ctx.shadowBlur = 8;
-    fillR(ctx, tcbx, tcby, tcbW, tcbH, "#4a3010");
-    ctx.restore();
-    // Cabinet body
-    fillR(ctx, tcbx + 2, tcby + 2, tcbW - 4, tcbH - 4, "#5a3c18");
-    // Crown molding (top)
-    fillR(ctx, tcbx - 2, tcby - 4, tcbW + 4, 5, "#3a2408");
-    fillR(ctx, tcbx - 1, tcby - 3, tcbW + 2, 3, "#6a5020");
-    // Glass door left
-    fillR(ctx, tcbx + 3, tcby + 7, tcbW / 2 - 5, tcbH - 11, "#1a385090");
-    ctx.strokeStyle = "#806040";
-    ctx.lineWidth = 1;
-    ctx.strokeRect(
-      tcbx + 3 + 0.5,
-      tcby + 7 + 0.5,
-      tcbW / 2 - 5 - 1,
-      tcbH - 11 - 1,
-    );
-    // Glass door right
-    fillR(
-      ctx,
-      tcbx + tcbW / 2 + 2,
-      tcby + 7,
-      tcbW / 2 - 5,
-      tcbH - 11,
-      "#1a385090",
-    );
-    ctx.strokeRect(
-      tcbx + tcbW / 2 + 2 + 0.5,
-      tcby + 7 + 0.5,
-      tcbW / 2 - 5 - 1,
-      tcbH - 11 - 1,
-    );
-    // Center divider
-    fillR(ctx, tcbx + tcbW / 2 - 1, tcby + 7, 2, tcbH - 11, "#3a2408");
-    // Door handles
-    ctx.fillStyle = "#c09830";
-    ctx.fillRect(tcbx + tcbW / 2 - 5, tcby + tcbH / 2 - 3, 4, 6);
-    ctx.fillRect(tcbx + tcbW / 2 + 1, tcby + tcbH / 2 - 3, 4, 6);
-    // Shelf lines inside cabinet
-    [0.33, 0.66].forEach((frac) => {
-      const sy = tcby + 7 + (tcbH - 11) * frac;
-      fillR(ctx, tcbx + 3, sy - 1, tcbW - 6, 2, "#3a2408");
-      fillR(ctx, tcbx + 3, sy + 1, tcbW - 6, 1, "#6a5020");
-    });
-    // Trophies on shelves (5 trophies: 2 top, 2 mid, 1 bottom)
-    const trophyColors = [
-      "#e0af68",
-      "#c8d3f5",
-      "#bb9af7",
-      "#9ece6a",
-      "#e0af68",
-    ];
-    [
-      [0.22, 0.14],
-      [0.65, 0.14],
-      [0.25, 0.47],
-      [0.62, 0.47],
-      [0.44, 0.78],
-    ].forEach(([fx, fy], ti) => {
-      const trx = tcbx + 4 + fx * (tcbW - 8),
-        trY = tcby + 8 + fy * (tcbH - 14);
-      const tc = trophyColors[ti % trophyColors.length];
-      ctx.fillStyle = tc;
-      // Cup shape
-      ctx.beginPath();
-      ctx.moveTo(trx - 4, trY + 5);
-      ctx.lineTo(trx - 5, trY - 1);
-      ctx.lineTo(trx + 5, trY - 1);
-      ctx.lineTo(trx + 4, trY + 5);
-      ctx.closePath();
-      ctx.fill();
-      // Handles
-      ctx.strokeStyle = tc;
-      ctx.lineWidth = 1.5;
-      ctx.beginPath();
-      ctx.arc(trx - 5, trY + 2, 2, -Math.PI * 0.5, Math.PI * 0.5);
-      ctx.stroke();
-      ctx.beginPath();
-      ctx.arc(trx + 5, trY + 2, 2, Math.PI * 0.5, -Math.PI * 0.5);
-      ctx.stroke();
-      // Stem
-      ctx.fillStyle = tc;
-      ctx.fillRect(trx - 1, trY + 5, 2, 3);
-      // Base
-      ctx.fillRect(trx - 3, trY + 8, 6, 2);
-      // Shine
-      ctx.fillStyle = "#ffffff50";
-      ctx.fillRect(trx - 3, trY - 1, 2, 4);
-    });
-    // Base plinth
-    fillR(ctx, tcbx, tcby + tcbH, tcbW, 4, "#3a2408");
-    // Label
-    ctx.fillStyle = "#c09830";
-    ctx.font = "4px 'Press Start 2P',monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("TROPHIES", tcbx + tcbW / 2, tcby + tcbH + 12);
-    ctx.textAlign = "left";
-
     // ── 2. Dartboard (ON the top wall — row 0) ──────────────────
     const [_dartTx, _dartTy] = getAdminPos("darts", rX + 1.5, 0);
     const dartWallX = OX + _dartTx * T;
@@ -13187,7 +13085,7 @@ function loop(now) {
     );
   }
   {
-    const [_gbTx, _gbTy] = getAdminPos("gumball_machine", 36, 61);
+    const [_gbTx, _gbTy] = getAdminPos("gumball_machine", 14, 57);
     const [gbx, gby] = ts(_gbTx, _gbTy);
     drawObjectCached(
       ctx,
@@ -14504,14 +14402,6 @@ function buildAdminObjects() {
     h: 2,
   });
   adminObjects.push({
-    id: "trophy_cabinet",
-    label: "🏆 Trophies",
-    tx: rX + 0.3,
-    ty: 12,
-    w: 2,
-    h: 2.5,
-  });
-  adminObjects.push({
     id: "rubber_duck",
     label: "🦆 Rubber Duck",
     tx: rX + 0.3,
@@ -14983,121 +14873,6 @@ function applyWallPositions() {
     bgBuf.height = CH;
   }
   KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1;
-}
-
-// Default layout positions (exported from user's admin editor — canonical layout v3)
-const BUILTIN_POSITIONS = {
-  // ═══ DESKS ═══
-  desk_0: { tx: 11.5, ty: 3.5 },
-  desk_1: { tx: 8, ty: 1 },
-  desk_2: { tx: 15, ty: 1 },
-  desk_3: { tx: 1, ty: 5 },
-  desk_4: { tx: 8, ty: 5 },
-  desk_5: { tx: 15, ty: 5 },
-  desk_6: { tx: 1, ty: 9 },
-  desk_7: { tx: 8, ty: 9 },
-  desk_8: { tx: 15, ty: 9 },
-  desk_9: { tx: 1, ty: 13 },
-  desk_10: { tx: 8, ty: 13 },
-  desk_11: { tx: 15, ty: 13 },
-  desk_12: { tx: 1, ty: 17 },
-  desk_13: { tx: 8, ty: 17 },
-  desk_14: { tx: 15, ty: 17 },
-  desk_15: { tx: 19.5, ty: 13 },
-  desk_16: { tx: 19.5, ty: 17 },
-  desk_17: { tx: 1, ty: 1 },
-  desk_18: { tx: 19.5, ty: 9 },
-  desk_19: { tx: 19.5, ty: 5 },
-
-  // ═══ WALL DECORATIONS ═══
-  neon_sign: { tx: 3, ty: 0.5 },
-  corkboard: { tx: 11, ty: 0 },
-  whiteboard: { tx: 27.5, ty: 0 },
-  kanban: { tx: 22.5, ty: 0 },
-  darts: { tx: 6, ty: 0 },
-  telescope: { tx: 20, ty: 1.5 },
-  clock: { tx: 31.5, ty: 0 },
-
-  // ═══ RIGHT PANEL ═══
-  aquarium: { tx: 30.5, ty: 5.5 },
-  cooler: { tx: 32, ty: 17.5 },
-  printer: { tx: 29.5, ty: 22.5 },
-  trashcan: { tx: 30.5, ty: 10.5 },
-  lava_lamp: { tx: 30, ty: 18 },
-  plant_0: { tx: 1.5, ty: 19.5 },
-  plant_1: { tx: 26.5, ty: 22.5 },
-  vending: { tx: 28, ty: 12 },
-
-  // ═══ KITCHEN ═══
-  kitchen_counter: { tx: 25, ty: 10 },
-  kitchen_table: { tx: 26.5, ty: 14 },
-  fridge: { tx: 24, ty: 9 },
-
-  // ═══ COUCHES (5 columns, 4 rows, staggered) ═══
-  couch_0: { tx: 1.5, ty: 32 },
-  couch_1: { tx: 6, ty: 22.5 },
-  couch_2: { tx: 22, ty: 22.5 },
-  couch_3: { tx: 10, ty: 22.5 },
-  couch_4: { tx: 18, ty: 27.5 },
-  couch_5: { tx: 1.5, ty: 27.5 },
-  couch_6: { tx: 6, ty: 25 },
-  couch_7: { tx: 10, ty: 32 },
-  couch_8: { tx: 22, ty: 25 },
-  couch_9: { tx: 18, ty: 22.5 },
-  couch_10: { tx: 1.5, ty: 25 },
-  couch_11: { tx: 6, ty: 27.5 },
-  couch_12: { tx: 10, ty: 25 },
-  couch_13: { tx: 18, ty: 32 },
-  couch_14: { tx: 22, ty: 27.5 },
-  couch_15: { tx: 1.5, ty: 22.5 },
-  couch_16: { tx: 6, ty: 32 },
-  couch_17: { tx: 22, ty: 32 },
-  couch_18: { tx: 10, ty: 27.5 },
-  couch_19: { tx: 18, ty: 25 },
-
-  // ═══ ACTIVITY ZONE ═══
-  server_rack: { tx: 1, ty: 46 },
-  printer_3d: { tx: 3, ty: 46 },
-  arcade: { tx: 5, ty: 46 },
-  rowing_machine: { tx: 7, ty: 46.5 },
-  tv: { tx: 11.5, ty: 47 },
-  gaming_sofa: { tx: 11.5, ty: 51 },
-  foosball: { tx: 8, ty: 53 },
-  pingpong: { tx: 23.5, ty: 51.5 },
-  jukebox: { tx: 25, ty: 53 },
-  pinball: { tx: 21.5, ty: 52 },
-  trophy_cabinet: { tx: 24.5, ty: 46 },
-  bookshelf: { tx: 26.5, ty: 46 },
-
-  // ═══ GYM & SPORTS ═══
-  gym: { tx: 2, ty: 56 },
-  basketball: { tx: 28.5, ty: 56 },
-  crystal_ball: { tx: 19.5, ty: 57 },
-
-  // ═══ BOTTOM ZONE ═══
-  dj_console: { tx: 27, ty: 59.5 },
-  rubber_duck: { tx: 28, ty: 61.5 },
-  nap_pod: { tx: 27, ty: 62 },
-  conf_table: { tx: 12, ty: 62 },
-  espresso_bar: { tx: 20, ty: 63 },
-  photo_booth: { tx: 16, ty: 53 },
-  zen_garden: { tx: 24, ty: 63 },
-  terrarium: { tx: 30, ty: 61 },
-  newtons_cradle: { tx: 33, ty: 61 },
-  popcorn_machine: { tx: 17, ty: 57 },
-};
-
-// Apply custom positions to actual game objects
-function applyCustomPositions() {
-  const saved = JSON.parse(localStorage.getItem("admin_positions") || "{}");
-  // Merge: builtin is default for everyone, saved overrides per-browser
-  window._adminPos = Object.assign({}, BUILTIN_POSITIONS, saved);
-}
-
-// Get position for an object — returns saved admin position or default
-function getAdminPos(id, defTx, defTy) {
-  const p = window._adminPos?.[id];
-  return p ? [p.tx, p.ty] : [defTx, defTy];
 }
 
 // Sync IDLE_SPOTS / DESK_SLOTS / PP positions to admin-edited object positions
