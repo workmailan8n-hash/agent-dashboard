@@ -32,6 +32,9 @@ const {
   handleTgWebhook,
   handleGetTgFeedback,
 } = require("./src/server/handlers/telegram");
+const {
+  handleRailwayWebhook,
+} = require("./src/server/handlers/railway-webhook");
 
 const CLAUDE_PROJECTS_DIR = path.join(os.homedir(), ".claude", "projects");
 const PORT = process.env.PORT || 3737;
@@ -384,6 +387,9 @@ const server = http.createServer((req, res) => {
     return handleTgWebhook(req, res, TG_TOKEN, TG_CHAT, lastTgFeedback);
   if (method === "GET" && url === "/api/tg-feedback")
     return handleGetTgFeedback(req, res, lastTgFeedback);
+
+  if (method === "POST" && url === "/railway-webhook")
+    return handleRailwayWebhook(req, res);
 
   if (method === "GET" && url === "/api/layout")
     return handleGetLayout(req, res, sharedLayout);

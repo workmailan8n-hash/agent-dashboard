@@ -1,83 +1,116 @@
-// Send sprint report to Telegram in Ukrainian
-// Reads task description from argument OR last-sprint.log
-// Usage: node sprint-tg.js "Short summary in Ukrainian"
+// Send sprint report to Telegram in Ukrainian.
+// Usage: node sprint-tg.js "<summary>" [tag] [branch] [prNumber] [prUrl]
+// The tag/branch/prNumber come from sprint-finalize.js JSON output.
 
-require('dotenv').config();
-const fs = require('fs');
-const path = require('path');
-const http = require('http');
+require("dotenv").config();
+const fs = require("fs");
+const path = require("path");
 
 const TG_TOKEN = process.env.TG_TOKEN;
 const TG_CHAT = process.env.TG_CHAT;
 
 if (!TG_TOKEN || !TG_CHAT) {
-  console.error('Missing TG_TOKEN or TG_CHAT in .env');
+  console.error("Missing TG_TOKEN or TG_CHAT in .env");
   process.exit(1);
 }
 
-// Get task description: from argument, or parse last-sprint.log
-let task = process.argv[2];
+const task = process.argv[2] || "Спринт завершено (деталі у last-sprint.log)";
+const tag = process.argv[3] || "";
+const branch = process.argv[4] || "";
+const prNumber = process.argv[5] || "";
+const prUrl = process.argv[6] || "";
 
-if (!task) {
+// Fallback: extract task list from last-sprint.log if argv[2] is the default.
+let taskText = task;
+if (taskText.startsWith("Спринт завершено")) {
   try {
-    const log = fs.readFileSync(path.join(__dirname, 'last-sprint.log'), 'utf8');
+    const logText = fs.readFileSync(
+      path.join(__dirname, "last-sprint.log"),
+      "utf8",
+    );
     const tasks = [];
     const re = /\*\*Task \d+\s*[—–-]\s*(.+?)\*\*/g;
     let m;
-    while ((m = re.exec(log)) !== null) tasks.push(m[1].trim());
-    if (tasks.length > 0) task = tasks.join('\n✅ ');
-  } catch (e) {}
+    while ((m = re.exec(logText)) !== null) tasks.push(m[1].trim());
+    if (tasks.length > 0) taskText = tasks.join("\n✅ ");
+  } catch {}
 }
 
-if (!task) task = 'Спринт завершено (деталі у last-sprint.log)';
+// Pull preview URL from the sprint-preview store (populated by /railway-webhook).
+function getPreviewUrl() {
+  try {
+    const store = JSON.parse(
+      fs.readFileSync(path.join(__dirname, ".sprint-preview.json"), "utf8"),
+    );
+    if (branch && store[`branch:${branch}`]?.url) {
+      return store[`branch:${branch}`].url;
+    }
+    if (prNumber && store[`pr:${prNumber}`]?.url) {
+      return store[`pr:${prNumber}`].url;
+    }
+    if (store.latest?.url) return store.latest.url;
+  } catch {}
+  return null;
+}
 
-// Get last commit message
-let lastCommit = '';
+// Last commit subject, trimmed.
+let lastCommit = "";
 try {
-  const { execSync } = require('child_process');
-  lastCommit = execSync('git log -1 --format="%s" 2>/dev/null', { cwd: __dirname, encoding: 'utf8' }).trim();
+  const { execSync } = require("child_process");
+  lastCommit = execSync('git log -1 --format="%s"', {
+    cwd: __dirname,
+    encoding: "utf8",
+  }).trim();
   if (lastCommit) lastCommit = `\n\n💾 Коміт: <code>${lastCommit}</code>`;
-} catch (e) {}
-
-// Get public URL from server health endpoint
-function getPublicUrl() {
-  return new Promise((resolve) => {
-    http.get('http://localhost:3737/api/health', (res) => {
-      let d = '';
-      res.on('data', c => d += c);
-      res.on('end', () => {
-        try {
-          const h = JSON.parse(d);
-          resolve(h.publicUrl || null);
-        } catch (e) { resolve(null); }
-      });
-    }).on('error', () => resolve(null));
-  });
-}
+} catch {}
 
 (async () => {
-  const pubUrl = await getPublicUrl();
-  const linkLine = pubUrl
-    ? `\n\n🔗 <a href="${pubUrl}">Переглянути онлайн</a>`
-    : '';
+  const previewUrl = getPreviewUrl();
+  const previewLine = previewUrl
+    ? `\n\n🔗 <a href="${previewUrl}">Переглянути прев'ю спринту</a>`
+    : "\n\n⏳ Прев'ю ще не готове (Railway піднімає середовище)";
+  const prLine = prUrl ? `\n📋 <a href="${prUrl}">PR #${prNumber}</a>` : "";
+  const tagLine = tag ? `\n🏷 <code>${tag}</code>` : "";
+
+  // Buttons carry the tag so the webhook handler knows which sprint to act on.
+  const buttons = tag
+    ? [
+        [
+          { text: "✅ Підтвердити", callback_data: `approve:${tag}` },
+          { text: "⏭ Пропустити", callback_data: `skip:${tag}` },
+        ],
+        [{ text: "❌ Відкотити", callback_data: `revert:${tag}` }],
+      ]
+    : [
+        [
+          { text: "✅ Підтвердити", callback_data: "approve" },
+          { text: "❌ Відхилити", callback_data: "reject" },
+        ],
+      ];
 
   const msg = {
     chat_id: TG_CHAT,
-    text: `🏗 <b>Звіт спринту — Agent Dashboard</b>\n\n✅ ${task}${lastCommit}${linkLine}\n\nПідтвердити зміни?`,
-    parse_mode: 'HTML',
-    reply_markup: {
-      inline_keyboard: [[
-        { text: '✅ Підтвердити', callback_data: 'approve' },
-        { text: '❌ Відхилити', callback_data: 'reject' }
-      ]]
-    }
+    text:
+      `🏗 <b>Звіт спринту — Agent Dashboard</b>\n\n` +
+      `✅ ${taskText}` +
+      lastCommit +
+      tagLine +
+      previewLine +
+      prLine +
+      `\n\nПідтвердити зміни?`,
+    parse_mode: "HTML",
+    disable_web_page_preview: false,
+    reply_markup: { inline_keyboard: buttons },
   };
 
-  const res = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify(msg)
-  });
+  const res = await fetch(
+    `https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,
+    {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(msg),
+    },
+  );
   const r = await res.json();
-  console.log(r.ok ? 'Sent!' : 'Failed:', r.description || JSON.stringify(r));
+  console.log(r.ok ? "Sent!" : "Failed:", r.description || JSON.stringify(r));
 })();
