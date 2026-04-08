@@ -31,6 +31,7 @@ import {
   applyCustomPositions,
 } from "./adminPos.js";
 import { launchSlotMachineGame } from "./minigames/slot_machine.js";
+import { launchCoffeeGame } from "./minigames/coffee.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -9044,9 +9045,10 @@ function drawCatBowls(ctx, tick) {
 //  DYNAMIC EFFECTS  (monitor glow, animated light shafts, coffee steam)
 // ════════════════════════════════════════════════════════════════
 function drawDynamicEffects(ctx, tick) {
-  // Animated monitor content + glow for working agents
+  // Animated monitor content + glow for working agents (suppressed during power outage)
   for (const [id, sp] of Object.entries(agentStates)) {
     if (!sp.arrived || !sp.isWorking || sp.state === "walking") continue;
+    if (powerOutageActive && _powerFlickerPhase === 1) continue; // monitors dark during outage
     const def = DESK_DEFS[Math.min(sp.slotIdx, DESK_DEFS.length - 1)];
     if (!def) continue;
     const [dx, dy] = ts(def.tx, def.ty);
@@ -13119,6 +13121,37 @@ function loop(now) {
     }
   }
 
+  // ── Power Outage update ───────────────────────────────────────
+  if (powerOutageActive) {
+    powerOutageTimer -= dt;
+    _powerFlickerTick += dt;
+    // Phase 0: flicker for first 1.2s
+    if (_powerFlickerPhase === 0 && _powerFlickerTick > 1.2)
+      _powerFlickerPhase = 1;
+    // Phase 2: flicker back on during last 1.5s
+    if (_powerFlickerPhase === 1 && powerOutageTimer < 1.5)
+      _powerFlickerPhase = 2;
+    if (powerOutageTimer <= 0) {
+      powerOutageActive = false;
+      window._powerOutageActive = false;
+      // Play power-restored buzz
+      try {
+        const ac = getAC();
+        const o = ac.createOscillator(),
+          g = ac.createGain();
+        o.connect(g);
+        g.connect(ac.destination);
+        o.type = "square";
+        o.frequency.setValueAtTime(60, ac.currentTime);
+        o.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 0.2);
+        g.gain.setValueAtTime(0.06, ac.currentTime);
+        g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.3);
+        o.start();
+        o.stop(ac.currentTime + 0.3);
+      } catch {}
+    }
+  }
+
   // ── Draw ─────────────────────────────────────────────────────
   ctx.clearRect(0, 0, CW, canvas.height);
   ctx.drawImage(bgBuf, 0, 0);
@@ -13645,8 +13678,90 @@ function loop(now) {
     }
   }
 
-  // Office lighting tint — color shifts with time of day
-  drawOfficeLighting(ctx);
+  // ── Power Outage overlay ─────────────────────────────────────
+  if (powerOutageActive) {
+    const flickerOn =
+      _powerFlickerPhase === 0
+        ? Math.sin(globalTick * 1.8) > 0.2 // rapid flicker at start
+        : _powerFlickerPhase === 2
+          ? Math.sin(globalTick * 1.4) > -0.3 // recovery flicker at end
+          : false; // fully dark in phase 1
+
+    // Dark overlay — nearly black, partial during flicker phases
+    const darkAlpha = flickerOn ? 0.25 : 0.88;
+    ctx.save();
+    ctx.globalAlpha = darkAlpha;
+    ctx.fillStyle = "#030308";
+    ctx.fillRect(OX, OY, COLS * T, ROWS * T);
+    ctx.restore();
+
+    if (!flickerOn || _powerFlickerPhase === 1) {
+      // Emergency lights — red blinking lights in top-left and top-right corners
+      const emergPhase = Math.sin(globalTick * 0.22);
+      const emergOn = emergPhase > 0;
+      const corners = [
+        { x: OX + 10, y: OY + 8 },
+        { x: OX + COLS * T - 24, y: OY + 8 },
+      ];
+      for (const c of corners) {
+        ctx.save();
+        // Emergency light housing
+        ctx.fillStyle = emergOn ? "#cc2020" : "#4a0808";
+        ctx.fillRect(c.x, c.y, 14, 9);
+        ctx.strokeStyle = "#881010";
+        ctx.lineWidth = 1;
+        ctx.strokeRect(c.x, c.y, 14, 9);
+        // Lens
+        ctx.fillStyle = emergOn ? "#ff6060" : "#220808";
+        ctx.beginPath();
+        ctx.arc(c.x + 7, c.y + 4.5, 3, 0, Math.PI * 2);
+        ctx.fill();
+        // Glow cone when on
+        if (emergOn) {
+          ctx.globalAlpha = 0.18;
+          const grd = ctx.createRadialGradient(
+            c.x + 7,
+            c.y + 4.5,
+            0,
+            c.x + 7,
+            c.y + 4.5,
+            35,
+          );
+          grd.addColorStop(0, "#ff4040");
+          grd.addColorStop(1, "transparent");
+          ctx.fillStyle = grd;
+          ctx.fillRect(c.x - 28, c.y - 5, 70, 50);
+        }
+        ctx.restore();
+      }
+
+      // "⚡ POWER OUTAGE" banner
+      const countdown = Math.ceil(powerOutageTimer);
+      const bannerAlpha = powerOutageTimer < 1.5 ? powerOutageTimer / 1.5 : 1;
+      if (countdown > 0) {
+        ctx.save();
+        ctx.globalAlpha = bannerAlpha * (0.6 + Math.abs(emergPhase) * 0.4);
+        ctx.font = "bold 14px 'Press Start 2P', monospace";
+        ctx.textAlign = "center";
+        ctx.shadowColor = "#ffcc00";
+        ctx.shadowBlur = 18;
+        ctx.fillStyle = "#ffcc00";
+        ctx.fillText("⚡ POWER OUTAGE ⚡", OX + (COLS / 2) * T, OY + 24);
+        ctx.font = "bold 7px 'Press Start 2P', monospace";
+        ctx.fillStyle = "#ffeeaa";
+        ctx.shadowBlur = 8;
+        ctx.fillText(
+          "BACKUP POWER IN " + countdown + "s",
+          OX + (COLS / 2) * T,
+          OY + 40,
+        );
+        ctx.restore();
+      }
+    }
+  }
+
+  // Office lighting tint — color shifts with time of day (skip during full outage)
+  if (!powerOutageActive || _powerFlickerPhase !== 1) drawOfficeLighting(ctx);
 
   // Sims mode overlay
   if (simsMode) {
@@ -14689,6 +14804,38 @@ function triggerFireDrill() {
   playAlarmBeep();
 }
 window.triggerFireDrill = triggerFireDrill;
+
+// ── Power Outage ───────────────────────────────────────────────
+let powerOutageActive = false;
+let powerOutageTimer = 0;
+const POWER_OUTAGE_DURATION = 18; // seconds
+let _powerFlickerTick = 0;
+let _powerFlickerPhase = 0; // 0=flicker-in, 1=dark, 2=flicker-out
+
+function triggerPowerOutage() {
+  if (powerOutageActive) return;
+  powerOutageActive = true;
+  powerOutageTimer = POWER_OUTAGE_DURATION;
+  _powerFlickerTick = 0;
+  _powerFlickerPhase = 0;
+  window._powerOutageActive = true;
+  // Play electric buzz
+  try {
+    const ac = getAC();
+    const o = ac.createOscillator(),
+      g = ac.createGain();
+    o.connect(g);
+    g.connect(ac.destination);
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(120, ac.currentTime);
+    o.frequency.exponentialRampToValueAtTime(40, ac.currentTime + 0.3);
+    g.gain.setValueAtTime(0.08, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.4);
+    o.start();
+    o.stop(ac.currentTime + 0.4);
+  } catch {}
+}
+window.triggerPowerOutage = triggerPowerOutage;
 
 function playAlarmBeep() {
   try {
@@ -16229,6 +16376,12 @@ canvas.addEventListener("click", (e) => {
     blip(880, 0.05, "square", 0.03);
     setTimeout(() => blip(1100, 0.05, "square", 0.02), 80);
     setTimeout(() => blip(1320, 0.08, "square", 0.02), 160);
+    return;
+  }
+  if (hit.type === "coffee") {
+    launchCoffeeGame();
+    blip(440, 0.06, "sine", 0.04);
+    setTimeout(() => blip(550, 0.05, "sine", 0.03), 120);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
@@ -17847,6 +18000,7 @@ document.addEventListener("keydown", (e) => {
   }
   if (e.key === "g" || e.key === "G") triggerPartyMode();
   if (e.key === "f" || e.key === "F") triggerFireDrill();
+  if (e.key === "o" || e.key === "O") triggerPowerOutage();
 });
 
 // ════════════════════════════════════════════════════════════════
