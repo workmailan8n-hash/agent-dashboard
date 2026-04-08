@@ -1662,3 +1662,114 @@ function _drawTrophy(ctx, cx, cy, colorTop, colorBase, tick, idx) {
   ctx.fillText("★", cx, cy - 3);
   ctx.textAlign = "left";
 }
+
+// ── Water Cooler (break room hydration) ─────────────────────────
+export function drawWaterCooler(ctx, x, y, tick) {
+  const tw = T * 0.9;
+  const th = T * 1.6;
+  const cx = x + tw / 2;
+
+  ctx.save();
+
+  // Base / cabinet — light gray
+  ctx.fillStyle = "#c0c0c0";
+  ctx.fillRect(x | 0, (y + th * 0.45) | 0, tw | 0, (th * 0.55) | 0);
+
+  // Cabinet highlight
+  ctx.fillStyle = "#d8d8d8";
+  ctx.fillRect((x + 2) | 0, (y + th * 0.45 + 2) | 0, (tw - 4) | 0, 4);
+
+  // Water bottle on top — inverted trapezoid, light blue
+  ctx.fillStyle = "#a0d8ef";
+  ctx.beginPath();
+  ctx.moveTo((x + tw * 0.15) | 0, (y + th * 0.45) | 0);
+  ctx.lineTo((x + tw * 0.85) | 0, (y + th * 0.45) | 0);
+  ctx.lineTo((x + tw * 0.7) | 0, y | 0);
+  ctx.lineTo((x + tw * 0.3) | 0, y | 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Water level inside bottle — animated subtle wave
+  const waveOffset = Math.sin(tick * 0.04) * 2;
+  const waterTop = y + th * 0.12 + waveOffset;
+  ctx.fillStyle = "#70b8df";
+  ctx.beginPath();
+  ctx.moveTo((x + tw * 0.3) | 0, y | 0);
+  ctx.lineTo((x + tw * 0.7) | 0, y | 0);
+  ctx.lineTo((x + tw * 0.68) | 0, waterTop | 0);
+  ctx.lineTo((x + tw * 0.32) | 0, waterTop | 0);
+  ctx.closePath();
+  ctx.fill();
+
+  // Bottle shine
+  ctx.fillStyle = "rgba(255,255,255,0.35)";
+  ctx.fillRect(
+    (x + tw * 0.35) | 0,
+    (y + 3) | 0,
+    (tw * 0.1) | 0,
+    (th * 0.28) | 0,
+  );
+
+  // Bottle outline
+  ctx.strokeStyle = "#80b8cf";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo((x + tw * 0.15) | 0, (y + th * 0.45) | 0);
+  ctx.lineTo((x + tw * 0.85) | 0, (y + th * 0.45) | 0);
+  ctx.lineTo((x + tw * 0.7) | 0, y | 0);
+  ctx.lineTo((x + tw * 0.3) | 0, y | 0);
+  ctx.closePath();
+  ctx.stroke();
+
+  // Dispenser nozzle area
+  ctx.fillStyle = "#a8a8a8";
+  ctx.fillRect((x + tw * 0.3) | 0, (y + th * 0.62) | 0, (tw * 0.4) | 0, 8);
+
+  // Blue tap button (cold)
+  ctx.fillStyle = "#3399ff";
+  ctx.beginPath();
+  ctx.arc((cx - 5) | 0, (y + th * 0.72) | 0, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Red tap button (hot)
+  ctx.fillStyle = "#ff4444";
+  ctx.beginPath();
+  ctx.arc((cx + 5) | 0, (y + th * 0.72) | 0, 4, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Button highlights
+  ctx.fillStyle = "rgba(255,255,255,0.4)";
+  ctx.beginPath();
+  ctx.arc((cx - 6) | 0, (y + th * 0.72 - 1) | 0, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.beginPath();
+  ctx.arc((cx + 4) | 0, (y + th * 0.72 - 1) | 0, 2, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Drip animation
+  if (Math.sin(tick * 0.3) > 0.9) {
+    const dropProgress = (Math.sin(tick * 0.3) - 0.9) / 0.1;
+    const dropY = y + th * 0.76 + dropProgress * 8;
+    ctx.fillStyle = "#a0d8ef";
+    ctx.beginPath();
+    ctx.ellipse(cx | 0, dropY | 0, 2, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+  }
+
+  // Cup holder at bottom — small gray rectangle
+  ctx.fillStyle = "#888888";
+  ctx.fillRect((x + tw * 0.2) | 0, (y + th * 0.88) | 0, (tw * 0.6) | 0, 4);
+  ctx.fillStyle = "#999999";
+  ctx.fillRect(
+    (x + tw * 0.22) | 0,
+    (y + th * 0.88 + 1) | 0,
+    (tw * 0.56) | 0,
+    2,
+  );
+
+  // Shadow under base
+  ctx.fillStyle = "rgba(0,0,0,0.15)";
+  ctx.fillRect((x + 2) | 0, (y + th) | 0, (tw - 4) | 0, 3);
+
+  ctx.restore();
+}

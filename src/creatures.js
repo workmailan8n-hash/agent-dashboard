@@ -2877,6 +2877,230 @@ class RandomVisitor {
 
 const randomVisitor = new RandomVisitor();
 
+// ════════════════════════════════════════════════════════════════
+//  MAIL DELIVERY NPC  (daily at 10:00 AM)
+// ════════════════════════════════════════════════════════════════
+export let mailLetters = [];
+
+class MailDelivery {
+  constructor() {
+    this.state = "idle";
+    this.tx = 0;
+    this.ty = 0;
+    this.sx = 0;
+    this.sy = 0;
+    this._lastDay = -1;
+    this._speed = 3.0; // tiles/sec
+    this._facingLeft = false;
+    this._enterTimer = 0;
+    this._deskTimer = 0;
+    this._deskIndex = 0;
+    this._deskTargets = [];
+  }
+
+  _buildDeskTargets() {
+    if (!DESK_DEFS || DESK_DEFS.length === 0) return [];
+    const indices = [0];
+    const mid = Math.floor(DESK_DEFS.length / 2);
+    if (mid !== 0) indices.push(mid);
+    const last = DESK_DEFS.length - 1;
+    if (last !== 0 && last !== mid) indices.push(last);
+    return indices.map((i) => ({
+      tx: DESK_DEFS[i].tx + 1.5,
+      ty: DESK_DEFS[i].ty + 1.5,
+    }));
+  }
+
+  _screenPos() {
+    this.sx = OX + this.tx * T;
+    this.sy = OY + this.ty * T;
+  }
+
+  _moveTo(targetTx, targetTy, dt) {
+    const dx = targetTx - this.tx;
+    const dy = targetTy - this.ty;
+    const dist = Math.sqrt(dx * dx + dy * dy);
+    if (dist <= this._speed * dt) {
+      this.tx = targetTx;
+      this.ty = targetTy;
+      this._screenPos();
+      return true;
+    }
+    this._facingLeft = dx < 0;
+    this.tx += (dx / dist) * this._speed * dt;
+    this.ty += (dy / dist) * this._speed * dt;
+    this._screenPos();
+    return false;
+  }
+
+  update(dt, tick) {
+    const entryTx = COLS - 0.5;
+    const entryTy = KITCHEN_DOOR_ROW + 1.5;
+
+    if (this.state === "idle") {
+      const now = new Date();
+      const today = now.getDate();
+      if (
+        now.getHours() === 10 &&
+        now.getMinutes() === 0 &&
+        this._lastDay !== today
+      ) {
+        this._lastDay = today;
+        this._deskTargets = this._buildDeskTargets();
+        this._deskIndex = 0;
+        this.tx = entryTx;
+        this.ty = entryTy;
+        this._facingLeft = true;
+        this._screenPos();
+        this.state = "entering";
+        this._enterTimer = 0.5;
+        S.doorAnim.target = 1;
+        S.doorAnim.timer = 1.5;
+      }
+    } else if (this.state === "entering") {
+      this._enterTimer -= dt;
+      if (this._enterTimer <= 0) {
+        if (this._deskTargets.length === 0) {
+          this.state = "leaving";
+          S.doorAnim.target = 1;
+          S.doorAnim.timer = 1.5;
+        } else {
+          this.state = "walking_to_desk";
+        }
+      }
+    } else if (this.state === "walking_to_desk") {
+      const desk = this._deskTargets[this._deskIndex];
+      const arrived = this._moveTo(desk.tx, desk.ty, dt);
+      if (arrived) {
+        this.state = "delivering";
+        this._deskTimer = 2;
+        // Push letter
+        mailLetters.push({ tx: desk.tx, ty: desk.ty, timer: 30 });
+      }
+    } else if (this.state === "delivering") {
+      this._deskTimer -= dt;
+      if (this._deskTimer <= 0) {
+        this._deskIndex++;
+        if (this._deskIndex >= this._deskTargets.length) {
+          this.state = "leaving";
+          S.doorAnim.target = 1;
+          S.doorAnim.timer = 1.5;
+        } else {
+          this.state = "walking_to_desk";
+        }
+      }
+    } else if (this.state === "leaving") {
+      const entryTx2 = COLS - 0.5;
+      const entryTy2 = KITCHEN_DOOR_ROW + 1.5;
+      const arrived = this._moveTo(entryTx2, entryTy2, dt);
+      if (arrived) {
+        this.state = "done";
+        S.doorAnim.target = 0;
+        S.doorAnim.timer = 0;
+      }
+    } else if (this.state === "done") {
+      this.state = "idle";
+    }
+  }
+
+  draw(ctx, tick) {
+    if (this.state === "idle" || this.state === "entering") return;
+
+    ctx.save();
+
+    const cx = this.sx;
+    const cy = this.sy;
+    const isMoving =
+      this.state === "walking_to_desk" || this.state === "leaving";
+    const bob = isMoving ? Math.sin(tick * 0.18) * 2 : 0;
+    const by = cy + bob;
+
+    if (!this._facingLeft) {
+      ctx.translate(cx, 0);
+      ctx.scale(-1, 1);
+      ctx.translate(-cx, 0);
+    }
+
+    // Shadow
+    ctx.fillStyle = "rgba(0,0,0,0.18)";
+    ctx.beginPath();
+    ctx.ellipse(cx, cy + 12, 10, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Legs
+    const legSwing = isMoving ? Math.sin(tick * 0.18) * 5 : 0;
+    ctx.fillStyle = "#1a1a3a";
+    ctx.fillRect((cx - 5) | 0, (by + 8) | 0, 4, (8 + legSwing * 0.3) | 0);
+    ctx.fillRect((cx + 1) | 0, (by + 8) | 0, 4, (8 - legSwing * 0.3) | 0);
+
+    // Body — postal blue uniform
+    ctx.fillStyle = "#1a4a8a";
+    ctx.fillRect((cx - 8) | 0, (by - 4) | 0, 16, 14);
+    // Uniform stripe
+    ctx.fillStyle = "#2255aa";
+    ctx.fillRect((cx - 2) | 0, (by - 4) | 0, 4, 14);
+
+    // Mail bag on right side (brown)
+    ctx.fillStyle = "#8b5e3c";
+    ctx.fillRect((cx + 8) | 0, (by - 2) | 0, 10, 12);
+    ctx.fillStyle = "#7a4e2c";
+    ctx.fillRect((cx + 9) | 0, (by - 1) | 0, 8, 10);
+    // Bag strap
+    ctx.strokeStyle = "#5a3e1c";
+    ctx.lineWidth = 1.5;
+    ctx.beginPath();
+    ctx.moveTo((cx + 8) | 0, (by - 2) | 0);
+    ctx.lineTo((cx - 2) | 0, (by - 6) | 0);
+    ctx.stroke();
+    // Bag flap
+    ctx.fillStyle = "#9a6e4c";
+    ctx.fillRect((cx + 8) | 0, (by - 2) | 0, 10, 4);
+
+    // Left arm
+    ctx.fillStyle = "#1a4a8a";
+    ctx.fillRect((cx - 12) | 0, (by - 2) | 0, 4, 9);
+
+    // Hands
+    ctx.fillStyle = "#f5c5a0";
+    ctx.fillRect((cx - 13) | 0, (by + 6) | 0, 4, 3);
+    ctx.fillRect((cx + 9) | 0, (by + 6) | 0, 4, 3);
+
+    // Head
+    ctx.fillStyle = "#f5c5a0";
+    ctx.beginPath();
+    ctx.ellipse(cx, by - 10, 6, 7, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Postal cap — blue with brim
+    ctx.fillStyle = "#1a4a8a";
+    ctx.fillRect((cx - 7) | 0, (by - 19) | 0, 14, 8);
+    // Cap brim
+    ctx.fillStyle = "#122e60";
+    ctx.fillRect((cx - 9) | 0, (by - 12) | 0, 18, 3);
+    // Cap badge — yellow circle
+    ctx.fillStyle = "#ffcc00";
+    ctx.beginPath();
+    ctx.arc(cx | 0, (by - 16) | 0, 3, 0, Math.PI * 2);
+    ctx.fill();
+
+    // Eyes
+    ctx.fillStyle = "#2a1808";
+    ctx.fillRect((cx - 3) | 0, (by - 11) | 0, 2, 2);
+    ctx.fillRect((cx + 1) | 0, (by - 11) | 0, 2, 2);
+
+    // Smile
+    ctx.strokeStyle = "#2a1808";
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(cx, by - 8, 3, 0, Math.PI);
+    ctx.stroke();
+
+    ctx.restore();
+  }
+}
+
+const mailDelivery = new MailDelivery();
+
 export {
   drawCat,
   CatState,
@@ -2888,4 +3112,5 @@ export {
   pizzaDelivery,
   cleaningCrew,
   randomVisitor,
+  mailDelivery,
 };

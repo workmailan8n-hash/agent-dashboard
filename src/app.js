@@ -20,6 +20,7 @@ import {
   drawRetroTelephone,
   drawTrophyCabinet,
   drawSlotMachine,
+  drawWaterCooler,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
@@ -13112,6 +13113,19 @@ function loop(now) {
       drawSlotMachine,
     );
   }
+  // Water Cooler (break room hydration)
+  {
+    const [_wcTx, _wcTy] = getAdminPos("water_cooler", 23, 8);
+    const [wcx, wcy] = ts(_wcTx, _wcTy);
+    drawObjectCached(
+      ctx,
+      "water_cooler",
+      wcx - T / 2,
+      wcy - 4,
+      globalTick,
+      drawWaterCooler,
+    );
+  }
   // Record Player (lounge area, spins vinyl)
   {
     const [_rpTx, _rpTy] = getAdminPos("record_player", 20, ACT_ZONE_Y + 23);
@@ -15568,6 +15582,7 @@ const CLICK_OBJ_MAP = {
   newtons_cradle: "newtons_cradle",
   gumball_machine: "gumball_machine",
   slot_machine: "slot_machine",
+  water_cooler: "water_cooler",
 };
 
 // Dynamic: desks and couches
@@ -15616,6 +15631,7 @@ function findClickableAt(tx, ty) {
     { id: "newtons_cradle", w: 1.5, h: 1.5 },
     { id: "gumball_machine", w: 1.5, h: 2 },
     { id: "slot_machine", w: 1.5, h: 2 },
+    { id: "water_cooler", w: 1.2, h: 2 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++)
@@ -16265,6 +16281,20 @@ function initClickParticles(type, cx, cy) {
       }
       break;
     }
+    case "water_cooler":
+      for (let i = 0; i < 8; i++)
+        p.push({
+          x: cx + (Math.random() - 0.5) * 14,
+          y: cy + (Math.random() - 0.5) * 8,
+          vx: (Math.random() - 0.5) * 2.5,
+          vy: -1.5 - Math.random() * 2,
+          life: 1,
+          color: ["#a0d8ef", "#3399ff", "#ffffff"][
+            Math.floor(Math.random() * 3)
+          ],
+          size: 2 + Math.random() * 2,
+        });
+      break;
   }
   return p;
 }

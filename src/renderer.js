@@ -80,6 +80,8 @@ import {
   pizzaDelivery,
   cleaningCrew,
   randomVisitor,
+  mailDelivery,
+  mailLetters,
 } from "./creatures.js";
 import { renderCard, updateUI } from "./ui.js";
 import {
@@ -520,6 +522,12 @@ function loop(now) {
   pizzaDelivery.update(dt, globalTick);
   cleaningCrew.update(dt, globalTick);
   randomVisitor.update(dt, globalTick);
+  mailDelivery.update(dt, globalTick);
+  // Decrement mail letter timers and remove expired ones
+  for (let i = mailLetters.length - 1; i >= 0; i--) {
+    mailLetters[i].timer -= dt;
+    if (mailLetters[i].timer <= 0) mailLetters.splice(i, 1);
+  }
 
   // ── Ping pong ball physics ──────────────────────────────────────
   {
@@ -887,6 +895,31 @@ function loop(now) {
     ctx.fillRect((prx + 8) | 0, (paperY + 1) | 0, (T * 1.6 - 14) | 0, 1);
   }
 
+  // Draw mail letters on floor (before characters)
+  for (const letter of mailLetters) {
+    const lx = OX + letter.tx * T + 8;
+    const ly = OY + letter.ty * T - 4;
+    // Envelope body
+    ctx.fillStyle = "#ffffff";
+    ctx.fillRect((lx - 4) | 0, (ly - 3) | 0, 8, 6);
+    ctx.strokeStyle = "#cccccc";
+    ctx.lineWidth = 0.5;
+    ctx.strokeRect((lx - 4) | 0, (ly - 3) | 0, 8, 6);
+    // V-flap on top
+    ctx.strokeStyle = "#aaaaaa";
+    ctx.lineWidth = 0.5;
+    ctx.beginPath();
+    ctx.moveTo((lx - 4) | 0, (ly - 3) | 0);
+    ctx.lineTo(lx | 0, ly | 0);
+    ctx.lineTo((lx + 4) | 0, (ly - 3) | 0);
+    ctx.stroke();
+    // Diagonal crossing line
+    ctx.beginPath();
+    ctx.moveTo((lx - 4) | 0, (ly + 3) | 0);
+    ctx.lineTo((lx + 4) | 0, (ly - 3) | 0);
+    ctx.stroke();
+  }
+
   // Phase 1: sprites (depth-sorted) + particles
   const sorted = Object.values(agentStates).sort((a, b) => a.depth - b.depth);
   for (const sp of sorted) sp.draw(ctx);
@@ -898,6 +931,7 @@ function loop(now) {
   pizzaDelivery.draw(ctx, globalTick);
   cleaningCrew.draw(ctx, globalTick);
   randomVisitor.draw(ctx, globalTick);
+  mailDelivery.draw(ctx, globalTick);
   PS.draw(ctx);
 
   // Phase 2: all overlays strictly on top
