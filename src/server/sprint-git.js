@@ -1,121 +1,116 @@
-// Git operations for sprint preview flow: approve (merge staging → master),
-// revert (undo a sprint commit in staging), with a file-based lock so two
-// simultaneous TG button presses can't collide.
+// Sprint approval / revert via GitHub API.
+// Called by telegram.js when the user presses ✅ Підтвердити or ❌ Відкотити.
+// No local git required — all operations go through GitHub REST API.
 
-const { execSync } = require("child_process");
-const fs = require("fs");
-const path = require("path");
 const log = require("./logger");
 
-const REPO_DIR = path.join(__dirname, "..", "..");
-const LOCK_FILE = path.join(REPO_DIR, ".sprint.lock");
-const STAGING_BRANCH = "sprint-staging";
-const PROD_BRANCH = "master";
+const REPO_SLUG = "workmailan8n-hash/agent-dashboard";
+const BASE = "master";
 
-function acquireLock() {
-  if (fs.existsSync(LOCK_FILE)) {
-    const age = Date.now() - fs.statSync(LOCK_FILE).mtimeMs;
-    if (age < 5 * 60 * 1000) return false; // lock held < 5 min
-    log.warn("[sprint-git] stale lock older than 5min, overriding");
-  }
-  fs.writeFileSync(LOCK_FILE, String(process.pid));
-  return true;
+function githubHeaders() {
+  const token = process.env.GITHUB_TOKEN;
+  if (!token) throw new Error("GITHUB_TOKEN not set");
+  return {
+    Authorization: `Bearer ${token}`,
+    Accept: "application/vnd.github+json",
+    "X-GitHub-Api-Version": "2022-11-28",
+    "Content-Type": "application/json",
+  };
 }
 
-function releaseLock() {
+// tag = "sprint-2026-04-08_23-31"  →  branch = "sprint/2026-04-08_23-31"
+function tagToBranch(tag) {
+  return tag.replace(/^sprint-/, "sprint/");
+}
+
+async function findOpenPR(branch) {
+  const url = `https://api.github.com/repos/${REPO_SLUG}/pulls?head=${REPO_SLUG.split("/")[0]}:${branch}&state=open&per_page=5`;
+  const res = await fetch(url, { headers: githubHeaders() });
+  if (!res.ok) throw new Error(`GitHub list PRs ${res.status}`);
+  const list = await res.json();
+  return list[0] || null;
+}
+
+// Approve: merge the sprint PR into master via GitHub API.
+async function approveSprint(tag) {
   try {
-    fs.unlinkSync(LOCK_FILE);
-  } catch {}
-}
+    const branch = tagToBranch(tag);
+    log.info(`[sprint-git] approve tag=${tag} branch=${branch}`);
 
-function git(cmd) {
-  return execSync(`git ${cmd}`, {
-    cwd: REPO_DIR,
-    encoding: "utf8",
-    stdio: ["ignore", "pipe", "pipe"],
-  }).trim();
-}
-
-function tryGit(cmd) {
-  try {
-    return { ok: true, out: git(cmd) };
-  } catch (e) {
-    return { ok: false, err: (e.stderr || e.message || "").toString() };
-  }
-}
-
-// Approve: merge sprint-staging into master up to the given tag, push master.
-// If no tag given, merge whole staging HEAD.
-function approveSprint(tag) {
-  if (!acquireLock()) return { ok: false, error: "lock held" };
-  try {
-    git("fetch --all --tags");
-    git(`checkout ${PROD_BRANCH}`);
-    git(`pull --ff-only origin ${PROD_BRANCH}`);
-
-    const target = tag || STAGING_BRANCH;
-    // Try fast-forward first
-    let merge = tryGit(`merge --ff-only ${target}`);
-    let strategy = "ff-only";
-    if (!merge.ok) {
-      // Fall back to a merge commit
-      merge = tryGit(
-        `merge --no-ff -m "chore: approve sprint ${target}" ${target}`,
-      );
-      strategy = "no-ff";
-      if (!merge.ok) {
-        tryGit("merge --abort");
-        return {
-          ok: false,
-          error: `merge conflict: ${merge.err.slice(0, 500)}`,
-        };
-      }
+    const pr = await findOpenPR(branch);
+    if (!pr) {
+      // PR may already be merged or closed.
+      log.warn(`[sprint-git] no open PR for branch ${branch}`);
+      return { ok: false, error: `no open PR for branch ${branch}` };
     }
-    const push = tryGit(`push origin ${PROD_BRANCH}`);
-    if (!push.ok) return { ok: false, error: `push failed: ${push.err}` };
 
-    const sha = git("rev-parse HEAD");
-    return { ok: true, strategy, sha, target };
-  } finally {
-    releaseLock();
-  }
-}
-
-// Revert: git revert the commit pointed to by the tag in sprint-staging, push staging.
-function revertSprint(tag) {
-  if (!acquireLock()) return { ok: false, error: "lock held" };
-  try {
-    git("fetch --all --tags");
-    git(`checkout ${STAGING_BRANCH}`);
-    git(`pull --ff-only origin ${STAGING_BRANCH}`);
-
-    // Tag points at the sprint commit. revert it (create a new commit undoing the change).
-    const revert = tryGit(`revert --no-edit ${tag}`);
-    if (!revert.ok) {
-      tryGit("revert --abort");
+    const mergeRes = await fetch(
+      `https://api.github.com/repos/${REPO_SLUG}/pulls/${pr.number}/merge`,
+      {
+        method: "PUT",
+        headers: githubHeaders(),
+        body: JSON.stringify({
+          commit_title: `chore: approve sprint ${tag}`,
+          merge_method: "squash",
+        }),
+      },
+    );
+    const mergeData = await mergeRes.json();
+    if (!mergeRes.ok) {
+      log.warn(`[sprint-git] merge failed: ${JSON.stringify(mergeData)}`);
       return {
         ok: false,
-        error: `revert conflict: ${revert.err.slice(0, 500)}`,
+        error: `merge failed (${mergeRes.status}): ${mergeData.message || ""}`,
       };
     }
-    const push = tryGit(`push origin ${STAGING_BRANCH}`);
-    if (!push.ok) return { ok: false, error: `push failed: ${push.err}` };
-
-    const sha = git("rev-parse HEAD");
-    return { ok: true, sha, tag };
-  } finally {
-    releaseLock();
+    log.info(
+      `[sprint-git] merged PR #${pr.number} sha=${mergeData.sha?.slice(0, 8)}`,
+    );
+    return {
+      ok: true,
+      strategy: "squash",
+      sha: mergeData.sha,
+      prNumber: pr.number,
+    };
+  } catch (e) {
+    log.warn(`[sprint-git] approveSprint error: ${e.message}`);
+    return { ok: false, error: e.message };
   }
 }
 
-function currentBranch() {
-  return git("rev-parse --abbrev-ref HEAD");
+// Revert: close the PR without merging (sprint changes stay on staging but don't reach master).
+async function revertSprint(tag) {
+  try {
+    const branch = tagToBranch(tag);
+    log.info(`[sprint-git] revert tag=${tag} branch=${branch}`);
+
+    const pr = await findOpenPR(branch);
+    if (!pr) {
+      log.warn(`[sprint-git] no open PR for branch ${branch}`);
+      return { ok: false, error: `no open PR for branch ${branch}` };
+    }
+
+    const closeRes = await fetch(
+      `https://api.github.com/repos/${REPO_SLUG}/pulls/${pr.number}`,
+      {
+        method: "PATCH",
+        headers: githubHeaders(),
+        body: JSON.stringify({ state: "closed" }),
+      },
+    );
+    if (!closeRes.ok) {
+      const d = await closeRes.json();
+      return {
+        ok: false,
+        error: `close PR failed: ${d.message || closeRes.status}`,
+      };
+    }
+    log.info(`[sprint-git] closed PR #${pr.number}`);
+    return { ok: true, tag, prNumber: pr.number };
+  } catch (e) {
+    log.warn(`[sprint-git] revertSprint error: ${e.message}`);
+    return { ok: false, error: e.message };
+  }
 }
 
-module.exports = {
-  approveSprint,
-  revertSprint,
-  currentBranch,
-  STAGING_BRANCH,
-  PROD_BRANCH,
-};
+module.exports = { approveSprint, revertSprint };
