@@ -75,7 +75,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 ## Day 9 — Office Events
 - [x] Party mode trigger (balloons, confetti, music notes, dancing)
 - [x] Fire drill (alarm sound, everyone runs to exit)
-- [ ] Power outage (lights off, emergency lights, monitors dark)
+- [x] Power outage (lights off, emergency lights, monitors dark)
 - [ ] Holiday decorations auto (Christmas/Halloween by real date)
 
 ## Day 10 — Premium Polish
