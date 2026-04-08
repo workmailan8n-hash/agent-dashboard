@@ -2,8 +2,8 @@
 // Парсит JSON-результат `claude -p --output-format json` и аппендит метрики в CSV.
 // Usage: node sprint-track.js <path-to-json-log>
 
-import fs from "node:fs";
-import path from "node:path";
+const fs = require("fs");
+const path = require("path");
 
 const logPath = process.argv[2];
 if (!logPath) {
