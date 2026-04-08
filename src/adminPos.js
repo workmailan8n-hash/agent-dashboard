@@ -89,6 +89,7 @@ export const BUILTIN_POSITIONS = {
   bookshelf: { tx: 26.5, ty: 46 },
   slot_machine: { tx: 1, ty: 50 },
   water_cooler: { tx: 23, ty: 8 },
+  disco_ball: { tx: 13, ty: 46 },
 
   // ═══ GYM & SPORTS ═══
   gym: { tx: 2, ty: 56 },

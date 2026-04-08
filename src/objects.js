@@ -1773,3 +1773,114 @@ export function drawWaterCooler(ctx, x, y, tick) {
 
   ctx.restore();
 }
+
+// ── Disco Ball (hangs from ceiling, party trigger) ───────────────
+export function drawDiscoBall(ctx, x, y, tick) {
+  const r = T * 0.65;
+  const cx = (x + T * 0.75) | 0;
+  const cy = (y + r + 4) | 0;
+
+  ctx.save();
+
+  // Hanging wire / string
+  ctx.strokeStyle = "#606070";
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx, y);
+  ctx.lineTo(cx, cy - r);
+  ctx.stroke();
+
+  // Shadow on floor
+  ctx.globalAlpha = 0.12;
+  ctx.fillStyle = "#000000";
+  ctx.beginPath();
+  ctx.ellipse(cx, cy + r + 2, r * 0.9, r * 0.25, 0, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.globalAlpha = 1;
+
+  // Ball base — dark sphere
+  const bg = ctx.createRadialGradient(
+    cx - r * 0.3,
+    cy - r * 0.3,
+    r * 0.05,
+    cx,
+    cy,
+    r,
+  );
+  bg.addColorStop(0, "#888898");
+  bg.addColorStop(1, "#1a1a2a");
+  ctx.fillStyle = bg;
+  ctx.beginPath();
+  ctx.arc(cx, cy, r, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Mirror tiles — 5×5 grid mapped onto sphere surface
+  const tileColors = [
+    "#ffffff",
+    "#d0d8ff",
+    "#ffd0e8",
+    "#d0ffe8",
+    "#fff0d0",
+    "#c0c8f0",
+    "#f0c0d8",
+    "#c0f0d8",
+    "#f0e8c0",
+    "#e8d0f0",
+  ];
+  const rows = 5,
+    cols = 6;
+  const spinAngle = tick * 0.03;
+
+  for (let ri = 0; ri < rows; ri++) {
+    for (let ci = 0; ci < cols; ci++) {
+      const phi = (ri / rows) * Math.PI; // 0→π (top to bottom)
+      const theta = (ci / cols) * Math.PI * 2 + spinAngle;
+
+      // 3D→2D projection (simple orthographic)
+      const px = Math.sin(phi) * Math.cos(theta);
+      const py = -Math.cos(phi);
+      const pz = Math.sin(phi) * Math.sin(theta);
+
+      // Only front-facing tiles
+      if (pz < -0.1) continue;
+
+      const tx2 = cx + px * r;
+      const ty2 = cy + py * r;
+
+      // Tile size shrinks toward poles
+      const tileW = Math.max(2, (r * 0.38 * Math.sin(phi)) | 0);
+      const tileH = Math.max(2, (r * 0.32) | 0);
+
+      // Shimmer based on angle + tick
+      const shimmer =
+        0.3 + 0.7 * Math.max(0, Math.sin(theta - spinAngle * 2 + ri));
+      ctx.globalAlpha = shimmer * (0.5 + pz * 0.5);
+      ctx.fillStyle = tileColors[(ri * cols + ci) % tileColors.length];
+      ctx.fillRect((tx2 - tileW / 2) | 0, (ty2 - tileH / 2) | 0, tileW, tileH);
+    }
+  }
+
+  ctx.globalAlpha = 1;
+
+  // Bright specular highlight
+  ctx.fillStyle = "rgba(255,255,255,0.7)";
+  ctx.beginPath();
+  ctx.arc((cx - r * 0.3) | 0, (cy - r * 0.35) | 0, r * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Tiny secondary sparkle
+  ctx.fillStyle = "rgba(255,255,255,0.5)";
+  ctx.beginPath();
+  ctx.arc((cx + r * 0.25) | 0, (cy - r * 0.5) | 0, r * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+
+  // Label
+  ctx.globalAlpha = 0.7;
+  ctx.fillStyle = "#c090ff";
+  ctx.font = "4px 'Press Start 2P',monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("DISCO", cx, cy + r + 10);
+  ctx.textAlign = "left";
+
+  ctx.restore();
+}

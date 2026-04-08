@@ -21,6 +21,7 @@ import {
   drawTrophyCabinet,
   drawSlotMachine,
   drawWaterCooler,
+  drawDiscoBall,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
 import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
@@ -12996,6 +12997,82 @@ function loop(now) {
     }
   }
 
+  // ── Party Mode update ─────────────────────────────────────────
+  if (partyMode) {
+    partyTimer -= dt;
+    partyLightAngle += dt * 1.2;
+    if (partyTimer <= 0) {
+      partyMode = false;
+      partyBalloons = [];
+      partyNotes = [];
+    } else {
+      // Spawn confetti bursts every ~20 ticks
+      if (globalTick % 20 === 0) {
+        const rx = OX + T * 2 + Math.random() * (COLS - 4) * T;
+        const ry = OY + T * 2 + Math.random() * (ROWS - 6) * T;
+        PS.confetti(rx, ry);
+      }
+      // Spawn balloons (rise from bottom)
+      if (globalTick % 18 === 0 && partyBalloons.length < 12) {
+        partyBalloons.push({
+          x: OX + T * 2 + Math.random() * (COLS - 4) * T,
+          y: OY + (ROWS - 1) * T,
+          vx: (Math.random() - 0.5) * 14,
+          vy: -(18 + Math.random() * 14),
+          life: 3 + Math.random() * 2,
+          maxLife: 5,
+          col: PARTY_BALLOON_COLS[
+            Math.floor(Math.random() * PARTY_BALLOON_COLS.length)
+          ],
+        });
+      }
+      // Spawn music notes from agents
+      if (globalTick % 12 === 0) {
+        for (const sp of Object.values(agentStates)) {
+          if (Math.random() < 0.4) {
+            partyNotes.push({
+              x: sp.sx + (Math.random() - 0.5) * 12,
+              y: sp.sy - 10,
+              vy: -(18 + Math.random() * 12),
+              life: 2 + Math.random() * 1.5,
+              maxLife: 3.5,
+              char: PARTY_NOTE_CHARS[
+                Math.floor(Math.random() * PARTY_NOTE_CHARS.length)
+              ],
+              col: PARTY_BALLOON_COLS[
+                Math.floor(Math.random() * PARTY_BALLOON_COLS.length)
+              ],
+            });
+          }
+        }
+      }
+      // Keep idle agents celebrating
+      if (globalTick % 60 === 0) {
+        for (const sp of Object.values(agentStates)) {
+          if (!sp.isWorking && sp.arrived && !sp.celebrating) {
+            sp.celebrating = true;
+            sp.celebrateTimer = 2;
+          }
+        }
+      }
+    }
+    // Update balloons
+    partyBalloons = partyBalloons.filter((b) => {
+      b.x += b.vx * dt;
+      b.y += b.vy * dt;
+      b.vx += (Math.random() - 0.5) * 8 * dt;
+      b.life -= dt;
+      return b.life > 0 && b.y > OY - T * 2;
+    });
+    // Update notes
+    partyNotes = partyNotes.filter((n) => {
+      n.x += Math.sin(n.life * 4) * 0.5;
+      n.y += n.vy * dt;
+      n.life -= dt;
+      return n.life > 0;
+    });
+  }
+
   // ── Draw ─────────────────────────────────────────────────────
   ctx.clearRect(0, 0, CW, canvas.height);
   ctx.drawImage(bgBuf, 0, 0);
@@ -13125,6 +13202,45 @@ function loop(now) {
       globalTick,
       drawWaterCooler,
     );
+  }
+  // Disco Ball (activity zone, clickable party trigger)
+  {
+    const [_dbTx, _dbTy] = getAdminPos(
+      "disco_ball",
+      13,
+      ACT_ZONE_Y > 0 ? ACT_ZONE_Y + 2 : 2,
+    );
+    const [dbx, dby] = ts(_dbTx, _dbTy);
+    drawObjectCached(
+      ctx,
+      "disco_ball",
+      dbx - T * 0.25,
+      dby - 4,
+      globalTick,
+      drawDiscoBall,
+    );
+    // Party light rays when party is active
+    if (partyMode) {
+      const bcx = dbx + T * 0.5,
+        bcy = dby + T * 0.65;
+      ctx.save();
+      const rayCount = 8;
+      for (let ri = 0; ri < rayCount; ri++) {
+        const ang = partyLightAngle + (ri / rayCount) * Math.PI * 2;
+        const rayLen = 80 + Math.sin(globalTick * 0.07 + ri) * 30;
+        const col = PARTY_BALLOON_COLS[ri % PARTY_BALLOON_COLS.length];
+        ctx.strokeStyle = col;
+        ctx.lineWidth = 2;
+        ctx.globalAlpha = 0.18 + Math.sin(globalTick * 0.1 + ri * 1.3) * 0.1;
+        ctx.shadowColor = col;
+        ctx.shadowBlur = 8;
+        ctx.beginPath();
+        ctx.moveTo(bcx, bcy);
+        ctx.lineTo(bcx + Math.cos(ang) * rayLen, bcy + Math.sin(ang) * rayLen);
+        ctx.stroke();
+      }
+      ctx.restore();
+    }
   }
   // Record Player (lounge area, spins vinyl)
   {
@@ -13346,6 +13462,80 @@ function loop(now) {
 
   // Click animations on interactive objects
   drawClickAnims(ctx, globalTick);
+
+  // ── Party Mode overlay (balloons, music notes, color pulse) ──
+  if (partyMode) {
+    // Subtle color flash over the whole office
+    const flashAlpha = 0.04 + Math.sin(globalTick * 0.22) * 0.03;
+    const flashCol =
+      PARTY_BALLOON_COLS[
+        Math.floor(globalTick * 0.08) % PARTY_BALLOON_COLS.length
+      ];
+    ctx.save();
+    ctx.globalAlpha = flashAlpha;
+    ctx.fillStyle = flashCol;
+    ctx.fillRect(OX, OY, COLS * T, ROWS * T);
+    ctx.restore();
+
+    // Draw balloons
+    ctx.save();
+    ctx.font = "bold 14px monospace";
+    ctx.textAlign = "center";
+    for (const b of partyBalloons) {
+      const t2 = b.life / b.maxLife;
+      ctx.globalAlpha = Math.min(1, t2 * 3) * 0.88;
+      // Balloon body
+      ctx.fillStyle = b.col;
+      ctx.beginPath();
+      ctx.ellipse(b.x | 0, b.y | 0, 7, 9, 0, 0, Math.PI * 2);
+      ctx.fill();
+      // Shine
+      ctx.fillStyle = "rgba(255,255,255,0.3)";
+      ctx.beginPath();
+      ctx.ellipse((b.x - 2) | 0, (b.y - 3) | 0, 3, 4, -0.5, 0, Math.PI * 2);
+      ctx.fill();
+      // String
+      ctx.strokeStyle = "#888";
+      ctx.lineWidth = 1;
+      ctx.globalAlpha = ctx.globalAlpha * 0.5;
+      ctx.beginPath();
+      ctx.moveTo(b.x | 0, (b.y + 9) | 0);
+      ctx.lineTo((b.x + Math.sin(b.life * 3) * 4) | 0, (b.y + 20) | 0);
+      ctx.stroke();
+    }
+    ctx.restore();
+
+    // Draw music notes
+    ctx.save();
+    ctx.font = "bold 10px monospace";
+    ctx.textAlign = "center";
+    for (const n of partyNotes) {
+      const t2 = n.life / n.maxLife;
+      ctx.globalAlpha = Math.min(1, t2 * 4) * 0.9;
+      ctx.fillStyle = n.col;
+      ctx.fillText(n.char, n.x | 0, n.y | 0);
+    }
+    ctx.restore();
+
+    // "PARTY TIME!" banner
+    if (partyTimer > PARTY_DURATION - 2) {
+      const bannerAlpha = Math.min(1, (PARTY_DURATION - partyTimer) * 2);
+      const bannerFade = partyTimer > 1 ? 1 : partyTimer;
+      ctx.save();
+      ctx.globalAlpha = Math.min(bannerAlpha, bannerFade) * 0.92;
+      ctx.font = "bold 18px 'Press Start 2P', monospace";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#ff79c6";
+      ctx.shadowBlur = 18;
+      ctx.fillStyle = "#ffffff";
+      ctx.fillText(
+        "🎉 PARTY TIME! 🎉",
+        OX + (COLS / 2) * T,
+        OY + (ROWS / 2) * T - 10,
+      );
+      ctx.restore();
+    }
+  }
 
   // Office lighting tint — color shifts with time of day
   drawOfficeLighting(ctx);
@@ -14332,6 +14522,43 @@ let simsSelectedAgents = new Set();
 let simsHoverSpot = null; // {spot, idx} — IDLE_SPOT under cursor in sims mode
 const NEON_COLORS = ["#ff79c6", "#8be9fd", "#50fa7b", "#ffb86c", "#bd93f9"];
 let neonSignColorIdx = 0;
+// ── Party Mode ────────────────────────────────────────────────────
+let partyMode = false;
+let partyTimer = 0; // seconds remaining
+const PARTY_DURATION = 30; // seconds
+const PARTY_BALLOON_COLS = [
+  "#f7768e",
+  "#e0af68",
+  "#9ece6a",
+  "#7aa2f7",
+  "#bb9af7",
+  "#2ac3de",
+  "#ff9e64",
+];
+const PARTY_NOTE_CHARS = ["♪", "♫", "♬", "♩"];
+let partyNotes = []; // {x, y, vy, life, maxLife, char, col}
+let partyBalloons = []; // {x, y, vx, vy, life, maxLife, col}
+let partyLightAngle = 0; // disco light sweep angle
+
+function triggerPartyMode() {
+  partyMode = true;
+  partyTimer = PARTY_DURATION;
+  // Force all idle agents to dance
+  for (const sp of Object.values(agentStates)) {
+    if (!sp.isWorking && sp.arrived) {
+      sp.celebrating = true;
+      sp.celebrateTimer = 2;
+    }
+  }
+  // Big confetti burst at center
+  const cx = OX + (COLS / 2) * T;
+  const cy = OY + (ROWS / 2) * T;
+  for (let i = 0; i < 5; i++) PS.confetti(cx + (Math.random() - 0.5) * 80, cy);
+  blip(880, 0.15, "square", 0.04);
+  setTimeout(() => blip(1100, 0.1, "square", 0.03), 120);
+  setTimeout(() => blip(1320, 0.12, "square", 0.03), 240);
+}
+window.triggerPartyMode = triggerPartyMode;
 const simsArrivalFx = []; // [{x, y, life, maxLife, text}] — arrival celebration effects
 let adminObjects = []; // {id, label, tx, ty, w, h} — tile coords
 let adminSelected = null;
@@ -14795,6 +15022,14 @@ function buildAdminObjects() {
     label: "🎰 Slot Machine",
     tx: 1,
     ty: 50,
+    w: 1.5,
+    h: 2,
+  });
+  adminObjects.push({
+    id: "disco_ball",
+    label: "🪩 Disco Ball",
+    tx: 13,
+    ty: 46,
     w: 1.5,
     h: 2,
   });
@@ -15583,6 +15818,7 @@ const CLICK_OBJ_MAP = {
   gumball_machine: "gumball_machine",
   slot_machine: "slot_machine",
   water_cooler: "water_cooler",
+  disco_ball: "disco_ball",
 };
 
 // Dynamic: desks and couches
@@ -15632,6 +15868,7 @@ function findClickableAt(tx, ty) {
     { id: "gumball_machine", w: 1.5, h: 2 },
     { id: "slot_machine", w: 1.5, h: 2 },
     { id: "water_cooler", w: 1.2, h: 2 },
+    { id: "disco_ball", w: 1.5, h: 2 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++)
@@ -15833,6 +16070,10 @@ canvas.addEventListener("click", (e) => {
   if (hit.type === "darts") {
     launchDartsGame();
     blip(550, 0.12, "square", 0.04);
+    return;
+  }
+  if (hit.type === "disco_ball") {
+    triggerPartyMode();
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
@@ -17449,6 +17690,7 @@ document.addEventListener("keydown", (e) => {
   if (e.key === "Escape" && simsMode && simsSelectedAgents.size > 0) {
     simsSelectedAgents = new Set();
   }
+  if (e.key === "g" || e.key === "G") triggerPartyMode();
 });
 
 // ════════════════════════════════════════════════════════════════
