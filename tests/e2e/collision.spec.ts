@@ -25,7 +25,9 @@ test("BUILTIN_POSITIONS canonical layout has zero collision conflicts", async ({
   });
 
   if (conflicts.length) {
-    console.log("Conflicts:", JSON.stringify(conflicts, null, 2));
+    console.log(`[collision] ${conflicts.length} conflict(s):`);
+    console.log(JSON.stringify(conflicts, null, 2));
   }
+
   expect(conflicts).toHaveLength(0);
 });

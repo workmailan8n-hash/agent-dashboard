@@ -29,8 +29,8 @@ export const BUILTIN_POSITIONS = {
   desk_19: { tx: 19.5, ty: 5 },
 
   // ═══ WALL DECORATIONS ═══
-  neon_sign: { tx: 3, ty: 0.5 },
-  corkboard: { tx: 11, ty: 0 },
+  neon_sign: { tx: 17, ty: 0 },
+  corkboard: { tx: 12, ty: 0 },
   whiteboard: { tx: 27.5, ty: 0 },
   kanban: { tx: 22.5, ty: 0 },
   darts: { tx: 6, ty: 0 },
@@ -41,11 +41,11 @@ export const BUILTIN_POSITIONS = {
   aquarium: { tx: 30.5, ty: 5.5 },
   cooler: { tx: 32, ty: 17.5 },
   printer: { tx: 29.5, ty: 22.5 },
-  trashcan: { tx: 30.5, ty: 10.5 },
+  trashcan: { tx: 29, ty: 11.5 },
   lava_lamp: { tx: 30, ty: 18 },
-  plant_0: { tx: 1.5, ty: 19.5 },
+  plant_0: { tx: 5, ty: 19.5 },
   plant_1: { tx: 26.5, ty: 22.5 },
-  vending: { tx: 28, ty: 12 },
+  vending: { tx: 31, ty: 12 },
 
   // ═══ KITCHEN ═══
   kitchen_counter: { tx: 25, ty: 10 },
@@ -83,7 +83,7 @@ export const BUILTIN_POSITIONS = {
   gaming_sofa: { tx: 11.5, ty: 51 },
   foosball: { tx: 8, ty: 53 },
   pingpong: { tx: 23.5, ty: 51.5 },
-  jukebox: { tx: 25, ty: 53 },
+  jukebox: { tx: 30, ty: 53 },
   pinball: { tx: 21.5, ty: 52 },
   trophy_cabinet: { tx: 24.5, ty: 46 },
   bookshelf: { tx: 26.5, ty: 46 },
@@ -95,7 +95,7 @@ export const BUILTIN_POSITIONS = {
 
   // ═══ BOTTOM ZONE ═══
   dj_console: { tx: 27, ty: 59.5 },
-  rubber_duck: { tx: 28, ty: 61.5 },
+  rubber_duck: { tx: 1, ty: 60 },
   nap_pod: { tx: 27, ty: 62 },
   conf_table: { tx: 12, ty: 62 },
   espresso_bar: { tx: 20, ty: 63 },
