@@ -58,46 +58,49 @@ function handleTgWebhook(req, res, TG_TOKEN, TG_CHAT, lastTgFeedback) {
         // Acknowledge the button press immediately.
         const ackText =
           action === "approve"
-            ? "\u2705 \u041F\u0456\u0434\u0442\u0432\u0435\u0440\u0434\u0436\u0435\u043D\u043E!"
+            ? "✅ Підтверджено!"
             : action === "skip"
-              ? "\u23ED \u041F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u043E"
-              : "\u274C \u0412\u0456\u0434\u043A\u043E\u0447\u0435\u043D\u043E";
+              ? "⏭ Пропущено"
+              : "❌ Відкочено";
         tgFetch(TG_TOKEN, "answerCallbackQuery", {
           callback_query_id: cb.id,
           text: ackText,
         });
 
-        // Run git action if any, then post status.
-        let result = { ok: true };
-        if (action === "approve" || action === "revert") {
-          if (!tag) {
-            result = { ok: false, error: "no tag in callback_data" };
-          } else {
-            result = dispatchSprintAction(action, tag);
+        // Run async git action, then update TG message with result.
+        (async () => {
+          let result = { ok: true };
+          if (action === "approve" || action === "revert") {
+            if (!tag) {
+              result = { ok: false, error: "no tag in callback_data" };
+            } else {
+              result = await dispatchSprintAction(action, tag);
+            }
           }
-        }
 
-        // Compose final status line.
-        let statusLine;
-        if (action === "approve") {
-          statusLine = result.ok
-            ? `\n\n\u2705 \u041F\u0406\u0414\u0422\u0412\u0415\u0420\u0414\u0416\u0415\u041D\u041E (${result.strategy || ""}) \u2192 master`
-            : `\n\n\u26A0\uFE0F \u041F\u041E\u041C\u0418\u041B\u041A\u0410: ${result.error}`;
-        } else if (action === "revert") {
-          statusLine = result.ok
-            ? `\n\n\u274C \u0412\u0406\u0414\u041A\u041E\u0427\u0415\u041D\u041E (${tag}) \u2192 sprint-staging`
-            : `\n\n\u26A0\uFE0F \u041F\u041E\u041C\u0418\u041B\u041A\u0410: ${result.error}`;
-        } else if (action === "skip") {
-          statusLine = `\n\n\u23ED \u041F\u0440\u043E\u043F\u0443\u0449\u0435\u043D\u043E (\u043F\u0440\u0435\u0432\u044C\u044E \u0437\u0430\u043B\u0438\u0448\u0430\u0454\u0442\u044C\u0441\u044F)`;
-        } else {
-          statusLine = `\n\n(${action})`;
-        }
+          let statusLine;
+          if (action === "approve") {
+            statusLine = result.ok
+              ? `\n\n✅ ПІДТВЕРДЖЕНО (${result.strategy || "squash"}) → master`
+              : `\n\n⚠️ ПОМИЛКА: ${result.error}`;
+          } else if (action === "revert") {
+            statusLine = result.ok
+              ? `\n\n❌ ВІДКОЧЕНО (${tag}) → PR закрито`
+              : `\n\n⚠️ ПОМИЛКА: ${result.error}`;
+          } else if (action === "skip") {
+            statusLine = `\n\n⏭ Пропущено (прев'ю залишається)`;
+          } else {
+            statusLine = `\n\n(${action})`;
+          }
 
-        tgFetch(TG_TOKEN, "editMessageText", {
-          chat_id: chatId,
-          message_id: msgId,
-          text: origText + statusLine,
-        });
+          tgFetch(TG_TOKEN, "editMessageText", {
+            chat_id: chatId,
+            message_id: msgId,
+            text: origText + statusLine,
+          });
+        })().catch((e) =>
+          log.warn("[telegram] async callback error: " + e.message),
+        );
       } else if (update.message?.text) {
         lastTgFeedback.action = "comment";
         lastTgFeedback.text = update.message.text;
