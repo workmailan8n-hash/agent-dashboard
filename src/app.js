@@ -30,6 +30,7 @@ import {
   getAdminPos,
   applyCustomPositions,
 } from "./adminPos.js";
+import { launchSlotMachineGame } from "./minigames/slot_machine.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -9719,6 +9720,23 @@ class AgentState {
     // If cleaning, don't touch slot assignment — cleaning logic controls movement
     if (this.isCleaning) return;
 
+    // ── Fire drill evacuation — everyone runs to the exit ────────
+    if (window._fireDrillActive) {
+      this.isWorking = false;
+      this.arrived = false;
+      this._departingDesk = false;
+      const exitRow = Math.floor(ROWS * 0.38) + 1;
+      // Spread agents across nearby rows so they don't pile up
+      const spread = ((this.id.charCodeAt(this.id.length - 1) % 5) - 2) * 0.7;
+      this.setTarget(COLS + 2, exitRow + spread);
+      if (this.state !== "walking") this.setAnim("walking");
+      this.moveToward(dt, 7.0); // run faster than normal
+      this.thought = "🔥";
+      this.speechBubble = "FIRE DRILL!";
+      this.speechBubbleLife = 2;
+      return;
+    }
+
     // ── Spawn: sit on couch briefly before moving ─────────────────
     if (this._spawnSitTimer > 0) {
       this._spawnSitTimer -= dt;
@@ -13073,6 +13091,34 @@ function loop(now) {
     });
   }
 
+  // ── Fire Drill update ─────────────────────────────────────────
+  if (fireDrillActive) {
+    fireDrillTimer -= dt;
+    _fireDrillBeepTick += dt;
+    // Alarm beep every 0.5 s
+    if (_fireDrillBeepTick >= 0.5) {
+      _fireDrillBeepTick = 0;
+      playAlarmBeep();
+    }
+    if (fireDrillTimer <= 0) {
+      fireDrillActive = false;
+      window._fireDrillActive = false;
+      // Reset agents so they re-pick activities
+      for (const sp of Object.values(agentStates)) {
+        sp.slotIdx = -1;
+        sp.arrived = false;
+        sp.activityDur = 0;
+        // Snap back if they walked off-screen
+        if (sp.tx > COLS - 1) {
+          sp.tx = COLS - 2;
+          sp.ty = Math.floor(ROWS * 0.38) + (Math.random() - 0.5) * 2;
+          sp.targetTx = sp.tx;
+          sp.targetTy = sp.ty;
+        }
+      }
+    }
+  }
+
   // ── Draw ─────────────────────────────────────────────────────
   ctx.clearRect(0, 0, CW, canvas.height);
   ctx.drawImage(bgBuf, 0, 0);
@@ -13532,6 +13578,68 @@ function loop(now) {
         "🎉 PARTY TIME! 🎉",
         OX + (COLS / 2) * T,
         OY + (ROWS / 2) * T - 10,
+      );
+      ctx.restore();
+    }
+  }
+
+  // ── Fire Drill overlay (red flash + alarm + banner) ──────────
+  if (fireDrillActive) {
+    const alarmPhase = Math.sin(globalTick * 0.28);
+    // Pulsing red tint over the whole office
+    ctx.save();
+    ctx.globalAlpha = 0.08 + Math.abs(alarmPhase) * 0.1;
+    ctx.fillStyle = "#ff2020";
+    ctx.fillRect(OX, OY, COLS * T, ROWS * T);
+    ctx.restore();
+
+    // Fire alarm strobe light (top-left corner of office)
+    const alarmX = OX + 4,
+      alarmY = OY + 4;
+    const alarmOn = alarmPhase > 0;
+    // Alarm box body
+    ctx.save();
+    ctx.fillStyle = alarmOn ? "#ff3030" : "#8b1010";
+    ctx.fillRect(alarmX, alarmY, 18, 12);
+    ctx.strokeStyle = "#cc0000";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(alarmX, alarmY, 18, 12);
+    // Lens circle
+    ctx.fillStyle = alarmOn ? "#ffff80" : "#441010";
+    ctx.beginPath();
+    ctx.arc(alarmX + 9, alarmY + 6, 4, 0, Math.PI * 2);
+    ctx.fill();
+    // Glow when on
+    if (alarmOn) {
+      ctx.globalAlpha = 0.35;
+      ctx.shadowColor = "#ff4040";
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = "#ff4040";
+      ctx.beginPath();
+      ctx.arc(alarmX + 9, alarmY + 6, 12, 0, Math.PI * 2);
+      ctx.fill();
+    }
+    ctx.restore();
+
+    // "🔥 FIRE DRILL! 🔥" banner at top
+    if (fireDrillTimer > FIRE_DRILL_DURATION - 3 || (globalTick >> 3) & 1) {
+      ctx.save();
+      const bannerAlpha = Math.min(1, fireDrillTimer > 1 ? 1 : fireDrillTimer);
+      ctx.globalAlpha = bannerAlpha * (0.7 + Math.abs(alarmPhase) * 0.3);
+      ctx.font = "bold 16px 'Press Start 2P', monospace";
+      ctx.textAlign = "center";
+      ctx.shadowColor = "#ff2020";
+      ctx.shadowBlur = 20;
+      ctx.fillStyle = "#ff4040";
+      ctx.fillText("🔥 FIRE DRILL! 🔥", OX + (COLS / 2) * T, OY + 24);
+      // Countdown
+      ctx.font = "bold 8px 'Press Start 2P', monospace";
+      ctx.fillStyle = "#ffaaaa";
+      ctx.shadowBlur = 8;
+      ctx.fillText(
+        "EVACUATE! " + Math.ceil(fireDrillTimer) + "s",
+        OX + (COLS / 2) * T,
+        OY + 42,
       );
       ctx.restore();
     }
@@ -14559,6 +14667,46 @@ function triggerPartyMode() {
   setTimeout(() => blip(1320, 0.12, "square", 0.03), 240);
 }
 window.triggerPartyMode = triggerPartyMode;
+
+// ── Fire Drill ────────────────────────────────────────────────
+let fireDrillActive = false;
+let fireDrillTimer = 0;
+const FIRE_DRILL_DURATION = 20; // seconds
+let _fireDrillBeepTick = 0;
+
+function triggerFireDrill() {
+  if (fireDrillActive) return;
+  fireDrillActive = true;
+  fireDrillTimer = FIRE_DRILL_DURATION;
+  window._fireDrillActive = true;
+  // Interrupt working agents — force them off their desks
+  for (const sp of Object.values(agentStates)) {
+    sp._departingDesk = false;
+    sp._spawnSitTimer = 0;
+  }
+  // Release all idle slot bookings so agents don't fight over desks on return
+  for (const k of Object.keys(idleOccupied)) delete idleOccupied[k];
+  playAlarmBeep();
+}
+window.triggerFireDrill = triggerFireDrill;
+
+function playAlarmBeep() {
+  try {
+    const ac = getAC();
+    const o = ac.createOscillator(),
+      g = ac.createGain();
+    o.connect(g);
+    g.connect(ac.destination);
+    o.type = "sawtooth";
+    o.frequency.setValueAtTime(880, ac.currentTime);
+    o.frequency.setValueAtTime(660, ac.currentTime + 0.25);
+    g.gain.setValueAtTime(0.05, ac.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.5);
+    o.start();
+    o.stop(ac.currentTime + 0.5);
+  } catch {}
+}
+
 const simsArrivalFx = []; // [{x, y, life, maxLife, text}] — arrival celebration effects
 let adminObjects = []; // {id, label, tx, ty, w, h} — tile coords
 let adminSelected = null;
@@ -16074,6 +16222,13 @@ canvas.addEventListener("click", (e) => {
   }
   if (hit.type === "disco_ball") {
     triggerPartyMode();
+    return;
+  }
+  if (hit.type === "slot_machine") {
+    launchSlotMachineGame();
+    blip(880, 0.05, "square", 0.03);
+    setTimeout(() => blip(1100, 0.05, "square", 0.02), 80);
+    setTimeout(() => blip(1320, 0.08, "square", 0.02), 160);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
@@ -17691,6 +17846,7 @@ document.addEventListener("keydown", (e) => {
     simsSelectedAgents = new Set();
   }
   if (e.key === "g" || e.key === "G") triggerPartyMode();
+  if (e.key === "f" || e.key === "F") triggerFireDrill();
 });
 
 // ════════════════════════════════════════════════════════════════
