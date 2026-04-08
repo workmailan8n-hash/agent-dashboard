@@ -15,6 +15,18 @@ import "./styles/leaderboard.css";
 import "./styles/loading.css";
 import "./styles/mobile.css";
 import "./app.js";
+import { validateCanonicalLayout } from "./collision.js";
+
+// Boot-time collision validator (non-fatal — logs to DevTools)
+if (typeof window !== "undefined") {
+  setTimeout(() => {
+    try {
+      validateCanonicalLayout();
+    } catch (e) {
+      console.warn("[collision] validator failed:", e);
+    }
+  }, 100);
+}
 
 // ════════════════════════════════════════════════════════════════
 //  SETTINGS PANEL

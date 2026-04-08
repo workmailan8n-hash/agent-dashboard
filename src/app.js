@@ -14409,6 +14409,56 @@ let adminObjects = []; // {id, label, tx, ty, w, h} — tile coords
 let adminSelected = null;
 let adminDragging = false;
 let adminDragOff = { x: 0, y: 0 };
+
+// ── Collision check for admin drag (uses window.findConflicts from collision.js) ──
+function checkAdminObjectConflict(obj) {
+  if (typeof window === "undefined" || !window.findConflicts) return null;
+  // Build positions: just the dragged object + all others (so overlap detection works)
+  const positions = { [obj.id]: { tx: obj.tx, ty: obj.ty } };
+  for (const o of adminObjects) {
+    if (o === obj) continue;
+    positions[o.id] = { tx: o.tx, ty: o.ty };
+    // Override size table for non-canonical objects via OBJECT_SIZES already covers it
+  }
+  // Bounds check: out of canvas
+  if (
+    obj.tx < 0 ||
+    obj.ty < 0 ||
+    obj.tx + obj.w > COLS + 0.05 ||
+    obj.ty + obj.h > ROWS + 0.05
+  ) {
+    return "out of bounds";
+  }
+  // Pairwise overlap with other admin objects (uses live w/h from admin)
+  const a = { x1: obj.tx, y1: obj.ty, x2: obj.tx + obj.w, y2: obj.ty + obj.h };
+  for (const o of adminObjects) {
+    if (o === obj) continue;
+    const b = { x1: o.tx, y1: o.ty, x2: o.tx + o.w, y2: o.ty + o.h };
+    if (
+      a.x1 < b.x2 - 0.05 &&
+      a.x2 > b.x1 + 0.05 &&
+      a.y1 < b.y2 - 0.05 &&
+      a.y2 > b.y1 + 0.05
+    ) {
+      return "overlap with " + (o.label || o.id);
+    }
+  }
+  // Wall check using canonical walls
+  if (window.buildCanonicalWalls) {
+    const walls = window.buildCanonicalWalls(COLS, ROWS);
+    for (const w of walls) {
+      if (
+        a.x1 < w.x2 - 0.05 &&
+        a.x2 > w.x1 + 0.05 &&
+        a.y1 < w.y2 - 0.05 &&
+        a.y2 > w.y1 + 0.05
+      ) {
+        return "wall (" + w.label + ")";
+      }
+    }
+  }
+  return null;
+}
 let adminHover = null;
 let adminWalls = []; // {id, label, type:'vertical'|'horizontal', pos, min, max}
 let adminHoverWall = null;
@@ -15304,6 +15354,9 @@ canvas.addEventListener("mousedown", (e) => {
     adminSelected = obj;
     adminDragging = true;
     adminDragOff = { x: tx - obj.tx, y: ty - obj.ty };
+    obj._dragStartTx = obj.tx;
+    obj._dragStartTy = obj.ty;
+    obj._conflictReason = null;
     canvas.style.cursor = "grabbing";
   } else {
     adminSelected = null;
@@ -15381,6 +15434,8 @@ canvas.addEventListener("mousemove", (e) => {
       0,
       Math.min(ROWS - adminSelected.h, adminSelected.ty),
     );
+    // Live collision check
+    adminSelected._conflictReason = checkAdminObjectConflict(adminSelected);
   } else {
     // Wall hover detection
     adminHoverWall = null;
@@ -15510,7 +15565,14 @@ canvas.addEventListener("mouseup", (e) => {
   if (adminDragging) {
     adminDragging = false;
     canvas.style.cursor = "grab";
-    saveAdminPositions();
+    // Snap back if drop position is invalid
+    if (adminSelected && adminSelected._conflictReason) {
+      adminSelected.tx = adminSelected._dragStartTx;
+      adminSelected.ty = adminSelected._dragStartTy;
+      adminSelected._conflictReason = null;
+    } else {
+      saveAdminPositions();
+    }
     // Rebuild background with new positions
     buildBackground();
     buildObstacleGrid();
@@ -15546,15 +15608,22 @@ function drawAdminOverlay(ctx) {
     const isSelected = obj === adminSelected;
     const isHover = obj === adminHover;
 
-    // Bounding box
-    ctx.strokeStyle = isSelected
-      ? "#f7768e"
-      : isHover
-        ? "#7aa2f7"
-        : "#ffffff40";
-    ctx.lineWidth = isSelected ? 2 : 1;
-    ctx.setLineDash(isSelected ? [] : [4, 4]);
+    // Bounding box (red when conflict)
+    const hasConflict = !!obj._conflictReason;
+    ctx.strokeStyle = hasConflict
+      ? "#ff3344"
+      : isSelected
+        ? "#f7768e"
+        : isHover
+          ? "#7aa2f7"
+          : "#ffffff40";
+    ctx.lineWidth = hasConflict ? 3 : isSelected ? 2 : 1;
+    ctx.setLineDash(isSelected || hasConflict ? [] : [4, 4]);
     ctx.strokeRect(x, y, w, h);
+    if (hasConflict) {
+      ctx.fillStyle = "#ff334430";
+      ctx.fillRect(x, y, w, h);
+    }
     ctx.setLineDash([]);
 
     // Label background
@@ -15645,7 +15714,7 @@ function drawAdminOverlay(ctx) {
       adminDraggingWall && adminSelectedWall
         ? `Moving: ${adminSelectedWall.label} → pos ${adminSelectedWall.pos}`
         : adminSelected && adminDragging
-          ? `Moving: ${adminSelected.label} → (${adminSelected.tx.toFixed(1)}, ${adminSelected.ty.toFixed(1)})`
+          ? `Moving: ${adminSelected.label} → (${adminSelected.tx.toFixed(1)}, ${adminSelected.ty.toFixed(1)})${adminSelected._conflictReason ? "  ⚠ " + adminSelected._conflictReason : ""}`
           : adminHoverWall
             ? `${adminHoverWall.label} — drag to resize`
             : adminHover
