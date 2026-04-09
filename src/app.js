@@ -6601,10 +6601,15 @@ function drawDynamicWindows(ctx) {
   // (nameplate spans tx ~12..22; windows sit at tx 2, 8, 24, 30).
   const WINDOW_TX = [2, 8, 24, 30];
   for (let i = 0; i < WINDOW_TX.length; i++) {
+    // Align inner sky rect exactly with the static window frame drawn in
+    // buildBackground: frame outer = (wx, wy, T-8, T-10), so inner pane
+    // starts at (wx+1, wy+1) with size (T-10, T-12).
     const wx = OX + WINDOW_TX[i] * T + 4,
       wy = OY + 5;
-    const ww = T - 12,
-      wh = T - 14;
+    const ix = wx + 1,
+      iy = wy + 1,
+      ww = T - 10,
+      wh = T - 12;
 
     // Clip every per-window draw to the inner window rect so weather,
     // clouds, moon, glow etc. cannot bleed past the window frame.
@@ -6614,23 +6619,23 @@ function drawDynamicWindows(ctx) {
     ctx.shadowOffsetX = 0;
     ctx.shadowOffsetY = 0;
     ctx.beginPath();
-    ctx.rect(wx + 2, wy + 2, ww, wh);
+    ctx.rect(ix, iy, ww, wh);
     ctx.clip();
 
     // Sky gradient
-    const grad = ctx.createLinearGradient(wx + 2, wy + 2, wx + 2, wy + 2 + wh);
+    const grad = ctx.createLinearGradient(ix, iy, ix, iy + wh);
     grad.addColorStop(0, sky.top);
     grad.addColorStop(1, sky.bot);
     ctx.fillStyle = grad;
-    ctx.fillRect(wx + 2, wy + 2, ww, wh);
+    ctx.fillRect(ix, iy, ww, wh);
 
     // Stars (night only)
     if (sky.stars) {
       ctx.fillStyle = "#ffffff";
       const starSeed = i * 7;
       for (let s = 0; s < 5; s++) {
-        const sx = wx + 4 + ((starSeed + s * 13) % (ww - 4));
-        const sy = wy + 4 + ((starSeed + s * 17) % (wh - 6));
+        const sx = ix + 2 + ((starSeed + s * 13) % Math.max(1, ww - 4));
+        const sy = iy + 2 + ((starSeed + s * 17) % Math.max(1, wh - 4));
         const twinkle = Math.sin(Date.now() * 0.003 + s * 2) > 0.3 ? 1 : 0.3;
         ctx.globalAlpha = twinkle;
         ctx.fillRect(sx, sy, 1, 1);
@@ -6642,11 +6647,11 @@ function drawDynamicWindows(ctx) {
     if (sky.moon && i === 0) {
       ctx.fillStyle = "#e8e0c0";
       ctx.beginPath();
-      ctx.arc(wx + ww - 4, wy + 8, 4, 0, Math.PI * 2);
+      ctx.arc(ix + ww - 5, iy + 6, 3, 0, Math.PI * 2);
       ctx.fill();
       ctx.fillStyle = sky.top;
       ctx.beginPath();
-      ctx.arc(wx + ww - 2, wy + 7, 3.5, 0, Math.PI * 2);
+      ctx.arc(ix + ww - 3, iy + 5, 2.5, 0, Math.PI * 2);
       ctx.fill(); // crescent
     }
 
@@ -6655,37 +6660,37 @@ function drawDynamicWindows(ctx) {
       ctx.save();
       ctx.globalAlpha = 0.3;
       const glow = ctx.createRadialGradient(
-        wx + ww / 2,
-        wy + wh,
+        ix + ww / 2,
+        iy + wh,
         0,
-        wx + ww / 2,
-        wy + wh,
+        ix + ww / 2,
+        iy + wh,
         wh,
       );
       glow.addColorStop(0, tod.state === "dawn" ? "#ffaa40" : "#ff6020");
       glow.addColorStop(1, "transparent");
       ctx.fillStyle = glow;
-      ctx.fillRect(wx + 2, wy + 2, ww, wh);
+      ctx.fillRect(ix, iy, ww, wh);
       ctx.restore();
     }
 
-    // Clouds (day only, subtle)
+    // Clouds (day only, subtle) — clipped to inner pane
     if (tod.state === "day") {
       ctx.fillStyle = "#ffffff30";
-      const cx = wx + ((Date.now() * 0.01 + i * 20) % (ww + 10)) - 5;
+      const cx = ix + ((Date.now() * 0.01 + i * 20) % (ww + 10)) - 5;
       ctx.beginPath();
-      ctx.arc(cx, wy + 8, 3, 0, Math.PI * 2);
+      ctx.arc(cx, iy + 6, 2.5, 0, Math.PI * 2);
       ctx.fill();
-      ctx.arc(cx + 4, wy + 7, 4, 0, Math.PI * 2);
+      ctx.arc(cx + 4, iy + 5, 3, 0, Math.PI * 2);
       ctx.fill();
-      ctx.arc(cx + 8, wy + 8, 3, 0, Math.PI * 2);
+      ctx.arc(cx + 8, iy + 6, 2.5, 0, Math.PI * 2);
       ctx.fill();
     }
 
     // Weather particles outside windows
     if (window.__settings?.animations !== false) {
-      const wx2 = wx + 2,
-        wy2 = wy + 2;
+      const wx2 = ix,
+        wy2 = iy;
       const weather = getDailyWeather();
       const t = Date.now() * 0.001;
       if (weather === "rain") {
