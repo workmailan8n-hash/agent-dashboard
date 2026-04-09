@@ -41,7 +41,6 @@ export const BUILTIN_POSITIONS = {
   aquarium: { tx: 30.5, ty: 5.5 },
   cooler: { tx: 32, ty: 17.5 },
   printer: { tx: 29.5, ty: 22.5 },
-  trashcan: { tx: 29, ty: 11.5 },
   lava_lamp: { tx: 30, ty: 18 },
   plant_0: { tx: 5, ty: 19.5 },
   plant_1: { tx: 26.5, ty: 22.5 },
@@ -76,7 +75,7 @@ export const BUILTIN_POSITIONS = {
 
   // ═══ ACTIVITY ZONE ═══
   server_rack: { tx: 1, ty: 46 },
-  printer_3d: { tx: 3, ty: 46 },
+  printer_3d: { tx: 5, ty: 48.5 },
   arcade: { tx: 3, ty: 46 },
   rowing_machine: { tx: 7, ty: 46.5 },
   tv: { tx: 11.5, ty: 47 },
@@ -90,7 +89,7 @@ export const BUILTIN_POSITIONS = {
   slot_machine: { tx: 8, ty: 52 },
   water_cooler: { tx: 23, ty: 8 },
   disco_ball: { tx: 15, ty: 45 },
-  record_player: { tx: 3, ty: 57 },
+  record_player: { tx: 10, ty: 57.5 },
 
   // ═══ GYM & SPORTS ═══
   gym: { tx: 2, ty: 56 },
@@ -99,7 +98,7 @@ export const BUILTIN_POSITIONS = {
 
   // ═══ BOTTOM ZONE ═══
   dj_console: { tx: 7, ty: 57 },
-  rubber_duck: { tx: 16, ty: 62.5 },
+  rubber_duck: { tx: 18.2, ty: 65.2 },
   nap_pod: { tx: 27, ty: 62 },
   conf_table: { tx: 12, ty: 62 },
   espresso_bar: { tx: 20, ty: 63 },

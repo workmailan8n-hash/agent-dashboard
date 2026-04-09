@@ -116,15 +116,6 @@ function buildAdminObjects() {
     w: 2,
     h: 1,
   });
-  adminObjects.push({
-    id: "trashcan",
-    label: "🗑 Trash",
-    tx: KITCHEN_WALL_COL - 2,
-    ty: 3,
-    w: 1,
-    h: 1,
-  });
-
   // Plants
   IDLE_SPOTS.filter((s) => s.type === "plant").forEach((s, i) => {
     adminObjects.push({

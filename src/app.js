@@ -6220,9 +6220,7 @@ function buildObstacleGrid() {
     markRect(prTx, prTy, 2, 1);
   }
 
-  // ── Trash can ─────
-  const [trTx, trTy] = getAdminPos("trashcan", KITCHEN_WALL_COL - 2, 3);
-  mark(Math.floor(trTx), Math.floor(trTy));
+  // ── Trash can removed ─────
 
   // ── Vending machine ─────
   if (KITCHEN_WALL_COL > 0 && ACT_ZONE_Y > 0) {
@@ -6454,9 +6452,12 @@ function drawKanban(ctx) {
   }
 
   // Header
-  ctx.fillStyle = "#3d2a0a";
-  ctx.font = "bold 8px monospace";
+  ctx.font = "bold 9px 'Press Start 2P',monospace";
   ctx.textAlign = "center";
+  ctx.lineWidth = 3;
+  ctx.strokeStyle = "#f5e6b0";
+  ctx.strokeText("KANBAN", bx + bw / 2, by + 14);
+  ctx.fillStyle = "#3d2a0a";
   ctx.fillText("KANBAN", bx + bw / 2, by + 14);
 
   // Divider line
@@ -6598,11 +6599,21 @@ function drawDynamicWindows(ctx) {
   };
   const sky = skies[tod.state] || skies.day;
 
-  for (let i = 0; i < 4; i++) {
-    const wx = OX + (3 + i * 6) * T + 4,
+  // Window x-positions chosen to avoid the central AGENT OFFICE nameplate
+  // (nameplate spans tx ~12..22; windows sit at tx 2, 8, 26, 32).
+  const WINDOW_TX = [2, 8, 26, 32];
+  for (let i = 0; i < WINDOW_TX.length; i++) {
+    const wx = OX + WINDOW_TX[i] * T + 4,
       wy = OY + 5;
     const ww = T - 12,
       wh = T - 14;
+
+    // Clip every per-window draw to the inner window rect so weather,
+    // clouds, moon, glow etc. cannot bleed past the window frame.
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(wx + 2, wy + 2, ww, wh);
+    ctx.clip();
 
     // Sky gradient
     const grad = ctx.createLinearGradient(wx + 2, wy + 2, wx + 2, wy + 2 + wh);
@@ -6746,6 +6757,9 @@ function drawDynamicWindows(ctx) {
         ctx.restore();
       }
     }
+
+    // End per-window clip (light shaft is intentionally drawn outside it)
+    ctx.restore();
 
     // Light shaft into room
     if (sky.shaft > 0) {
@@ -7097,8 +7111,10 @@ function buildBackground() {
   }
 
   // Windows — static frames only (sky color drawn dynamically)
-  for (let i = 0; i < 4; i++) {
-    const wx = OX + (3 + i * 6) * T + 4,
+  // Keep in sync with WINDOW_TX in drawDynamicWindows()
+  const _WINDOW_TX = [2, 8, 26, 32];
+  for (let i = 0; i < _WINDOW_TX.length; i++) {
+    const wx = OX + _WINDOW_TX[i] * T + 4,
       wy = OY + 5;
     fillR(ctx, wx, wy, T - 8, T - 10, "#0a0a14"); // dark placeholder
     ctx.strokeStyle = "#3a3860";
@@ -7898,43 +7914,7 @@ function buildBackground() {
     }
   }
 
-  // ── Trash Can (static body drawn on background) ───────────────────
-  {
-    const [_trTx, _trTy] = getAdminPos("trashcan", KITCHEN_WALL_COL - 2, 3);
-    const [tcx, tcy] = ts(_trTx, _trTy);
-    const cx2 = tcx + T / 2,
-      cy2 = tcy + T * 0.5;
-    // Shadow
-    ctx.save();
-    ctx.shadowColor = "#00000060";
-    ctx.shadowBlur = 4;
-    // Can body (tapered cylinder)
-    ctx.fillStyle = "#505060";
-    ctx.beginPath();
-    ctx.moveTo(cx2 - 9, cy2 + 14);
-    ctx.lineTo(cx2 + 9, cy2 + 14);
-    ctx.lineTo(cx2 + 7, cy2 - 6);
-    ctx.lineTo(cx2 - 7, cy2 - 6);
-    ctx.closePath();
-    ctx.fill();
-    ctx.restore();
-    // Lid
-    ctx.fillStyle = "#606878";
-    ctx.fillRect((cx2 - 10) | 0, (cy2 - 10) | 0, 20, 4);
-    // Lid handle
-    ctx.fillStyle = "#707880";
-    ctx.fillRect((cx2 - 3) | 0, (cy2 - 14) | 0, 6, 5);
-    // Horizontal bands on can body
-    ctx.fillStyle = "#5a5a6a";
-    ctx.fillRect((cx2 - 8) | 0, cy2 | 0, 16, 2);
-    ctx.fillRect((cx2 - 8) | 0, (cy2 + 8) | 0, 16, 2);
-    // Recycling symbol hint
-    ctx.fillStyle = "#3a8a3a";
-    ctx.font = "6px monospace";
-    ctx.textAlign = "center";
-    ctx.fillText("\u267B", cx2, cy2 + 6);
-    ctx.textAlign = "left";
-  }
+  // ── Trash Can removed ─────────────────────────────────────────────
 
   // ════ RIGHT ENTERTAINMENT ZONE ══════════════════════════════════
   {
@@ -8095,10 +8075,13 @@ function buildBackground() {
     fillR(ctx, arcx, arcy, arcW, arcH, "#1a1a30");
     ctx.restore();
     fillR(ctx, arcx + 2, arcy + 2, arcW - 4, 12, "#c02040");
-    ctx.fillStyle = "#ffcc00";
-    ctx.font = "5px 'Press Start 2P',monospace";
+    ctx.font = "bold 7px 'Press Start 2P',monospace";
     ctx.textAlign = "center";
-    ctx.fillText("ARCADE", arcx + arcW / 2, arcy + 10);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#3a0010";
+    ctx.strokeText("ARCADE", arcx + arcW / 2, arcy + 11);
+    ctx.fillStyle = "#ffcc00";
+    ctx.fillText("ARCADE", arcx + arcW / 2, arcy + 11);
     ctx.textAlign = "left";
     const marqueeCols = ["#ff0", "#0ff", "#f0f", "#0f0", "#ff0", "#0ff"];
     for (let li = 0; li < 6; li++) {
@@ -8785,8 +8768,8 @@ function buildBackground() {
     fillR(ctx, tvx + 13, tvy + 8, 4, 4, "#f5c2a0"); // head
     // score
     ctx.fillStyle = "#9ece6a";
-    ctx.font = "4px 'Press Start 2P',monospace";
-    ctx.fillText("SCORE:9999", tvx + T * 2 + 4, tvy + 10);
+    ctx.font = "bold 6px 'Press Start 2P',monospace";
+    ctx.fillText("SCORE:9999", tvx + T * 2 + 4, tvy + 11);
     // TV stand
     fillR(ctx, tvx + T * 2 - 4, tvy + T * 2.5, 8, 6, "#181828");
     fillR(ctx, tvx + T * 2 - 10, tvy + T * 2.5 + 6, 20, 4, "#1e1e30");
@@ -9360,10 +9343,13 @@ function drawDynamicEffects(ctx, tick) {
       fillR(ctx, wbx + 6 + mi * 12, wby + wbH + 1, 7, 3, markerColors[mi]);
     }
     // Label
-    ctx.fillStyle = "#505060";
-    ctx.font = "4px 'Press Start 2P',monospace";
+    ctx.font = "bold 7px 'Press Start 2P',monospace";
     ctx.textAlign = "center";
-    ctx.fillText("WHITEBOARD", wbx + wbW / 2, wby + wbH + 14);
+    ctx.lineWidth = 3;
+    ctx.strokeStyle = "#0a0a18";
+    ctx.strokeText("WHITEBOARD", wbx + wbW / 2, wby + wbH + 16);
+    ctx.fillStyle = "#e0e6f8";
+    ctx.fillText("WHITEBOARD", wbx + wbW / 2, wby + wbH + 16);
     ctx.textAlign = "left";
   }
 
@@ -9394,9 +9380,9 @@ function drawDynamicEffects(ctx, tick) {
     ctx.fillStyle = nsColor;
     ctx.shadowColor = nsColor;
     ctx.shadowBlur = 10 * nsGlow;
-    ctx.font = "7px 'Press Start 2P',monospace";
+    ctx.font = "bold 10px 'Press Start 2P',monospace";
     ctx.textAlign = "center";
-    ctx.fillText("VIBE", nsx + nsW / 2, nsy + nsH / 2 + 3);
+    ctx.fillText("VIBE", nsx + nsW / 2, nsy + nsH / 2 + 4);
     ctx.textAlign = "left";
     ctx.restore();
   }
@@ -13346,19 +13332,7 @@ function loop(now) {
       drawPhotoBooth,
     );
   }
-  // Retro Telephone (kitchen/break room area)
-  {
-    const [_rtTx, _rtTy] = getAdminPos("retro_telephone", 28, 4);
-    const [rtx, rty] = ts(_rtTx, _rtTy);
-    drawObjectCached(
-      ctx,
-      "retro_telephone",
-      rtx - T / 2,
-      rty - 4,
-      globalTick,
-      drawRetroTelephone,
-    );
-  }
+  // Retro Telephone removed
 
   // Trophy Cabinet (near main office wall)
   {
@@ -13460,12 +13434,12 @@ function loop(now) {
       ctx.fillRect(ex + 2, pcy - 2, 6, 6);
       // Score (incrementing)
       ctx.fillStyle = "#9ece6a";
-      ctx.font = "4px 'Press Start 2P',monospace";
+      ctx.font = "bold 6px 'Press Start 2P',monospace";
       ctx.textAlign = "left";
       ctx.fillText(
         `SCORE:${String(Math.floor(globalTick * 3)).padStart(4, "0")}`,
         sx + 2,
-        sy + 9,
+        sy + 10,
       );
       // Lives
       ctx.fillStyle = "#f7768e";
@@ -13487,8 +13461,7 @@ function loop(now) {
     }
   }
 
-  // Trash can dynamic (papers sticking out)
-  drawTrashCan(ctx, trashLevel);
+  // Trash can removed
 
   // Printer paper animation
   if (printerActive > 0 && KITCHEN_WALL_COL > 0 && KITCHEN_START_ROW > 0) {
@@ -14962,15 +14935,6 @@ function buildAdminObjects() {
     w: 2,
     h: 1,
   });
-  adminObjects.push({
-    id: "trashcan",
-    label: "🗑 Trash",
-    tx: KITCHEN_WALL_COL - 2,
-    ty: 3,
-    w: 1,
-    h: 1,
-  });
-
   // Plants
   IDLE_SPOTS.filter((s) => s.type === "plant").forEach((s, i) => {
     adminObjects.push({
@@ -16105,7 +16069,6 @@ function findClickableAt(tx, ty) {
     { id: "aquarium", w: 2.5, h: 2 },
     { id: "vending", w: 1.5, h: 2.5 },
     { id: "printer", w: 2, h: 1 },
-    { id: "trashcan", w: 1, h: 1 },
     { id: "darts", w: 2, h: 1 },
     { id: "tv", w: 4, h: 3 },
     { id: "pingpong", w: 6, h: 3 },

@@ -24,7 +24,6 @@ export const OBJECT_SIZES = {
   darts: { w: 2, h: 1 },
   aquarium: { w: 2.5, h: 2 },
   printer: { w: 2, h: 1 },
-  trashcan: { w: 1, h: 1 },
   kanban: { w: 4.5, h: 4 },
   plant: { w: 1, h: 1.5 },
   // Kitchen
@@ -199,16 +198,18 @@ export function findConflicts(positions, walls, COLS, ROWS) {
 // ── Validate the canonical layout & expose to window for tests ──
 export function validateCanonicalLayout() {
   const walls = buildCanonicalWalls();
-  const conflicts = findConflicts(
-    BUILTIN_POSITIONS,
-    walls,
-    CANONICAL_COLS,
-    CANONICAL_ROWS,
-  );
+  // Prefer live _adminPos (includes any user overrides from localStorage)
+  // so the dev-mode assertion catches real runtime overlaps, not just the
+  // canonical defaults in BUILTIN_POSITIONS.
+  const live =
+    typeof window !== "undefined" && window._adminPos
+      ? window._adminPos
+      : BUILTIN_POSITIONS;
+  const source =
+    live === BUILTIN_POSITIONS ? "BUILTIN_POSITIONS" : "_adminPos (live)";
+  const conflicts = findConflicts(live, walls, CANONICAL_COLS, CANONICAL_ROWS);
   if (conflicts.length) {
-    console.warn(
-      `[collision] ${conflicts.length} conflict(s) in BUILTIN_POSITIONS:`,
-    );
+    console.warn(`[collision] ${conflicts.length} conflict(s) in ${source}:`);
     for (const c of conflicts) {
       const a = c.aabb;
       console.warn(
@@ -217,7 +218,7 @@ export function validateCanonicalLayout() {
       );
     }
   } else {
-    console.log("[collision] BUILTIN_POSITIONS: 0 conflicts ✔");
+    console.log(`[collision] ${source}: 0 conflicts ✔`);
   }
   return conflicts;
 }
