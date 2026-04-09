@@ -32,6 +32,7 @@ import {
 } from "./adminPos.js";
 import { launchSlotMachineGame } from "./minigames/slot_machine.js";
 import { launchCoffeeGame } from "./minigames/coffee.js";
+import { launchJukeboxGame } from "./minigames/jukebox.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -73,6 +74,7 @@ function getAC() {
   return _ac;
 }
 function blip(freq, dur, type = "square", vol = 0.04) {
+  if (window.__settings?.sound === false) return;
   try {
     const ac = getAC();
     const o = ac.createOscillator(),
@@ -237,11 +239,13 @@ class ParticleSystem {
     for (const p of this.ps) p.draw(ctx);
   }
   emit(x, y, n, o) {
+    if (window.__settings?.particles === false) return;
     for (let i = 0; i < n; i++) this.ps.push(new Particle(x, y, o));
   }
 
   // Spawn burst — accent color ring
   burst(x, y, color) {
+    if (window.__settings?.particles === false) return;
     const cols = [color, "#ffffff", color];
     for (let i = 0; i < 14; i++) {
       this.ps.push(
@@ -261,6 +265,7 @@ class ParticleSystem {
 
   // Confetti on celebrate
   confetti(x, y) {
+    if (window.__settings?.particles === false) return;
     const cols = [
       "#7aa2f7",
       "#9ece6a",
@@ -288,6 +293,7 @@ class ParticleSystem {
 
   // Smoke drift (cigarette)
   smoke(x, y) {
+    if (window.__settings?.particles === false) return;
     if (Math.random() < 0.1) {
       this.ps.push(
         new Particle(x, y, {
@@ -305,6 +311,7 @@ class ParticleSystem {
 
   // Beer foam bubbles
   foam(x, y) {
+    if (window.__settings?.particles === false) return;
     if (Math.random() < 0.14) {
       this.ps.push(
         new Particle(x, y, {
@@ -322,6 +329,7 @@ class ParticleSystem {
 
   // Zzz float
   zzz(x, y) {
+    if (window.__settings?.particles === false) return;
     if (Math.random() < 0.04) {
       this.ps.push(
         new Particle(x, y, {
@@ -340,6 +348,7 @@ class ParticleSystem {
 
   // Sweat drops (furious typing)
   sweat(x, y) {
+    if (window.__settings?.particles === false) return;
     if (Math.random() < 0.18) {
       this.ps.push(
         new Particle(x, y, {
@@ -357,6 +366,7 @@ class ParticleSystem {
 
   // Despawn puff
   puff(x, y, color) {
+    if (window.__settings?.particles === false) return;
     for (let i = 0; i < 8; i++) {
       this.ps.push(
         new Particle(x, y, {
@@ -4080,6 +4090,7 @@ function drawDustMotes(ctx, tick) {
 // ── Fireflies outside windows at night ──
 let fireflies = [];
 function drawFireflies(ctx, tick) {
+  if (window.__settings?.animations === false) return;
   const tod = getTimeOfDay();
   if (tod.state !== "night") {
     return;
@@ -6670,7 +6681,7 @@ function drawDynamicWindows(ctx) {
     }
 
     // Weather particles outside windows
-    {
+    if (window.__settings?.animations !== false) {
       const wx2 = wx + 2,
         wy2 = wy + 2;
       const weather = getDailyWeather();
@@ -12377,19 +12388,19 @@ function drawLeftPanel(ctx, tick) {
     }
 
     // Role name
-    ctx.fillStyle = isWork ? "#e4ecff" : "#8892b0";
-    ctx.font = (isWork ? "bold " : "") + "11px monospace";
+    ctx.fillStyle = isWork ? "#ffffff" : "#c8d3f5";
+    ctx.font = (isWork ? "bold " : "") + "13px monospace";
     ctx.textAlign = "left";
     ctx.fillText(role.substring(0, 11), 24, y);
 
     // Tool / state badge
     if (isWork && ad.currentTool) {
-      ctx.fillStyle = "#bb9af7";
-      ctx.font = "9px monospace";
+      ctx.fillStyle = "#d7bbff";
+      ctx.font = "11px monospace";
       ctx.fillText(ad.currentTool.substring(0, 11), 24, y + 12);
     } else if (!isWork && sp.activityAnim) {
-      ctx.fillStyle = "#3d4466";
-      ctx.font = "9px monospace";
+      ctx.fillStyle = "#8892b0";
+      ctx.font = "11px monospace";
       ctx.fillText(
         sp.activityAnim.replace(/_/g, " ").substring(0, 13),
         24,
@@ -12404,8 +12415,8 @@ function drawLeftPanel(ctx, tick) {
   // Footer — total count
   ctx.fillStyle = "#2a2c4e";
   ctx.fillRect(6, H - 28, W - 12, 1);
-  ctx.fillStyle = "#565f89";
-  ctx.font = "bold 10px monospace";
+  ctx.fillStyle = "#a9b3d6";
+  ctx.font = "bold 12px monospace";
   ctx.textAlign = "center";
   const total = entries.length;
   const working = entries.filter(([, s]) => s.isWorking).length;
@@ -12432,13 +12443,13 @@ function drawRightPanel(ctx, tick) {
   ctx.fillRect(panelX + 6, 28, W - 12, 1);
 
   const label = (txt, val, col, yy) => {
-    ctx.fillStyle = "#565f89";
-    ctx.font = "9px monospace";
+    ctx.fillStyle = "#a9b3d6";
+    ctx.font = "bold 11px monospace";
     ctx.textAlign = "left";
     ctx.fillText(txt, panelX + 8, yy);
-    ctx.fillStyle = col || "#c8d3f5";
-    ctx.font = "bold 14px monospace";
-    ctx.fillText(String(val), panelX + 8, yy + 16);
+    ctx.fillStyle = col || "#ffffff";
+    ctx.font = "bold 16px monospace";
+    ctx.fillText(String(val), panelX + 8, yy + 17);
   };
 
   // Uptime
@@ -12454,7 +12465,7 @@ function drawRightPanel(ctx, tick) {
   const idle = agents.length - working;
   label("ONLINE", agents.length, "#9ece6a", 84);
   label("WORKING", working, "#e0af68", 118);
-  label("IDLE", idle, "#565f89", 152);
+  label("IDLE", idle, "#a9b3d6", 152);
 
   // Tasks
   const doneTasks =
@@ -12473,8 +12484,8 @@ function drawRightPanel(ctx, tick) {
   // Cat status
   ctx.fillStyle = "#2a2c4e";
   ctx.fillRect(panelX + 6, 256, W - 12, 1);
-  ctx.fillStyle = "#565f89";
-  ctx.font = "9px monospace";
+  ctx.fillStyle = "#a9b3d6";
+  ctx.font = "bold 11px monospace";
   ctx.textAlign = "left";
   ctx.fillText("CAT", panelX + 8, 270);
   const _catMoods = {
@@ -12495,13 +12506,13 @@ function drawRightPanel(ctx, tick) {
   const catMood = cat.messExists
     ? "💩 mess!"
     : _catMoods[cat.state] || "🐱 roaming";
-  ctx.fillStyle = cat.messExists ? "#f7768e" : "#c8d3f5";
-  ctx.font = "bold 11px monospace";
+  ctx.fillStyle = cat.messExists ? "#f7768e" : "#ffffff";
+  ctx.font = "bold 13px monospace";
   ctx.fillText(catMood, panelX + 8, 286);
 
   // Goose status
-  ctx.fillStyle = "#565f89";
-  ctx.font = "9px monospace";
+  ctx.fillStyle = "#a9b3d6";
+  ctx.font = "bold 11px monospace";
   ctx.textAlign = "left";
   ctx.fillText("GOOSE", panelX + 8, 302);
   const _gooseMoods = {
@@ -12520,15 +12531,15 @@ function drawRightPanel(ctx, tick) {
   ctx.fillStyle =
     goose.state === "honking" || goose.state === "stealing"
       ? "#f7768e"
-      : "#c8d3f5";
-  ctx.font = "bold 11px monospace";
+      : "#ffffff";
+  ctx.font = "bold 13px monospace";
   ctx.fillText(gooseMood, panelX + 8, 318);
 
   // Mini activity bar
   ctx.fillStyle = "#2a2c4e";
   ctx.fillRect(panelX + 6, 338, W - 12, 1);
-  ctx.fillStyle = "#565f89";
-  ctx.font = "9px monospace";
+  ctx.fillStyle = "#a9b3d6";
+  ctx.font = "bold 11px monospace";
   ctx.fillText("ACTIVITY", panelX + 8, 352);
   if (agents.length > 0) {
     const barW = W - 16;
@@ -16358,6 +16369,13 @@ canvas.addEventListener("click", (e) => {
     launchCoffeeGame();
     blip(440, 0.06, "sine", 0.04);
     setTimeout(() => blip(550, 0.05, "sine", 0.03), 120);
+    return;
+  }
+  if (hit.type === "jukebox") {
+    launchJukeboxGame();
+    blip(440, 0.06, "sine", 0.05);
+    setTimeout(() => blip(554, 0.05, "sine", 0.04), 100);
+    setTimeout(() => blip(659, 0.08, "sine", 0.03), 200);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
