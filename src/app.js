@@ -32,8 +32,6 @@ import {
 } from "./adminPos.js";
 import { launchSlotMachineGame } from "./minigames/slot_machine.js";
 import { launchCoffeeGame } from "./minigames/coffee.js";
-import { launchWhiteboardGame } from "./minigames/whiteboard.js";
-import { launchPlantGame } from "./minigames/plant.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -8519,31 +8517,7 @@ function buildBackground() {
 
   // ════ Activity zone ═══════════════════════════════════════════
   if (ACT_ZONE_Y > 0) {
-    // Zone divider wall (lounge → activity) with door opening in center
-    const [zx, zy] = ts(1, ACT_ZONE_Y);
-    const zoneW = (COLS - 2) * T;
-    const doorStart = Math.floor(zoneW * 0.35),
-      doorEnd = Math.floor(zoneW * 0.65);
-    // Left wall segment (thin floor divider)
-    fillR(ctx, zx, zy + Math.floor(T / 2) - 2, doorStart, 5, "#252344");
-    fillR(ctx, zx, zy + Math.floor(T / 2) - 2, doorStart, 2, "#3a3860");
-    // Right wall segment (thin floor divider)
-    fillR(
-      ctx,
-      zx + doorEnd,
-      zy + Math.floor(T / 2) - 2,
-      zoneW - doorEnd,
-      5,
-      "#252344",
-    );
-    fillR(
-      ctx,
-      zx + doorEnd,
-      zy + Math.floor(T / 2) - 2,
-      zoneW - doorEnd,
-      2,
-      "#3a3860",
-    );
+    // Zone divider removed — entertainment zone flows directly from lounge.
 
     // ── GYM (left side) ──────────────────────────────────────────
     const [_gymTx, _gymTy] = getAdminPos("gym", 1, ACT_ZONE_Y + 0.5);
@@ -13765,9 +13739,6 @@ function loop(now) {
   // Office lighting tint — color shifts with time of day (skip during full outage)
   if (!powerOutageActive || _powerFlickerPhase !== 1) drawOfficeLighting(ctx);
 
-  // Holiday decorations overlay — auto by real date
-  drawHolidayDecorations(ctx, globalTick);
-
   // Sims mode overlay
   if (simsMode) {
     // Draw selection ring for each selected agent
@@ -14841,267 +14812,6 @@ function triggerPowerOutage() {
   } catch {}
 }
 window.triggerPowerOutage = triggerPowerOutage;
-
-// ── Holiday Decorations — auto by real date ────────────────────────
-function getHolidaySeason() {
-  const d = new Date();
-  const m = d.getMonth() + 1; // 1-12
-  const day = d.getDate();
-  if (m === 10 && day >= 24) return "halloween";
-  if (m === 12 && day >= 1 && day <= 26) return "christmas";
-  if ((m === 12 && day >= 27) || (m === 1 && day <= 2)) return "newyear";
-  return null;
-}
-
-// Persistent holiday particle state
-let _holidayFlakes = []; // snowflakes / bats
-let _holidayFireworks = []; // new year firework bursts
-let _holidayInitSeason = null; // track season change
-
-function _initHolidayParticles(season) {
-  if (season === "christmas") {
-    _holidayFlakes = Array.from({ length: 38 }, () => ({
-      x: OX + Math.random() * COLS * T,
-      y: OY + Math.random() * ROWS * T,
-      vy: 0.3 + Math.random() * 0.5,
-      vx: (Math.random() - 0.5) * 0.3,
-      size: 1 + Math.random() * 2,
-      phase: Math.random() * Math.PI * 2,
-      alpha: 0.4 + Math.random() * 0.5,
-    }));
-  } else if (season === "halloween") {
-    _holidayFlakes = Array.from({ length: 10 }, (_, i) => ({
-      x: OX + (i / 10) * COLS * T + Math.random() * 30,
-      y: OY + Math.random() * ROWS * T * 0.5,
-      vx: (Math.random() - 0.5) * 0.8,
-      vy: (Math.random() - 0.5) * 0.3,
-      phase: Math.random() * Math.PI * 2,
-      wingPhase: Math.random() * Math.PI * 2,
-    }));
-  } else if (season === "newyear") {
-    _holidayFlakes = [];
-    _holidayFireworks = [];
-  }
-}
-
-function drawHolidayDecorations(ctx, tick) {
-  const season = getHolidaySeason();
-  if (!season) return;
-
-  // Re-init when season changes
-  if (_holidayInitSeason !== season) {
-    _holidayInitSeason = season;
-    _initHolidayParticles(season);
-  }
-
-  const offW = COLS * T,
-    offH = ROWS * T;
-  const dt = 1 / 60;
-
-  if (season === "christmas") {
-    // String lights across the top wall
-    ctx.save();
-    const lightY = OY + 4;
-    const spacing = 18;
-    const lightCols = ["#ff4040", "#40ff80", "#4080ff", "#ffdd00", "#ff80ff"];
-    for (let lx = OX + 8; lx < OX + offW - 8; lx += spacing) {
-      const sag = Math.sin(((lx - OX) / offW) * Math.PI) * 8;
-      // Wire
-      ctx.strokeStyle = "#444";
-      ctx.lineWidth = 0.8;
-      ctx.globalAlpha = 0.6;
-      ctx.beginPath();
-      ctx.moveTo(lx, lightY);
-      ctx.lineTo(lx + spacing, lightY + sag * 0.4);
-      ctx.stroke();
-      // Bulb
-      const col = lightCols[Math.floor(lx / spacing) % lightCols.length];
-      const glow = 0.7 + 0.3 * Math.sin(tick * 0.07 + lx * 0.05);
-      ctx.globalAlpha = glow;
-      ctx.fillStyle = col;
-      ctx.shadowColor = col;
-      ctx.shadowBlur = 6;
-      ctx.beginPath();
-      ctx.arc(lx, lightY + 4, 3, 0, Math.PI * 2);
-      ctx.fill();
-    }
-    ctx.shadowBlur = 0;
-    ctx.restore();
-
-    // Snowflake particles
-    ctx.save();
-    for (const f of _holidayFlakes) {
-      f.x += f.vx + Math.sin(tick * 0.02 + f.phase) * 0.4;
-      f.y += f.vy;
-      if (f.y > OY + offH) {
-        f.y = OY - 4;
-        f.x = OX + Math.random() * offW;
-      }
-      if (f.x < OX) f.x = OX + offW;
-      if (f.x > OX + offW) f.x = OX;
-      ctx.globalAlpha = f.alpha * (0.6 + 0.4 * Math.sin(tick * 0.04 + f.phase));
-      ctx.fillStyle = "#d0e8ff";
-      ctx.shadowColor = "#ffffff";
-      ctx.shadowBlur = 4;
-      ctx.fillRect(f.x | 0, f.y | 0, f.size | 0, f.size | 0);
-      // Cross arms for larger flakes
-      if (f.size > 2) {
-        ctx.fillRect((f.x - f.size) | 0, f.y | 0, (f.size * 3) | 0, 1);
-        ctx.fillRect(f.x | 0, (f.y - f.size) | 0, 1, (f.size * 3) | 0);
-      }
-    }
-    ctx.shadowBlur = 0;
-    ctx.restore();
-
-    // "MERRY XMAS" banner
-    ctx.save();
-    const bannerAlpha = 0.55 + 0.15 * Math.sin(tick * 0.05);
-    ctx.globalAlpha = bannerAlpha;
-    ctx.font = "bold 8px 'Press Start 2P',monospace";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ff4040";
-    ctx.shadowColor = "#ff4040";
-    ctx.shadowBlur = 10;
-    ctx.fillText("🎄 MERRY XMAS 🎄", OX + offW / 2, OY + 18);
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  } else if (season === "halloween") {
-    // Orange tint overlay
-    ctx.save();
-    ctx.globalAlpha = 0.07 + 0.03 * Math.sin(tick * 0.03);
-    ctx.fillStyle = "#ff6600";
-    ctx.fillRect(OX, OY, offW, offH);
-    ctx.restore();
-
-    // Corner cobwebs
-    ctx.save();
-    ctx.globalAlpha = 0.45;
-    ctx.strokeStyle = "#aaaaaa";
-    ctx.lineWidth = 0.8;
-    const webSize = 36;
-    [
-      [OX, OY],
-      [OX + offW, OY],
-    ].forEach(([wx, wy]) => {
-      const sign = wx === OX ? 1 : -1;
-      for (let r = 8; r <= webSize; r += 8) {
-        ctx.beginPath();
-        ctx.arc(wx, wy, r, 0, Math.PI / 2);
-        ctx.stroke();
-      }
-      for (let a = 0; a <= Math.PI / 2; a += Math.PI / 6) {
-        ctx.beginPath();
-        ctx.moveTo(wx, wy);
-        ctx.lineTo(
-          wx + Math.cos(a) * sign * webSize,
-          wy + Math.sin(a) * webSize,
-        );
-        ctx.stroke();
-      }
-    });
-    ctx.restore();
-
-    // Flying bats
-    ctx.save();
-    for (const b of _holidayFlakes) {
-      b.x += b.vx;
-      b.y += b.vy + Math.sin(tick * 0.05 + b.phase) * 0.5;
-      b.wingPhase += 0.15;
-      if (b.x < OX - 20) b.x = OX + offW + 10;
-      if (b.x > OX + offW + 20) b.x = OX - 10;
-      if (b.y < OY) b.y = OY + 20;
-      if (b.y > OY + offH * 0.6) b.vy = -Math.abs(b.vy);
-      const wing = Math.sin(b.wingPhase) * 5;
-      ctx.globalAlpha = 0.75;
-      ctx.fillStyle = "#220022";
-      // Body
-      ctx.beginPath();
-      ctx.ellipse(b.x, b.y, 4, 3, 0, 0, Math.PI * 2);
-      ctx.fill();
-      // Wings
-      ctx.beginPath();
-      ctx.moveTo(b.x - 4, b.y);
-      ctx.lineTo(b.x - 14, b.y - wing);
-      ctx.lineTo(b.x - 8, b.y + 2);
-      ctx.closePath();
-      ctx.fill();
-      ctx.beginPath();
-      ctx.moveTo(b.x + 4, b.y);
-      ctx.lineTo(b.x + 14, b.y - wing);
-      ctx.lineTo(b.x + 8, b.y + 2);
-      ctx.closePath();
-      ctx.fill();
-    }
-    ctx.restore();
-
-    // "BOO!" label
-    ctx.save();
-    ctx.globalAlpha = 0.6 + 0.2 * Math.sin(tick * 0.08);
-    ctx.font = "bold 10px 'Press Start 2P',monospace";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ff8800";
-    ctx.shadowColor = "#ff4400";
-    ctx.shadowBlur = 12;
-    ctx.fillText("🎃 HAPPY HALLOWEEN 🎃", OX + offW / 2, OY + 18);
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  } else if (season === "newyear") {
-    // Spawn firework bursts periodically
-    if (tick % 70 === 0) {
-      _holidayFireworks.push({
-        x: OX + T * 3 + Math.random() * (offW - T * 6),
-        y: OY + T + Math.random() * (offH * 0.5),
-        life: 1,
-        col: ["#ffd700", "#ff4060", "#40ffcc", "#bb9af7", "#ffaa00"][
-          Math.floor(Math.random() * 5)
-        ],
-        sparks: Array.from({ length: 14 }, (_, i) => {
-          const a = (i / 14) * Math.PI * 2;
-          return {
-            vx: Math.cos(a) * (1.5 + Math.random()),
-            vy: Math.sin(a) * (1.5 + Math.random()),
-          };
-        }),
-      });
-    }
-    ctx.save();
-    _holidayFireworks = _holidayFireworks.filter((fw) => {
-      fw.life -= dt * 1.2;
-      if (fw.life <= 0) return false;
-      ctx.globalAlpha = fw.life * 0.85;
-      ctx.fillStyle = fw.col;
-      ctx.shadowColor = fw.col;
-      ctx.shadowBlur = 8;
-      for (const sp of fw.sparks) {
-        sp.vx *= 0.97;
-        sp.vy *= 0.97;
-        sp.vy += 0.02;
-        const age = 1 - fw.life;
-        ctx.fillRect(
-          (fw.x + sp.vx * age * 30) | 0,
-          (fw.y + sp.vy * age * 30) | 0,
-          2,
-          2,
-        );
-      }
-      return true;
-    });
-    ctx.shadowBlur = 0;
-    ctx.restore();
-
-    // Banner
-    ctx.save();
-    ctx.globalAlpha = 0.7 + 0.2 * Math.sin(tick * 0.06);
-    ctx.font = "bold 8px 'Press Start 2P',monospace";
-    ctx.textAlign = "center";
-    ctx.fillStyle = "#ffd700";
-    ctx.shadowColor = "#ffd700";
-    ctx.shadowBlur = 12;
-    ctx.fillText("✨ HAPPY NEW YEAR ✨", OX + offW / 2, OY + 18);
-    ctx.shadowBlur = 0;
-    ctx.restore();
-  }
-}
 
 function playAlarmBeep() {
   try {
@@ -16648,19 +16358,6 @@ canvas.addEventListener("click", (e) => {
     launchCoffeeGame();
     blip(440, 0.06, "sine", 0.04);
     setTimeout(() => blip(550, 0.05, "sine", 0.03), 120);
-    return;
-  }
-  if (hit.type === "whiteboard") {
-    launchWhiteboardGame();
-    blip(660, 0.05, "triangle", 0.04);
-    setTimeout(() => blip(880, 0.04, "triangle", 0.03), 100);
-    return;
-  }
-  if (hit.type === "plant") {
-    launchPlantGame();
-    blip(550, 0.05, "sine", 0.04);
-    setTimeout(() => blip(660, 0.04, "sine", 0.03), 120);
-    setTimeout(() => blip(880, 0.04, "sine", 0.02), 240);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;

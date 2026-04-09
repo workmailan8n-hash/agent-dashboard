@@ -53,7 +53,7 @@ export const BUILTIN_POSITIONS = {
   fridge: { tx: 24, ty: 9 },
 
   // ═══ COUCHES (5 columns, 4 rows, staggered) ═══
-  couch_0: { tx: 1.5, ty: 32 },
+  couch_0: { tx: 14, ty: 32 },
   couch_1: { tx: 6, ty: 22.5 },
   couch_2: { tx: 22, ty: 22.5 },
   couch_3: { tx: 10, ty: 22.5 },
@@ -77,19 +77,20 @@ export const BUILTIN_POSITIONS = {
   // ═══ ACTIVITY ZONE ═══
   server_rack: { tx: 1, ty: 46 },
   printer_3d: { tx: 3, ty: 46 },
-  arcade: { tx: 5, ty: 46 },
+  arcade: { tx: 3, ty: 46 },
   rowing_machine: { tx: 7, ty: 46.5 },
   tv: { tx: 11.5, ty: 47 },
   gaming_sofa: { tx: 11.5, ty: 51 },
   foosball: { tx: 8, ty: 53 },
-  pingpong: { tx: 23.5, ty: 51.5 },
-  jukebox: { tx: 30, ty: 53 },
-  pinball: { tx: 21.5, ty: 52 },
+  pingpong: { tx: 18, ty: 51.5 },
+  jukebox: { tx: 28, ty: 51.5 },
+  pinball: { tx: 5, ty: 52 },
   trophy_cabinet: { tx: 24.5, ty: 46 },
   bookshelf: { tx: 26.5, ty: 46 },
-  slot_machine: { tx: 1, ty: 50 },
+  slot_machine: { tx: 8, ty: 52 },
   water_cooler: { tx: 23, ty: 8 },
-  disco_ball: { tx: 13, ty: 46 },
+  disco_ball: { tx: 15, ty: 45 },
+  record_player: { tx: 3, ty: 57 },
 
   // ═══ GYM & SPORTS ═══
   gym: { tx: 2, ty: 56 },
@@ -97,8 +98,8 @@ export const BUILTIN_POSITIONS = {
   crystal_ball: { tx: 19.5, ty: 57 },
 
   // ═══ BOTTOM ZONE ═══
-  dj_console: { tx: 27, ty: 59.5 },
-  rubber_duck: { tx: 1, ty: 60 },
+  dj_console: { tx: 7, ty: 57 },
+  rubber_duck: { tx: 16, ty: 62.5 },
   nap_pod: { tx: 27, ty: 62 },
   conf_table: { tx: 12, ty: 62 },
   espresso_bar: { tx: 20, ty: 63 },
