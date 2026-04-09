@@ -9642,9 +9642,9 @@ class AgentState {
     if (newMood !== this._lastMoodEmoji) {
       this._lastMoodEmoji = newMood;
       this._moodEmoji = newMood;
-      this._moodEmojiTimer = 100; // show for ~100 frames after change
+      this._moodEmojiTimer = 10; // show for 10 seconds after change
     } else if (this._moodEmojiTimer > 0) {
-      this._moodEmojiTimer -= dt * 60; // dt is seconds → frames
+      this._moodEmojiTimer -= dt;
       if (this._moodEmojiTimer <= 0) this._moodEmoji = "";
     }
     // ── Speech bubble timer ───────────────────────────────────────
