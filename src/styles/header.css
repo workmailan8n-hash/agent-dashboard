@@ -3,33 +3,129 @@ header {
   max-width: 1200px;
   display: flex;
   align-items: center;
-  gap: var(--gap-md);
   padding-bottom: 10px;
   border-bottom: 2px solid var(--color-border-alt);
 }
-.logo { font-size: var(--font-size-xl); color: var(--color-accent); text-shadow: 0 0 14px #7aa2f755; letter-spacing: 1px; }
-.blink { animation: blink 1s step-end infinite; }
-@keyframes blink { 50% { opacity: 0; } }
-#agent-count { color: var(--color-text-dim); font-size: var(--font-size-md); }
+.hz {
+  display: flex;
+  align-items: center;
+  gap: var(--gap-sm);
+  padding: 0 12px;
+  border-left: 1px solid var(--color-border-alt);
+  height: 28px;
+}
+.hz-logo {
+  border-left: none;
+  padding-left: 0;
+}
+.hz-info {
+  margin-left: auto;
+}
+
+.logo {
+  font-size: var(--font-size-xl);
+  color: var(--color-accent);
+  text-shadow: 0 0 14px #7aa2f755;
+  letter-spacing: 1px;
+}
+.blink {
+  animation: blink 1s step-end infinite;
+}
+@keyframes blink {
+  50% {
+    opacity: 0;
+  }
+}
+
+.agent-count {
+  color: var(--color-text-muted);
+  font-size: var(--font-size-md);
+}
+
+#btn-leaderboard,
 #btn-settings {
   background: #2a2848;
   color: #c8d3f5;
   border: 1px solid #3a3860;
   padding: 4px 10px;
-  font-family: 'Press Start 2P', monospace;
+  font-family: "Press Start 2P", monospace;
   font-size: 7px;
   cursor: pointer;
   border-radius: 4px;
 }
+#btn-leaderboard:hover,
 #btn-settings:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }
-#public-url {
-  margin-left: auto;
-  font-size: var(--font-size-sm); color: var(--color-success); text-decoration: none;
-  border: 1px solid #9ece6a44; padding: 3px 8px;
-  transition: border-color .3s, color .3s;
+
+/* Tunnel LED status */
+.tunnel-status {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  font-family: "Press Start 2P", monospace;
+  font-size: var(--font-size-sm);
+  color: var(--color-text-muted);
+  cursor: pointer;
+  padding: 3px 8px;
+  border: 1px solid var(--color-border-alt);
+  border-radius: 3px;
+  transition:
+    border-color 0.2s,
+    color 0.2s;
 }
-#public-url:hover { border-color: var(--color-success); color: #b8f080; }
-#public-url.loading { color: var(--color-text-dimmer); border-color: var(--color-border-alt); }
+.tunnel-status:hover {
+  border-color: var(--color-accent);
+  color: var(--color-text);
+}
+.tunnel-status .led {
+  width: 7px;
+  height: 7px;
+  border-radius: 50%;
+  background: var(--color-success);
+  box-shadow: 0 0 6px var(--color-success);
+}
+.tunnel-status .led.off {
+  background: #553344;
+  box-shadow: none;
+  animation: none;
+}
+.tunnel-status.copied .tunnel-label {
+  color: var(--color-success);
+}
+
+/* Canvas toolbar (above canvas) */
+.canvas-toolbar {
+  width: 100%;
+  max-width: 1200px;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  padding: 6px 0;
+}
+.canvas-toolbar.hidden {
+  display: none;
+}
+.canvas-toolbar button {
+  background: #1f1d36;
+  color: #a9b3d6;
+  border: 1px solid #2a2c4e;
+  padding: 3px 8px;
+  font-family: "Press Start 2P", monospace;
+  font-size: 6px;
+  cursor: pointer;
+  border-radius: 3px;
+  margin: 0;
+}
+.canvas-toolbar button:hover {
+  border-color: var(--color-accent);
+  color: var(--color-accent);
+}
+
+/* Legacy #public-url kept hidden but styled in case something toggles it */
+#public-url {
+  font-size: var(--font-size-sm);
+  color: var(--color-success);
+  text-decoration: none;
+}

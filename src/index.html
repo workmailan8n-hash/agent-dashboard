@@ -42,17 +42,30 @@
 </div>
 
 <header>
-  <span class="logo">▶ AGENT OFFICE <span class="blink">_</span></span>
-  <div class="view-tabs">
-    <button class="tab-btn active" id="tab-office" onclick="switchTab('office')">🖥 OFFICE</button>
-    <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">📋 TASKS</button>
+  <div class="hz hz-logo">
+    <span class="logo">▶ AGENT OFFICE <span class="blink">_</span></span>
   </div>
-  <span id="agent-count">0 agents</span>
-  <button id="btn-leaderboard">🏆 TOP</button>
-  <button id="btn-settings">⚙ SET</button>
-  <a id="public-url" class="loading" href="#" target="_blank">⏳ tunnel...</a>
+  <div class="hz hz-views">
+    <div class="view-tabs">
+      <button class="tab-btn active" id="tab-office" onclick="switchTab('office')">🖥 OFFICE</button>
+      <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">📋 TASKS</button>
+    </div>
+  </div>
+  <div class="hz hz-utils">
+    <button id="btn-leaderboard">🏆 TOP</button>
+    <button id="btn-settings">⚙ SET</button>
+  </div>
+  <div class="hz hz-info">
+    <span id="agent-count" class="agent-count">0 agents</span>
+    <div class="tunnel-status" id="tunnel-status" title="tunnel offline">
+      <span class="led off"></span>
+      <span class="tunnel-label">tunnel</span>
+    </div>
+    <a id="public-url" class="loading" href="#" target="_blank" style="display:none"></a>
+  </div>
 </header>
 
+<div class="canvas-toolbar" id="canvas-toolbar"></div>
 <div class="canvas-wrapper">
   <canvas id="office" width="1400" height="600"></canvas>
 </div>

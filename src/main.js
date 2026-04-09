@@ -271,18 +271,13 @@ if (typeof window !== "undefined") {
 //  DEMO MODE — 3-minute scripted agent scenario
 // ════════════════════════════════════════════════════════════════
 (function initDemo() {
-  const tabs = document.querySelector("header");
-  if (!tabs) return;
+  const toolbar = document.getElementById("canvas-toolbar");
+  if (!toolbar) return;
 
   const demoBtn = document.createElement("button");
   demoBtn.id = "btn-demo";
   demoBtn.textContent = "🎬 DEMO";
-  demoBtn.style.cssText =
-    "background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:4px 10px;font-family:inherit;font-size:7px;cursor:pointer;margin-left:4px;border-radius:4px;";
-  // Insert after SET button
-  const setBtn = document.getElementById("btn-settings");
-  if (setBtn) setBtn.after(demoBtn);
-  else tabs.appendChild(demoBtn);
+  toolbar.appendChild(demoBtn);
 
   let demoRunning = false;
   let demoTimers = [];

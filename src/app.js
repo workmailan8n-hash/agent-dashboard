@@ -40,7 +40,8 @@ import { launchJukeboxGame } from "./minigames/jukebox.js";
 // ════════════════════════════════════════════════════════════════
 let CW = 1400;
 const T = 32; // tile size px
-const OX = 150; // canvas left margin
+const OX = 180; // canvas left margin (left panel width)
+const OX_RIGHT = 160; // right panel width
 const OY = 12; // canvas top margin
 let COLS = 35; // room width in tiles (mutable for wall editor)
 let ROWS = 14;
@@ -12327,6 +12328,9 @@ function drawLeftPanel(ctx, tick) {
   ctx.fillStyle = "#1a1c2e";
   ctx.fillRect(W, 0, 3, H);
 
+  // Accent stripe
+  ctx.fillStyle = "#7aa2f7";
+  ctx.fillRect(4, 8, 2, 20);
   // Title
   ctx.fillStyle = "#7aa2f7";
   ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
@@ -12403,9 +12407,10 @@ function drawLeftPanel(ctx, tick) {
   ctx.fillText(`${working}/${total} working`, W / 2, H - 10);
 }
 
+const _activityHistory = [];
 function drawRightPanel(ctx, tick) {
-  const panelX = CW - OX + 3;
-  const W = OX - 6,
+  const panelX = CW - OX_RIGHT + 3;
+  const W = OX_RIGHT - 6,
     H = CH;
 
   // Background
@@ -12515,21 +12520,31 @@ function drawRightPanel(ctx, tick) {
   ctx.font = "bold 13px monospace";
   ctx.fillText(gooseMood, panelX + 8, 318);
 
-  // Mini activity bar
+  // Mini activity spark-bar (8 samples ring buffer)
   ctx.fillStyle = "#2a2c4e";
   ctx.fillRect(panelX + 6, 338, W - 12, 1);
   ctx.fillStyle = "#a9b3d6";
   ctx.font = "bold 11px monospace";
   ctx.fillText("ACTIVITY", panelX + 8, 352);
-  if (agents.length > 0) {
-    const barW = W - 16;
-    const wFrac = working / agents.length;
+  if ((tick & 31) === 0) {
+    _activityHistory.push(working);
+    if (_activityHistory.length > 8) _activityHistory.shift();
+  }
+  const bars = 8;
+  const bw = 10;
+  const bgap = 3;
+  const bx0 = panelX + 8;
+  const by0 = 358;
+  const bhMax = 22;
+  const peak = Math.max(1, agents.length, ..._activityHistory);
+  for (let i = 0; i < bars; i++) {
+    const v = _activityHistory[i] ?? 0;
+    const bh = Math.max(1, Math.round((v / peak) * bhMax));
+    const bx = bx0 + i * (bw + bgap);
     ctx.fillStyle = "#1a2040";
-    ctx.fillRect(panelX + 8, 358, barW, 8);
-    ctx.fillStyle = "#9ece6a";
-    ctx.fillRect(panelX + 8, 358, barW * wFrac, 8);
-    ctx.fillStyle = "#ffffff20";
-    ctx.fillRect(panelX + 8, 358, barW, 3);
+    ctx.fillRect(bx, by0, bw, bhMax);
+    ctx.fillStyle = "#7aa2f7";
+    ctx.fillRect(bx, by0 + (bhMax - bh), bw, bh);
   }
 
   // Blinking indicator
@@ -14398,6 +14413,38 @@ function updateUI() {
 // ════════════════════════════════════════════════════════════════
 let myTasks = [];
 
+let _tunnelUrl = null;
+function updateTunnelStatus(url) {
+  const wrap = document.getElementById("tunnel-status");
+  if (!wrap) return;
+  const led = wrap.querySelector(".led");
+  _tunnelUrl = url || null;
+  if (url) {
+    led.classList.remove("off");
+    wrap.title = url;
+  } else {
+    led.classList.add("off");
+    wrap.title = "tunnel offline";
+  }
+}
+document.addEventListener("DOMContentLoaded", () => {
+  const wrap = document.getElementById("tunnel-status");
+  if (!wrap) return;
+  wrap.addEventListener("click", () => {
+    if (!_tunnelUrl) return;
+    navigator.clipboard.writeText(_tunnelUrl).then(() => {
+      wrap.classList.add("copied");
+      const lbl = wrap.querySelector(".tunnel-label");
+      const prev = lbl.textContent;
+      lbl.textContent = "copied!";
+      setTimeout(() => {
+        wrap.classList.remove("copied");
+        lbl.textContent = prev;
+      }, 1200);
+    });
+  });
+});
+
 function switchTab(tab) {
   const isOffice = tab === "office";
   document.getElementById("tab-office").classList.toggle("active", isOffice);
@@ -14405,6 +14452,8 @@ function switchTab(tab) {
   document.getElementById("office").style.display = isOffice ? "block" : "none";
   document.getElementById("grid").style.display = isOffice ? "grid" : "none";
   document.getElementById("task-view").classList.toggle("visible", !isOffice);
+  const _tb = document.getElementById("canvas-toolbar");
+  if (_tb) _tb.classList.toggle("hidden", !isOffice);
   if (!isOffice) renderTasks();
 }
 
@@ -14572,16 +14621,7 @@ function connect() {
       }
     }
     if (msg.type === "public_url") {
-      const el = document.getElementById("public-url");
-      if (msg.url) {
-        el.href = msg.url;
-        el.textContent = "🌐 " + msg.url.replace("https://", "");
-        el.className = "";
-      } else {
-        el.href = "#";
-        el.textContent = "🔒 local";
-        el.className = "loading";
-      }
+      updateTunnelStatus(msg.url);
     }
   };
   ws.onclose = () => {
@@ -15372,7 +15412,7 @@ function applyWallPositions() {
   if (saved.wall_zone !== undefined) ACT_ZONE_Y = Math.round(saved.wall_zone);
   if (saved.wall_right !== undefined) {
     COLS = Math.round(saved.wall_right);
-    CW = OX + COLS * T + OX;
+    CW = OX + COLS * T + OX_RIGHT;
     const cv = document.getElementById("office");
     if (cv) cv.width = CW;
     bgBuf.width = CW;
@@ -15697,7 +15737,7 @@ canvas.addEventListener("mousemove", (e) => {
     // Live-resize canvas when dragging outer walls (no rebuild during drag)
     if (w.id === "wall_right") {
       COLS = Math.round(w.pos);
-      CW = OX + COLS * T + OX;
+      CW = OX + COLS * T + OX_RIGHT;
       canvas.width = CW;
       bgBuf.width = CW;
     }
@@ -15769,7 +15809,7 @@ document.addEventListener("mousemove", (e) => {
   }
   if (w.id === "wall_right") {
     COLS = Math.round(w.pos);
-    CW = OX + COLS * T + OX;
+    CW = OX + COLS * T + OX_RIGHT;
     canvas.width = CW;
     bgBuf.width = CW;
   }
@@ -15797,7 +15837,7 @@ document.addEventListener("mouseup", (e) => {
     if (w2.id === "wall_zone") ACT_ZONE_Y = Math.round(w2.pos);
     if (w2.id === "wall_right") {
       COLS = Math.round(w2.pos);
-      CW = OX + COLS * T + OX;
+      CW = OX + COLS * T + OX_RIGHT;
       canvas.width = CW;
       bgBuf.width = CW;
     }
@@ -15832,7 +15872,7 @@ canvas.addEventListener("mouseup", (e) => {
       if (w.id === "wall_zone") ACT_ZONE_Y = Math.round(w.pos);
       if (w.id === "wall_right") {
         COLS = Math.round(w.pos);
-        CW = OX + COLS * T + OX;
+        CW = OX + COLS * T + OX_RIGHT;
         canvas.width = CW;
         bgBuf.width = CW;
       }
@@ -17850,20 +17890,19 @@ function drawClickAnims(ctx, tick) {
   });
 }
 
-// Add admin button to header
+// Canvas toolbar buttons: EDIT + SIMS (DEMO added in main.js)
+const _toolbar = document.getElementById("canvas-toolbar");
 const adminBtn = document.createElement("button");
+adminBtn.id = "btn-edit";
 adminBtn.textContent = "✏️ EDIT";
-adminBtn.style.cssText =
-  "background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:4px 10px;font-family:inherit;font-size:7px;cursor:pointer;margin-left:8px;border-radius:4px;";
 adminBtn.onclick = toggleAdmin;
-document.querySelector("header .view-tabs").appendChild(adminBtn);
+if (_toolbar) _toolbar.appendChild(adminBtn);
 
 const simsBtn = document.createElement("button");
+simsBtn.id = "btn-sims";
 simsBtn.textContent = "🎮 SIMS";
-simsBtn.style.cssText =
-  "background:#2a2848;color:#c8d3f5;border:1px solid #3a3860;padding:4px 10px;font-family:inherit;font-size:7px;cursor:pointer;margin-left:4px;border-radius:4px;";
 simsBtn.onclick = toggleSimsMode;
-document.querySelector("header .view-tabs").appendChild(simsBtn);
+if (_toolbar) _toolbar.appendChild(simsBtn);
 
 // Admin info panel
 const adminPanel = document.createElement("div");
@@ -17909,7 +17948,7 @@ document.getElementById("admin-start-pos").onclick = () => {
     window._adminPos = Object.assign({}, BUILTIN_POSITIONS);
     // Reset walls to default sizes
     COLS = 35;
-    CW = OX + COLS * T + OX;
+    CW = OX + COLS * T + OX_RIGHT;
     canvas.width = CW;
     bgBuf.width = CW;
     generateLayout(Math.max(12, Object.keys(agentsData).length));
@@ -17971,6 +18010,7 @@ document.addEventListener("keydown", (e) => {
 //  EXPOSE GLOBALS for inline onclick handlers in HTML
 // ════════════════════════════════════════════════════════════════
 window.switchTab = switchTab;
+window.updateTunnelStatus = updateTunnelStatus;
 window.addTask = addTask;
 window.toggleTask = toggleTask;
 window.deleteTask = deleteTask;
