@@ -8,7 +8,9 @@ const GW = 500,
   GH = 300; // game canvas size
 const SCORE_TO_WIN = 5;
 const BALL_R = 6;
-const BASE_SPEED = 3.8;
+const BASE_SPEED = 4.2; // как у пинг-понга
+const MAX_SPEED = 14; // как у пинг-понга
+const HIT_ACCEL = 1.04; // мягче чем было (1.08)
 
 // Rod definitions: {side:'player'|'cpu', x, figures:[yOffset,...]}
 const RODS = [
@@ -307,7 +309,7 @@ export function launchFoosballGame() {
               // Hit!
               const side = rod.side === "player" ? 1 : -1;
               const spd = Math.hypot(gs.ball.vx, gs.ball.vy);
-              const newSpd = Math.min(spd * 1.08, 8);
+              const newSpd = Math.min(spd * HIT_ACCEL, MAX_SPEED);
               gs.ball.vx =
                 side * Math.abs(gs.ball.vx || 1) * (newSpd / spd) ||
                 side * newSpd;
@@ -323,19 +325,20 @@ export function launchFoosballGame() {
         }
       }
 
-      // Goal detection (left = cpu goal, right = player goal)
+      // Goal detection. Player keeper at x=70 (LEFT) → left goal принадлежит
+      // игроку, значит мяч в LEFT = CPU забил. И наоборот.
       if (gs.ball.x - BALL_R < 0) {
-        // Ball in left goal → player scores
-        gs.score.player++;
-        gs.flash = 1.2;
-        gs.flashSide = "player";
-        checkWin("player");
-      } else if (gs.ball.x + BALL_R > GW) {
-        // Ball in right goal → cpu scores
+        // Ball in player's (left) goal → CPU scores
         gs.score.cpu++;
         gs.flash = 1.2;
         gs.flashSide = "cpu";
         checkWin("cpu");
+      } else if (gs.ball.x + BALL_R > GW) {
+        // Ball in CPU's (right) goal → player scores
+        gs.score.player++;
+        gs.flash = 1.2;
+        gs.flashSide = "player";
+        checkWin("player");
       }
     }
 

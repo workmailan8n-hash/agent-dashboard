@@ -5128,14 +5128,16 @@ const FL_A = "#e4e0d8",
   FL_B = "#dcd8d0";
 const WL_TOP = "#2e2c48",
   WL_BASE = "#3a3860";
-const DESK_TOP = "#c4b488",
-  DESK_FRONT = "#a09060",
-  DESK_EDGE = "#8a7840";
-const CHAIR_C = "#363878",
-  CHAIR_SEAT = "#484a98";
-const COUCH_C = "#3a2868",
-  COUCH_SEAT = "#4e3888",
-  COUCH_HI = "#604ca0";
+// Modern office palette: white-laminate desks, dark mesh chairs,
+// slate-grey couches with subtle highlights.
+const DESK_TOP = "#e6e2d8", // off-white laminate
+  DESK_FRONT = "#b8b4ac", // light grey side
+  DESK_EDGE = "#7a7670"; // edge shadow
+const CHAIR_C = "#1f2128", // mesh dark grey
+  CHAIR_SEAT = "#3a3d48"; // seat cushion
+const COUCH_C = "#3e4350", // dark slate frame
+  COUCH_SEAT = "#6e7484", // mid slate fabric
+  COUCH_HI = "#8b91a1"; // light slate top
 // MON_DARK и SCREEN_C объявлены в начале файла
 
 let DESK_DEFS = [],
@@ -7203,33 +7205,64 @@ function buildBackground() {
     ctx.shadowColor = "#00000070";
     ctx.shadowBlur = 7;
     ctx.shadowOffsetY = 5;
+    // Modern white-laminate desk surface
     fillR(ctx, x, y, W, H, DESK_TOP);
     ctx.restore();
-    fillR(ctx, x, y, W, 3, "#d4c49a");
-    fillR(ctx, x, y + H, W, 7, DESK_FRONT);
-    fillR(ctx, x + W, y, 3, H + 7, "#7a6030");
+    fillR(ctx, x, y, W, 2, "#f4f0e6"); // top hi-light
+    fillR(ctx, x, y + H, W, 6, DESK_FRONT); // skirt
+    fillR(ctx, x, y + H + 6, W, 1, DESK_EDGE); // bottom shadow
+    fillR(ctx, x, y + H, 2, H * 0.9, "#c4c0b8"); // left leg
+    fillR(ctx, x + W - 2, y + H, 2, H * 0.9, "#c4c0b8"); // right leg
     ctx.strokeStyle = DESK_EDGE;
     ctx.lineWidth = 1;
     ctx.strokeRect(x + 0.5, y + 0.5, W - 1, H - 1);
-    fillR(ctx, x + W / 2 - 14, y + 3, 28, 20, MON_DARK);
-    fillR(ctx, x + W / 2 - 13, y + 4, 26, 18, "#0e0e1a");
-    fillR(ctx, x + W / 2 - 11, y + 6, 22, 14, SCREEN_C);
-    fillR(ctx, x + W / 2 - 3, y + H - 8, 6, 8, "#2a2a3c");
+
+    // Modern thin-bezel monitor (slimmer + arm stand)
+    const mw = 30,
+      mh = 18;
+    const mx = x + W / 2 - mw / 2,
+      my = y + 4;
+    fillR(ctx, mx, my, mw, mh, "#1a1c22"); // bezel
+    fillR(ctx, mx + 1, my + 1, mw - 2, mh - 2, "#0a0c12"); // inner bezel
+    fillR(ctx, mx + 2, my + 2, mw - 4, mh - 4, SCREEN_C); // screen
+    // animated code-line glow on screen
     const gl = ["#7aa2f770", "#9ece6a50", "#bb9af760", "#f7768e40"];
     for (let li = 0; li < 4; li++)
-      fillR(ctx, x + W / 2 - 9, y + 8 + li * 3, 6 + (li % 3) * 5, 2, gl[li]);
-    fillR(ctx, x + W / 2 - 12, y + H - 10, 24, 7, "#1e1e30");
-    fillR(ctx, x + W / 2 - 11, y + H - 9, 22, 5, "#2a2a42");
-    fillR(ctx, x + W / 2 + 14, y + H - 9, 6, 7, "#2a2a3c");
-    const cx2 = x + W / 2 - 9,
-      cy2 = y + H + 9;
-    fillR(ctx, cx2, cy2, 18, 15, CHAIR_C);
-    fillR(ctx, cx2 + 2, cy2 + 2, 14, 11, CHAIR_SEAT);
-    fillR(ctx, cx2, cy2 - 9, 18, 9, CHAIR_C);
-    fillR(ctx, cx2 + 2, cy2 - 8, 14, 7, CHAIR_SEAT);
-    fillR(ctx, cx2 - 2, cy2 + 13, 4, 3, "#181828");
-    fillR(ctx, cx2 + 16, cy2 + 13, 4, 3, "#181828");
-    fillR(ctx, cx2 + 7, cy2 + 14, 4, 3, "#181828");
+      fillR(ctx, mx + 3, my + 3 + li * 3, 5 + (li % 3) * 5, 2, gl[li]);
+    // logo dot under screen
+    fillR(ctx, x + W / 2 - 1, my + mh - 2, 2, 1, "#5a5e6a");
+    // arm stand (single column going to base)
+    fillR(ctx, x + W / 2 - 1, my + mh, 2, 5, "#3a3d48");
+    fillR(ctx, x + W / 2 - 5, my + mh + 5, 10, 2, "#2a2d38"); // base
+
+    // Keyboard + mouse on desk
+    fillR(ctx, x + W / 2 - 14, y + H - 8, 22, 5, "#2a2d36");
+    fillR(ctx, x + W / 2 - 13, y + H - 7, 20, 3, "#3a3d48");
+    fillR(ctx, x + W / 2 + 10, y + H - 7, 5, 4, "#2a2d36"); // mouse
+
+    // Modern mesh office chair (oval base, 5-wheel star, mesh back)
+    const cx2 = x + W / 2 - 10,
+      cy2 = y + H + 10;
+    // Wheel-base star (5 small wheels)
+    fillR(ctx, cx2 + 9, cy2 + 16, 2, 2, "#181a20");
+    fillR(ctx, cx2 - 1, cy2 + 14, 3, 2, "#181a20");
+    fillR(ctx, cx2 + 18, cy2 + 14, 3, 2, "#181a20");
+    fillR(ctx, cx2 + 2, cy2 + 18, 3, 2, "#181a20");
+    fillR(ctx, cx2 + 15, cy2 + 18, 3, 2, "#181a20");
+    // gas-lift column
+    fillR(ctx, cx2 + 9, cy2 + 12, 2, 5, "#2a2d36");
+    // seat
+    fillR(ctx, cx2, cy2 + 4, 20, 8, CHAIR_C);
+    fillR(ctx, cx2 + 1, cy2 + 5, 18, 6, CHAIR_SEAT);
+    // mesh backrest (taller, narrower)
+    fillR(ctx, cx2 + 1, cy2 - 11, 18, 15, CHAIR_C);
+    fillR(ctx, cx2 + 3, cy2 - 9, 14, 11, "#2a2d36");
+    // mesh lines for texture
+    for (let mi = 0; mi < 4; mi++)
+      fillR(ctx, cx2 + 3, cy2 - 8 + mi * 3, 14, 1, CHAIR_C);
+    // armrests
+    fillR(ctx, cx2 - 1, cy2 + 2, 2, 6, "#181a20");
+    fillR(ctx, cx2 + 19, cy2 + 2, 2, 6, "#181a20");
   }
 
   // Couches
@@ -7243,26 +7276,51 @@ function buildBackground() {
     ctx.shadowColor = "#00000070";
     ctx.shadowBlur = 9;
     ctx.shadowOffsetY = 5;
+    // Modern slate-grey couch: thin armrests, fabric cushions, metal legs
     fillR(ctx, x, y, W, H + 10, COUCH_C);
     ctx.restore();
-    fillR(ctx, x, y, W, 10, COUCH_C);
-    fillR(ctx, x + 2, y + 1, W - 4, 8, "#4a3880");
-    fillR(ctx, x, y + 10, W, H, COUCH_SEAT);
-    fillR(ctx, x + 3, y + 13, W - 6, H - 6, COUCH_HI);
-    fillR(ctx, x, y + 10 + H, W, 6, "#281e50");
-    fillR(ctx, x + W, y, 3, H + 16, "#1e1640");
-    fillR(ctx, x, y, 9, H + 10, COUCH_C);
-    fillR(ctx, x + W - 9, y, 9, H + 10, COUCH_C);
+    // backrest (narrower, thinner profile)
+    fillR(ctx, x, y, W, 9, COUCH_C);
+    fillR(ctx, x + 2, y + 1, W - 4, 7, "#4e535f"); // backrest fabric
+    // seat cushions
+    fillR(ctx, x, y + 9, W, H, COUCH_SEAT);
+    fillR(ctx, x + 3, y + 11, W - 6, H - 4, COUCH_HI); // top cushion highlight
+    // bottom shadow strip
+    fillR(ctx, x, y + 9 + H, W, 4, "#2a2e38");
+    // thin armrests (narrower than before)
+    fillR(ctx, x, y, 5, H + 9, COUCH_C);
+    fillR(ctx, x + W - 5, y, 5, H + 9, COUCH_C);
+    fillR(ctx, x + 1, y + 2, 3, H + 5, "#52576a"); // arm hi-light left
+    fillR(ctx, x + W - 4, y + 2, 3, H + 5, "#52576a"); // arm hi-light right
+    // cushion seams between sections
     const sec = Math.max(1, Math.floor(w));
     for (let s = 1; s < sec; s++)
-      fillR(ctx, x + s * (W / sec) - 1, y + 10, 2, H, "#382860");
-    const tx2 = x + 10,
-      ty2 = y + 10 + H + 8;
-    fillR(ctx, tx2, ty2, W - 20, 16, "#5a4830");
-    fillR(ctx, tx2 + 2, ty2 + 2, W - 24, 12, "#6a5840");
-    fillR(ctx, tx2, ty2 + 16, W - 20, 4, "#3a2818");
-    fillR(ctx, tx2 + 4, ty2 + 4, 6, 6, "#b8a020");
-    fillR(ctx, tx2 + 5, ty2 + 3, 4, 2, "#f0f0c0");
+      fillR(ctx, x + s * (W / sec) - 1, y + 9, 2, H - 2, "#363a44");
+    // accent throw pillows (teal + mustard)
+    if (sec >= 2) {
+      fillR(ctx, x + 8, y + 10, 8, 8, "#3d8f9a");
+      fillR(ctx, x + 9, y + 11, 6, 6, "#4ba6b3");
+      fillR(ctx, x + W - 16, y + 10, 8, 8, "#c8a040");
+      fillR(ctx, x + W - 15, y + 11, 6, 6, "#dab455");
+    }
+    // thin metal legs
+    fillR(ctx, x + 4, y + 9 + H + 4, 2, 4, "#2a2d36");
+    fillR(ctx, x + W - 6, y + 9 + H + 4, 2, 4, "#2a2d36");
+    if (sec >= 3) {
+      fillR(ctx, x + W / 2 - 1, y + 9 + H + 4, 2, 4, "#2a2d36");
+    }
+
+    // Modern coffee table in front of couch — light wood + thin metal frame
+    const tx2 = x + 12,
+      ty2 = y + 9 + H + 10;
+    fillR(ctx, tx2, ty2, W - 24, 12, "#a8957a"); // table top (wood)
+    fillR(ctx, tx2 + 2, ty2 + 1, W - 28, 4, "#c0a888"); // top hi-light
+    fillR(ctx, tx2, ty2 + 12, W - 24, 2, "#5a4830"); // edge shadow
+    fillR(ctx, tx2 + 2, ty2 + 14, 2, 4, "#2a2d36"); // legs
+    fillR(ctx, tx2 + W - 28, ty2 + 14, 2, 4, "#2a2d36");
+    // small accent on table (coffee cup)
+    fillR(ctx, tx2 + 6, ty2 + 4, 4, 4, "#e8e2d6");
+    fillR(ctx, tx2 + 7, ty2 + 5, 2, 2, "#5a4030");
   }
 
   // Plants — draw at positions defined in IDLE_SPOTS (type:'plant')
