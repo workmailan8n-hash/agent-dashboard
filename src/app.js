@@ -8517,31 +8517,7 @@ function buildBackground() {
 
   // ════ Activity zone ═══════════════════════════════════════════
   if (ACT_ZONE_Y > 0) {
-    // Zone divider wall (lounge → activity) with door opening in center
-    const [zx, zy] = ts(1, ACT_ZONE_Y);
-    const zoneW = (COLS - 2) * T;
-    const doorStart = Math.floor(zoneW * 0.35),
-      doorEnd = Math.floor(zoneW * 0.65);
-    // Left wall segment (thin floor divider)
-    fillR(ctx, zx, zy + Math.floor(T / 2) - 2, doorStart, 5, "#252344");
-    fillR(ctx, zx, zy + Math.floor(T / 2) - 2, doorStart, 2, "#3a3860");
-    // Right wall segment (thin floor divider)
-    fillR(
-      ctx,
-      zx + doorEnd,
-      zy + Math.floor(T / 2) - 2,
-      zoneW - doorEnd,
-      5,
-      "#252344",
-    );
-    fillR(
-      ctx,
-      zx + doorEnd,
-      zy + Math.floor(T / 2) - 2,
-      zoneW - doorEnd,
-      2,
-      "#3a3860",
-    );
+    // Zone divider removed — entertainment zone flows directly from lounge.
 
     // ── GYM (left side) ──────────────────────────────────────────
     const [_gymTx, _gymTy] = getAdminPos("gym", 1, ACT_ZONE_Y + 0.5);

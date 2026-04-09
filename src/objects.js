@@ -691,6 +691,12 @@ export function drawHammock(ctx, x, y, tick) {
 
 export function drawJukebox(ctx, x, y, tick) {
   const t = tick * 0.025;
+  // Scale up 1.7x — was too small next to pingpong table
+  ctx.save();
+  ctx.translate(x, y);
+  ctx.scale(1.7, 1.7);
+  x = 0;
+  y = 0;
   const jW = 22,
     jH = 48;
   // Cabinet base
@@ -763,6 +769,7 @@ export function drawJukebox(ctx, x, y, tick) {
   ctx.fillText("JUKE", x + jW / 2, y + 15);
   ctx.textAlign = "left";
   ctx.restore();
+  ctx.restore(); // scale
 }
 
 export function drawCrystalBall(ctx, x, y, tick) {
