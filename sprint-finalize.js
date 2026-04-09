@@ -66,7 +66,16 @@ async function openPullRequest(branch, tag) {
 }
 
 (async () => {
+  let stashed = false;
   try {
+    // Если в рабочем дереве остались несохранённые правки (например, ручная WIP
+    // на master), checkout упадёт. Стэшим под меткой, потом восстановим.
+    const dirty = git("status --porcelain");
+    if (dirty) {
+      git(`stash push -u -m "sprint-finalize autostash ${fmtTs()}"`);
+      stashed = true;
+    }
+
     // Ensure we are on staging and have the latest agent commit.
     git(`checkout ${STAGING}`);
 
@@ -98,5 +107,13 @@ async function openPullRequest(branch, tag) {
   } catch (e) {
     console.log(JSON.stringify({ ok: false, error: e.message || String(e) }));
     process.exit(1);
+  } finally {
+    // Возвращаем стэш WIP назад, что бы ни случилось.
+    if (stashed) {
+      try {
+        git("checkout master");
+        git("stash pop");
+      } catch {}
+    }
   }
 })();

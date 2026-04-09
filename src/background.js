@@ -54,9 +54,16 @@ function fillR(ctx, x, y, w, h, c) {
 // ── Animated entrance door (drawn over static background each frame) ──────────
 function drawEntranceDoor(ctx) {
   const edx = OX + (COLS - 1) * T;
-  const edy =
-    OY +
-    (KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS * 0.38)) * T;
+  // Door centred on the lounge rug (rug top = COUCH_DEFS[0].ty - 0.5, height 2 tiles,
+  // so rug centre = couchTy + 0.5). Door height = 3 tiles, centre at edyRow + 1.5.
+  // Therefore edyRow = couchTy - 1 places the door centre on the rug centre.
+  const couchTy =
+    COUCH_DEFS.length > 0
+      ? COUCH_DEFS[0].ty
+      : KITCHEN_DOOR_ROW > 0
+        ? KITCHEN_DOOR_ROW
+        : Math.floor(ROWS * 0.38);
+  const edy = OY + (couchTy - 1) * T;
   const doorH = T * 3;
   const o = ease.inOut(clamp(doorAnim.open, 0, 1)); // 0=closed, 1=fully open
 
@@ -179,11 +186,16 @@ function buildBackground() {
   }
 
   // ── Main entrance door (right wall) — agents spawn here ──────
+  // Centred on the lounge rug (see drawEntranceDoor for the math).
   {
     const edx = OX + (COLS - 1) * T;
-    const edy =
-      OY +
-      (KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS * 0.38)) * T;
+    const couchTy =
+      COUCH_DEFS.length > 0
+        ? COUCH_DEFS[0].ty
+        : KITCHEN_DOOR_ROW > 0
+          ? KITCHEN_DOOR_ROW
+          : Math.floor(ROWS * 0.38);
+    const edy = OY + (couchTy - 1) * T;
     // Door opening (3 tiles tall)
     fillR(ctx, edx, edy, T, T * 3, "#3a3050");
     // Door frame
@@ -202,8 +214,10 @@ function buildBackground() {
   }
 
   // Windows — static frames only (sky color drawn dynamically)
-  for (let i = 0; i < 4; i++) {
-    const wx = OX + (3 + i * 6) * T + 4,
+  // Keep in sync with WINDOW_TX in app.js (drawDynamicWindows + static frames)
+  const _WINDOW_TX = [1, 33];
+  for (let i = 0; i < _WINDOW_TX.length; i++) {
+    const wx = OX + _WINDOW_TX[i] * T + 4,
       wy = OY + 5;
     fillR(ctx, wx, wy, T - 8, T - 10, "#0a0a14"); // dark placeholder
     ctx.strokeStyle = "#3a3860";

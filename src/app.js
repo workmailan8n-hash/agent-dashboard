@@ -6597,9 +6597,9 @@ function drawDynamicWindows(ctx) {
   };
   const sky = skies[tod.state] || skies.day;
 
-  // Window x-positions chosen to avoid the central AGENT OFFICE nameplate
-  // (nameplate spans tx ~12..22; windows sit at tx 2, 8, 24, 30).
-  const WINDOW_TX = [2, 8, 24, 30];
+  // Window positions — keep in sync with background.js (_WINDOW_TX) and the
+  // static-frames loop below. 2 wide windows at the far left and far right.
+  const WINDOW_TX = [1, 33];
   for (let i = 0; i < WINDOW_TX.length; i++) {
     // Fill EXACTLY the same rect that buildBackground uses for the dark
     // placeholder: (wx, wy, T-8, T-10). Frame/cross lines are redrawn on
@@ -6980,12 +6980,20 @@ function fillR(ctx, x, y, w, h, c) {
   ctx.fillRect(x | 0, y | 0, w | 0, h | 0);
 }
 
+// Entrance door lives on the right wall, vertically centred on the lounge rug.
+// Single source of truth used by draw + spawn + creatures.
+function getEntranceDoorRow() {
+  if (typeof COUCH_DEFS !== "undefined" && COUCH_DEFS.length > 0) {
+    return COUCH_DEFS[0].ty - 1;
+  }
+  return KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS * 0.38);
+}
+
 // ── Animated entrance door (drawn over static background each frame) ──────────
 function drawEntranceDoor(ctx) {
   const edx = OX + (COLS - 1) * T;
-  const edy =
-    OY +
-    (KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS * 0.38)) * T;
+  // Centre on lounge rug (see getEntranceDoorRow).
+  const edy = OY + getEntranceDoorRow() * T;
   const doorH = T * 3;
   const o = ease.inOut(clamp(doorAnim.open, 0, 1)); // 0=closed, 1=fully open
 
@@ -7108,11 +7116,10 @@ function buildBackground() {
   }
 
   // ── Main entrance door (right wall) — agents spawn here ──────
+  // Centred on lounge rug via getEntranceDoorRow().
   {
     const edx = OX + (COLS - 1) * T;
-    const edy =
-      OY +
-      (KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW : Math.floor(ROWS * 0.38)) * T;
+    const edy = OY + getEntranceDoorRow() * T;
     // Door opening (3 tiles tall)
     fillR(ctx, edx, edy, T, T * 3, "#3a3050");
     // Door frame
@@ -7131,8 +7138,8 @@ function buildBackground() {
   }
 
   // Windows — static frames only (sky color drawn dynamically)
-  // Keep in sync with WINDOW_TX in drawDynamicWindows()
-  const _WINDOW_TX = [2, 8, 24, 30];
+  // Keep in sync with WINDOW_TX in drawDynamicWindows() and background.js
+  const _WINDOW_TX = [1, 33];
   for (let i = 0; i < _WINDOW_TX.length; i++) {
     const wx = OX + _WINDOW_TX[i] * T + 4,
       wy = OY + 5;
@@ -9015,9 +9022,13 @@ function drawDynamicEffects(ctx, tick) {
   for (const [id, sp] of Object.entries(agentStates)) {
     if (!sp.arrived || !sp.isWorking || sp.state === "walking") continue;
     if (powerOutageActive && _powerFlickerPhase === 1) continue; // monitors dark during outage
-    const def = DESK_DEFS[Math.min(sp.slotIdx, DESK_DEFS.length - 1)];
+    const idx = Math.min(sp.slotIdx, DESK_DEFS.length - 1);
+    const def = DESK_DEFS[idx];
     if (!def) continue;
-    const [dx, dy] = ts(def.tx, def.ty);
+    // Учитываем admin overrides — иначе анимация экрана рисуется на исходной
+    // позиции стола, а не на той, куда его перенёс админ.
+    const [_aTx, _aTy] = getAdminPos("desk_" + idx, def.tx, def.ty);
+    const [dx, dy] = ts(_aTx, _aTy);
     const W = T * 2;
     const sx = dx + W / 2 - 9,
       sy = dy + 8;
@@ -12658,17 +12669,25 @@ function loop(now) {
   for (const [id, sp] of Object.entries(agentStates))
     sp.update(agentsData[id], deskSet, dt, globalTick);
 
-  // ── Agent separation (soft collision) ──────────────────────────
+  // ── Agent separation (soft collision + head-on side-step) ─────
+  // Track per-frame velocity so we can detect head-on approach.
   {
     const list = Object.values(agentStates);
-    const MIN_WALK = 1.2; // distance when both walking
-    const MIN_STAND = 0.6; // distance when one is standing (tighter is ok)
-    const STRENGTH = 0.6;
+    for (const sp of list) {
+      if (sp._prevTx === undefined) {
+        sp._prevTx = sp.tx;
+        sp._prevTy = sp.ty;
+      }
+      sp._vx = sp.tx - sp._prevTx;
+      sp._vy = sp.ty - sp._prevTy;
+    }
+    const MIN_WALK = 1.25;
+    const MIN_STAND = 0.65;
+    const STRENGTH = 0.9; // stronger push to prevent overlap
     for (let i = 0; i < list.length; i++) {
       for (let j = i + 1; j < list.length; j++) {
         const a = list[i],
           b = list[j];
-        // Skip if both arrived at their spots (they're supposed to be near each other)
         if (a.arrived && b.arrived) continue;
         const dx = a.tx - b.tx,
           dy = a.ty - b.ty;
@@ -12676,25 +12695,54 @@ function loop(now) {
         const MIN = !a.arrived && !b.arrived ? MIN_WALK : MIN_STAND;
         if (d2 > MIN * MIN || d2 < 0.0001) continue;
         const d = Math.sqrt(d2);
-        const overlap = ((MIN - d) / d) * STRENGTH;
-        const nx = dx * overlap,
+        const overlap = (MIN - d) / d;
+        let nx = dx * overlap,
           ny = dy * overlap;
+
+        // Head-on detection: both walking, velocities opposing, closing fast.
+        // Rotate push vector 90° clockwise so they side-step right (pass on the
+        // right, like driving). Prevents the back-and-forth deadlock dance.
         if (!a.arrived && !b.arrived) {
-          // both walking — push equally apart
-          a.tx += nx * 0.5;
-          a.ty += ny * 0.5;
-          b.tx -= nx * 0.5;
-          b.ty -= ny * 0.5;
+          const relVx = a._vx - b._vx,
+            relVy = a._vy - b._vy;
+          // Closing = relative velocity points opposite to dx,dy (toward each other)
+          const closing = relVx * dx + relVy * dy < 0;
+          const relSpeed2 = relVx * relVx + relVy * relVy;
+          if (closing && relSpeed2 > 0.00002) {
+            // Rotate (nx,ny) by -90° → (ny, -nx) gives right-hand sidestep.
+            // Mix 70% sidestep + 30% push-apart for smooth overtake.
+            const sx = ny,
+              sy = -nx;
+            nx = sx * 0.7 + nx * 0.3;
+            ny = sy * 0.7 + ny * 0.3;
+          }
+        }
+
+        nx *= STRENGTH;
+        ny *= STRENGTH;
+        if (!a.arrived && !b.arrived) {
+          // Разрываем симметрию: только yielder (по id) реально сдвигается.
+          // Это окончательно убивает back-and-forth — нет больше "оба толкают
+          // друг друга и waypoint возвращает их обратно".
+          if (String(a.id) < String(b.id)) {
+            a.tx += nx;
+            a.ty += ny;
+          } else {
+            b.tx -= nx;
+            b.ty -= ny;
+          }
         } else if (!a.arrived) {
-          // b is seated — push a away fully
           a.tx += nx;
           a.ty += ny;
         } else if (!b.arrived) {
-          // a is seated — push b away fully
           b.tx -= nx;
           b.ty -= ny;
         }
       }
+    }
+    for (const sp of list) {
+      sp._prevTx = sp.tx;
+      sp._prevTy = sp.ty;
     }
   }
 
@@ -13342,16 +13390,8 @@ function loop(now) {
       drawRecordPlayer,
     );
   }
-  // Vending machine (break room snacks)
-  {
-    const [_vmTx, _vmTy] = getAdminPos(
-      "vending_machine",
-      PER_ROW * STEP_X + 2 + 1.2,
-      12.5,
-    );
-    const [vmx, vmy] = ts(_vmTx, _vmTy);
-    drawVendingMachine(ctx, vmx - T / 2, vmy - 6, globalTick);
-  }
+  // (removed duplicate "vending_machine" draw — the real vending is drawn
+  //  via the "vending" id at BUILTIN_POSITIONS.vending on the right wall)
   // Popcorn Machine (activity zone snack corner)
   if (ACT_ZONE_Y > 0) {
     const [_pmTx, _pmTy] = getAdminPos("popcorn_machine", 17, ACT_ZONE_Y + 17);

@@ -14,26 +14,52 @@ if (!TG_TOKEN || !TG_CHAT) {
   process.exit(1);
 }
 
-const task = process.argv[2] || "Спринт завершено (деталі у last-sprint.log)";
+// argv[2] — sentinel: --default (читать last-sprint.log), --finalize-failed,
+// --finalize-error, --pipeline (короткий ping), либо произвольный текст.
+// Cyrillic через cmd.exe argv бьётся, поэтому НЕ передаём украинский из bat.
+const mode = process.argv[2] || "--default";
 const tag = process.argv[3] || "";
 const branch = process.argv[4] || "";
 const prNumber = process.argv[5] || "";
 const prUrl = process.argv[6] || "";
 
-// Fallback: extract task list from last-sprint.log if argv[2] is the default.
-let taskText = task;
-if (taskText.startsWith("Спринт завершено")) {
+function extractTasksFromLog() {
   try {
     const logText = fs.readFileSync(
       path.join(__dirname, "last-sprint.log"),
       "utf8",
     );
+    // Файл — JSON-вывод от `claude --output-format json`. Нужен .result.
+    let body = logText;
+    try {
+      const j = JSON.parse(logText);
+      if (j && typeof j.result === "string") body = j.result;
+    } catch {}
     const tasks = [];
-    const re = /\*\*Task \d+\s*[—–-]\s*(.+?)\*\*/g;
+    const re = /\*\*Task\s*\d+\s*[—–\-:]\s*(.+?)\*\*/g;
     let m;
-    while ((m = re.exec(logText)) !== null) tasks.push(m[1].trim());
-    if (tasks.length > 0) taskText = tasks.join("\n✅ ");
-  } catch {}
+    while ((m = re.exec(body)) !== null) tasks.push(m[1].trim());
+    return tasks;
+  } catch {
+    return [];
+  }
+}
+
+let taskText;
+if (mode === "--finalize-failed") {
+  taskText = "Спринт завершено (помилка фіналізації, див. err log)";
+} else if (mode === "--finalize-error") {
+  taskText = "Спринт завершено (помилка відкриття PR, див. err log)";
+} else if (mode === "--pipeline") {
+  taskText = `pipeline completed (${tag || ""})`;
+} else if (mode === "--default") {
+  const tasks = extractTasksFromLog();
+  taskText =
+    tasks.length > 0
+      ? tasks.join("\n✅ ")
+      : "Спринт завершено (деталі у last-sprint.log)";
+} else {
+  taskText = mode;
 }
 
 // Pull preview URL from the sprint-preview store (populated by /railway-webhook).
@@ -64,11 +90,34 @@ try {
   if (lastCommit) lastCommit = `\n\n💾 Коміт: <code>${lastCommit}</code>`;
 } catch {}
 
+// Wait for Railway preview URL to appear in the store. Without a preview link
+// the report has no value, so we'd rather skip than spam TG with placeholders.
+async function waitForPreview(timeoutMs = 8 * 60 * 1000, intervalMs = 5000) {
+  const deadline = Date.now() + timeoutMs;
+  while (Date.now() < deadline) {
+    const url = getPreviewUrl();
+    if (url) return url;
+    await new Promise((r) => setTimeout(r, intervalMs));
+  }
+  return null;
+}
+
 (async () => {
-  const previewUrl = getPreviewUrl();
+  // For the main sprint report we REQUIRE a preview link. Poll until Railway
+  // webhook populates the store; if it never does — silently skip the report.
+  // Pipeline ping / fallback modes don't need a link and send immediately.
+  let previewUrl = getPreviewUrl();
+  if (mode === "--default" && !previewUrl) {
+    console.log("[sprint-tg] waiting for Railway preview URL...");
+    previewUrl = await waitForPreview();
+    if (!previewUrl) {
+      console.log("[sprint-tg] preview never arrived — skipping TG report");
+      process.exit(0);
+    }
+  }
   const previewLine = previewUrl
     ? `\n\n🔗 <a href="${previewUrl}">Переглянути прев'ю спринту</a>`
-    : "\n\n⏳ Прев'ю ще не готове (Railway піднімає середовище)";
+    : "";
   const prLine = prUrl ? `\n📋 <a href="${prUrl}">PR #${prNumber}</a>` : "";
   const tagLine = tag ? `\n🏷 <code>${tag}</code>` : "";
 

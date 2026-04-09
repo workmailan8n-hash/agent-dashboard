@@ -2,7 +2,7 @@
 //  CAT & GOOSE
 // ════════════════════════════════════════════════════════════════
 import { OX, OY, T } from "./constants.js";
-import { COLS, ROWS, KITCHEN_DOOR_ROW } from "./layout.js";
+import { COLS, ROWS, KITCHEN_DOOR_ROW, COUCH_DEFS } from "./layout.js";
 import { clamp } from "./math.js";
 import { PS } from "./particles.js";
 import { DESK_DEFS, IDLE_SPOTS, CAT_BOWLS } from "./layout.js";
@@ -2412,7 +2412,11 @@ class CleaningCrew {
   update(dt, tick) {
     const entryTx = COLS - 0.5;
     const entryTy =
-      KITCHEN_DOOR_ROW > 0 ? KITCHEN_DOOR_ROW + 1.5 : Math.floor(ROWS * 0.38);
+      COUCH_DEFS.length > 0
+        ? COUCH_DEFS[0].ty + 0.5
+        : KITCHEN_DOOR_ROW > 0
+          ? KITCHEN_DOOR_ROW + 1.5
+          : Math.floor(ROWS * 0.38);
 
     if (this.state === "idle") {
       const now = new Date();

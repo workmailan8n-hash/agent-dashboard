@@ -29,13 +29,17 @@ export const BUILTIN_POSITIONS = {
   desk_19: { tx: 19.5, ty: 5 },
 
   // ═══ WALL DECORATIONS ═══
+  // Top wall layout: 2 windows at the corners, everything else in between.
+  // WINDOW_TX = [1, 33]. Order L→R on row 0:
+  //   win(1), darts(6-8), corkboard(12-14.5), [nameplate 12-22],
+  //   kanban(22.5-25.5), whiteboard(27-30), clock(30.5-32), win(33).
   neon_sign: { tx: 28, ty: 44.5 },
-  corkboard: { tx: 12, ty: 0 },
-  whiteboard: { tx: 27.5, ty: 0 },
-  kanban: { tx: 22.5, ty: 0 },
   darts: { tx: 6, ty: 0 },
+  corkboard: { tx: 12, ty: 0 },
+  kanban: { tx: 22.5, ty: 0 },
+  whiteboard: { tx: 27, ty: 0 },
+  clock: { tx: 30.5, ty: 0 },
   telescope: { tx: 20, ty: 1.5 },
-  clock: { tx: 31.5, ty: 0 },
 
   // ═══ RIGHT PANEL ═══
   aquarium: { tx: 30.5, ty: 5.5 },
@@ -75,7 +79,7 @@ export const BUILTIN_POSITIONS = {
 
   // ═══ ACTIVITY ZONE ═══
   server_rack: { tx: 1, ty: 46 },
-  printer_3d: { tx: 5, ty: 48.5 },
+  printer_3d: { tx: 5, ty: 46 },
   arcade: { tx: 3, ty: 46 },
   rowing_machine: { tx: 7, ty: 46.5 },
   tv: { tx: 11.5, ty: 47 },
@@ -116,8 +120,18 @@ export function getAdminPos(id, defTx, defTy) {
   return p ? [p.tx, p.ty] : [defTx, defTy];
 }
 
+// Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
+// saved admin overrides in localStorage are wiped automatically.
+export const POS_SCHEMA = "6";
+
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {
+  // Wipe stale overrides from prior layouts.
+  if (localStorage.getItem("admin_positions_v") !== POS_SCHEMA) {
+    localStorage.removeItem("admin_positions");
+    localStorage.removeItem("admin_walls");
+    localStorage.setItem("admin_positions_v", POS_SCHEMA);
+  }
   const saved = JSON.parse(localStorage.getItem("admin_positions") || "{}");
   window._adminPos = Object.assign({}, BUILTIN_POSITIONS, saved);
 }

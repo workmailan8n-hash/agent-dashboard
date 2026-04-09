@@ -47,7 +47,7 @@ call node C:\AI\agent-dashboard\sprint-finalize.js > "C:\AI\agent-dashboard\spri
 if errorlevel 1 (
   echo [STEP] finalize-FAILED >> "%errlog%"
   echo [sprint.bat] sprint-finalize failed, sending TG report without preview link
-  call node C:\AI\agent-dashboard\sprint-tg.js "Спринт завершено (помилка фіналізації, див. err log)"
+  call node C:\AI\agent-dashboard\sprint-tg.js --finalize-failed
   goto :ping
 )
 
@@ -63,7 +63,7 @@ if "%FINAL%"=="SKIP" (
 if "%FINAL%"=="ERR" (
   echo [STEP] finalize-ERR >> "%errlog%"
   echo [sprint.bat] finalize returned error, sending fallback TG report
-  call node C:\AI\agent-dashboard\sprint-tg.js "Спринт завершено (помилка відкриття PR, див. err log)"
+  call node C:\AI\agent-dashboard\sprint-tg.js --finalize-error
   goto :ping
 )
 
@@ -74,17 +74,14 @@ for /f "tokens=1,2,3,4 delims=|" %%a in ("%FINAL%") do (
   set "PRURL=%%d"
 )
 
-REM Give Railway ~90s to spin up the PR preview env and fire the webhook.
-echo [STEP] wait-railway >> "%errlog%"
-echo [sprint.bat] waiting 90s for Railway preview env...
-timeout /t 90 /nobreak > nul
-
-echo [STEP] sprint-tg main >> "%errlog%"
-call node C:\AI\agent-dashboard\sprint-tg.js "Спринт завершено (деталі у last-sprint.log)" "%TAG%" "%BRANCH%" "%PRNUM%" "%PRURL%"
+REM sprint-tg.js --default polls .sprint-preview.json up to 8 min.
+REM If Railway preview never arrives, the script skips the TG report.
+echo [STEP] sprint-tg main (with preview wait) >> "%errlog%"
+call node C:\AI\agent-dashboard\sprint-tg.js --default "%TAG%" "%BRANCH%" "%PRNUM%" "%PRURL%"
 
 :ping
 echo [STEP] control-ping %date% %time% >> "%errlog%"
-call node C:\AI\agent-dashboard\sprint-tg.js "pipeline completed (%ts%)"
+call node C:\AI\agent-dashboard\sprint-tg.js --pipeline "%ts%"
 echo [STEP] done >> "%errlog%"
 endlocal
 exit /b 0
