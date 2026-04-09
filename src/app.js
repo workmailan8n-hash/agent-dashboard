@@ -35,6 +35,8 @@ import { launchWhiteboardGame } from "./minigames/whiteboard.js";
 import { launchPlantGame } from "./minigames/plant.js";
 import { launchJukeboxGame } from "./minigames/jukebox.js";
 import { launchCrystalBallGame } from "./minigames/crystal_ball.js";
+import { launchFoosballGame } from "./minigames/foosball.js";
+import { startGifExport } from "./gifExport.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -4057,9 +4059,10 @@ function drawDustMotes(ctx, tick) {
   if (tod.state === "night") return; // no dust at night
   // Init once
   if (dustMotes.length === 0) {
-    for (let w = 0; w < 4; w++) {
+    const _WTX = [1, 33];
+    for (let w = 0; w < _WTX.length; w++) {
       for (let j = 0; j < 3; j++) {
-        const wx = OX + (3 + w * 6) * T + 4;
+        const wx = OX + _WTX[w] * T + 4;
         dustMotes.push({
           x: wx + Math.random() * (T - 12),
           y: OY + 10 + Math.random() * T * 2,
@@ -4073,21 +4076,25 @@ function drawDustMotes(ctx, tick) {
       }
     }
   }
-  ctx.save();
   for (const m of dustMotes) {
     m.y += m.speed;
     m.x = m.wx + (T - 12) / 2 + Math.sin(tick * 0.02 + m.phase) * 6;
-    if (m.y > m.wy + m.wh) {
-      m.y = m.wy;
+    // Recycle inside the window frame (no more shaft bleed onto wall)
+    if (m.y > OY + 5 + T - 10) {
+      m.y = OY + 6;
       m.x = m.wx + Math.random() * (T - 12);
     }
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(m.wx, OY + 5, T - 8, T - 10);
+    ctx.clip();
     ctx.globalAlpha = 0.25 + Math.sin(tick * 0.03 + m.phase) * 0.15;
     ctx.fillStyle = "#ffe8a0";
     ctx.beginPath();
     ctx.arc(m.x, m.y, m.size, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   }
-  ctx.restore();
 }
 
 // ── Fireflies outside windows at night ──
@@ -4099,9 +4106,10 @@ function drawFireflies(ctx, tick) {
     return;
   }
   if (fireflies.length === 0) {
-    for (let w = 0; w < 4; w++) {
+    const _WTX = [1, 33];
+    for (let w = 0; w < _WTX.length; w++) {
       for (let j = 0; j < 2; j++) {
-        const wx = OX + (3 + w * 6) * T + 4;
+        const wx = OX + _WTX[w] * T + 4;
         fireflies.push({
           x: wx + Math.random() * (T - 12),
           y: OY + 6 + Math.random() * (T - 14),
@@ -4114,7 +4122,6 @@ function drawFireflies(ctx, tick) {
       }
     }
   }
-  ctx.save();
   for (const f of fireflies) {
     f.vx += (Math.random() - 0.5) * 0.05;
     f.vy += (Math.random() - 0.5) * 0.05;
@@ -4131,6 +4138,11 @@ function drawFireflies(ctx, tick) {
     f.trail.push({ x: f.x, y: f.y });
     if (f.trail.length > 4) f.trail.shift();
     const glow = 0.4 + Math.sin(tick * 0.08 + f.phase) * 0.3;
+    // Clip glow + trail to the inner window rect so nothing bleeds onto wall
+    ctx.save();
+    ctx.beginPath();
+    ctx.rect(f.wx, OY + 5, T - 8, T - 10);
+    ctx.clip();
     // Draw trail
     for (let t = 0; t < f.trail.length; t++) {
       ctx.globalAlpha = glow * (t / f.trail.length) * 0.4;
@@ -4151,8 +4163,8 @@ function drawFireflies(ctx, tick) {
     ctx.beginPath();
     ctx.arc(f.x, f.y, 5, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   }
-  ctx.restore();
 }
 
 // ── Dart animation — darts fly toward board when agent is at darts spot ──
@@ -6111,10 +6123,13 @@ function buildObstacleGrid() {
 
   // ── Kanban board (right entertainment zone) ─────
   {
-    const rXkb = PER_ROW * STEP_X + 2;
-    const [kbTx, kbTy] = getAdminPos("kanban", rXkb + 0.2, 2.5);
+    const [kbTx, kbTy] = getAdminPos(
+      "kanban",
+      BUILTIN_POSITIONS.kanban.tx,
+      BUILTIN_POSITIONS.kanban.ty,
+    );
     const kanbanCol = Math.floor(kbTx);
-    const kanbanW = Math.min(5, COLS - 1 - kanbanCol);
+    const kanbanW = 3;
     if (kanbanW >= 2) markRect(kanbanCol, Math.floor(kbTy), kanbanW, 4);
   }
 
@@ -6419,13 +6434,16 @@ function astar(fromTx, fromTy, toTx, toTy) {
 // Positioned on the right wall of the main office, ABOVE the kitchen partition
 function drawKanban(ctx) {
   if (!myTasks || KITCHEN_WALL_COL === 0) return;
-  // Position: right entertainment zone, below darts and above aquarium
-  const rX = PER_ROW * STEP_X + 2;
-  const [_kbTx, _kbTy] = getAdminPos("kanban", rX + 0.2, 2.5);
+  const [_kbTx, _kbTy] = getAdminPos(
+    "kanban",
+    BUILTIN_POSITIONS.kanban.tx,
+    BUILTIN_POSITIONS.kanban.ty,
+  );
   const bx = OX + _kbTx * T;
   const by = OY + _kbTy * T;
-  const bw = Math.min((COLS - 1 - _kbTx - 0.3) * T, T * 4.5);
-  const bh = T * 2.5;
+  // Sized same as whiteboard (w:3, h:1.6) so it fits under the top wall windows
+  const bw = T * 3;
+  const bh = T * 1.6;
 
   if (bw < T * 2) return; // not enough space
 
@@ -6597,9 +6615,11 @@ function drawDynamicWindows(ctx) {
   };
   const sky = skies[tod.state] || skies.day;
 
-  // Window x-positions chosen to avoid the central AGENT OFFICE nameplate
-  // (nameplate spans tx ~12..22; windows sit at tx 2, 8, 24, 30).
-  const WINDOW_TX = [2, 8, 24, 30];
+  // Window x-positions chosen to avoid top-wall objects:
+  // neon_sign(3-6), corkboard(10.5-13), nameplate(12-22),
+  // whiteboard(17-20), darts(24.5-26.5), clock(33.5).
+  // MUST match _WINDOW_TX in the static frame draw + background.js + drawChars.js
+  const WINDOW_TX = [1, 33];
   for (let i = 0; i < WINDOW_TX.length; i++) {
     // Fill EXACTLY the same rect that buildBackground uses for the dark
     // placeholder: (wx, wy, T-8, T-10). Frame/cross lines are redrawn on
@@ -7098,14 +7118,8 @@ function buildBackground() {
       }
     }
   }
-  // Kitchen partition door frame (fixed position col 23, rows 12-14)
-  {
-    const dx = OX + 23 * T,
-      dy = OY + 12 * T;
-    fillR(ctx, dx, dy, T, T * 4, "#2e2c50");
-    fillR(ctx, dx, dy, 4, T * 4, "#4a4880");
-    fillR(ctx, dx + T - 4, dy, 4, T * 4, "#4a4880");
-  }
+  // Kitchen partition door opening (col 23, rows 12-15) — left as a gap
+  // in the partition wall (no frame texture).
 
   // ── Main entrance door (right wall) — agents spawn here ──────
   {
@@ -7132,7 +7146,7 @@ function buildBackground() {
 
   // Windows — static frames only (sky color drawn dynamically)
   // Keep in sync with WINDOW_TX in drawDynamicWindows()
-  const _WINDOW_TX = [2, 8, 24, 30];
+  const _WINDOW_TX = [1, 33];
   for (let i = 0; i < _WINDOW_TX.length; i++) {
     const wx = OX + _WINDOW_TX[i] * T + 4,
       wy = OY + 5;
@@ -9048,8 +9062,9 @@ function drawDynamicEffects(ctx, tick) {
   }
 
   // Animated window light shafts — more visible
-  for (let i = 0; i < 4; i++) {
-    const wx = OX + (3 + i * 6) * T + 4,
+  const _WINDOW_TX_SHAFT = [1, 33];
+  for (let i = 0; i < _WINDOW_TX_SHAFT.length; i++) {
+    const wx = OX + _WINDOW_TX_SHAFT[i] * T + 4,
       wy = OY + 5;
     const alpha = 0.07 + Math.sin(tick * 0.012 + i * 2.1) * 0.025;
     ctx.save();
@@ -14939,12 +14954,14 @@ function buildAdminObjects() {
   adminObjects = [];
   const rX = PER_ROW * STEP_X + 2;
 
-  // Static furniture
+  // Static furniture — defaults read from BUILTIN_POSITIONS (single source of
+  // truth). Editor tx/ty here only matter if the id is missing from BUILTIN.
+  const BP = BUILTIN_POSITIONS;
   adminObjects.push({
     id: "clock",
     label: "🕐 Clock",
-    tx: COLS - 1.5,
-    ty: Math.max(4, Math.floor(ROWS * 0.2)),
+    tx: BP.clock.tx,
+    ty: BP.clock.ty,
     w: 1.5,
     h: 1.5,
   });
@@ -14959,8 +14976,8 @@ function buildAdminObjects() {
   adminObjects.push({
     id: "darts",
     label: "🎯 Darts",
-    tx: rX + 1.5,
-    ty: 0,
+    tx: BP.darts.tx,
+    ty: BP.darts.ty,
     w: 2,
     h: 1,
   });
@@ -15259,24 +15276,24 @@ function buildAdminObjects() {
   adminObjects.push({
     id: "corkboard",
     label: "📌 Corkboard",
-    tx: 10.5,
-    ty: 0,
+    tx: BP.corkboard.tx,
+    ty: BP.corkboard.ty,
     w: 2.5,
     h: 1.6,
   });
   adminObjects.push({
     id: "neon_sign",
     label: "💡 Neon Sign",
-    tx: 3,
-    ty: 0,
+    tx: BP.neon_sign.tx,
+    ty: BP.neon_sign.ty,
     w: 3,
     h: 1,
   });
   adminObjects.push({
     id: "whiteboard",
     label: "📝 Whiteboard",
-    tx: 17,
-    ty: 0,
+    tx: BP.whiteboard.tx,
+    ty: BP.whiteboard.ty,
     w: 3,
     h: 1.6,
   });
@@ -15339,15 +15356,14 @@ function buildAdminObjects() {
     h: 2,
   });
 
-  // Kanban board
-  const rXkb = PER_ROW * STEP_X + 2;
+  // Kanban board (same size as whiteboard so it fits on top wall)
   adminObjects.push({
     id: "kanban",
     label: "📋 Kanban",
-    tx: rXkb + 0.2,
-    ty: 2.5,
-    w: 4.5,
-    h: 4,
+    tx: BP.kanban.tx,
+    ty: BP.kanban.ty,
+    w: 3,
+    h: 1.6,
   });
 
   // Snapshot default positions (before applying saved overrides)
@@ -15358,7 +15374,7 @@ function buildAdminObjects() {
     }
   }
 
-  // Apply saved positions
+  // Apply saved positions (schema-wipe handled in applyCustomPositions)
   const saved = JSON.parse(localStorage.getItem("admin_positions") || "{}");
   for (const obj of adminObjects) {
     if (saved[obj.id]) {
@@ -16423,6 +16439,12 @@ canvas.addEventListener("click", (e) => {
     blip(660, 0.06, "sine", 0.04);
     setTimeout(() => blip(880, 0.07, "sine", 0.03), 120);
     setTimeout(() => blip(1100, 0.09, "sine", 0.03), 240);
+    return;
+  }
+  if (hit.type === "foosball") {
+    launchFoosballGame();
+    blip(440, 0.08, "square", 0.04);
+    setTimeout(() => blip(550, 0.06, "square", 0.03), 80);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
@@ -17957,6 +17979,19 @@ pngBtn.onclick = () => {
   setTimeout(() => blip(1100, 0.08, "sine", 0.03), 100);
 };
 if (_toolbar) _toolbar.appendChild(pngBtn);
+
+const gifBtn = document.createElement("button");
+gifBtn.id = "btn-export-gif";
+gifBtn.textContent = "🎞 GIF";
+gifBtn.title = "Export office as animated GIF (5 sec loop)";
+gifBtn.onclick = () => {
+  const officeCanvas = document.getElementById("office");
+  if (!officeCanvas) return;
+  startGifExport(officeCanvas);
+  blip(660, 0.06, "sine", 0.03);
+  setTimeout(() => blip(880, 0.07, "sine", 0.03), 100);
+};
+if (_toolbar) _toolbar.appendChild(gifBtn);
 
 // Admin info panel
 const adminPanel = document.createElement("div");
