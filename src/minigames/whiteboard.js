@@ -118,7 +118,9 @@ export function launchWhiteboardGame() {
       }
     }
 
-    const scaleX = Math.abs(Math.cos((c.flipAnim * Math.PI) / 2));
+    // Flip math: at flipAnim 0 (face-down) and 1 (face-up) scale = 1;
+    // crosses 0 at midpoint (flipAnim=0.5) — that's where the card "spins".
+    const scaleX = Math.abs(Math.cos(c.flipAnim * Math.PI));
     const faceUp = c.flipAnim >= 0.5;
 
     ctx.save();
