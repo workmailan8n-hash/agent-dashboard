@@ -9479,6 +9479,8 @@ class AgentState {
     this.workTicks = 0; // accumulated seconds in working state
     this.totalTicks = 0; // total accumulated seconds alive
     this._moodEmoji = ""; // cached mood emoji
+    this._lastMoodEmoji = ""; // previous mood — used to detect change
+    this._moodEmojiTimer = 0; // seconds remaining to show mood bubble
     // speech bubbles
     this.speechBubble = ""; // current speech text
     this.speechBubbleLife = 0; // countdown seconds (>0 = visible)
@@ -9635,8 +9637,16 @@ class AgentState {
       this.workTicks = Math.max(0, this.workTicks - excess);
     }
     const ratio = this.totalTicks > 2 ? this.workTicks / this.totalTicks : 0;
-    this._moodEmoji =
+    const newMood =
       ratio >= 0.7 ? "🔥" : ratio >= 0.4 ? "😊" : ratio >= 0.1 ? "😐" : "😤";
+    if (newMood !== this._lastMoodEmoji) {
+      this._lastMoodEmoji = newMood;
+      this._moodEmoji = newMood;
+      this._moodEmojiTimer = 100; // show for ~100 frames after change
+    } else if (this._moodEmojiTimer > 0) {
+      this._moodEmojiTimer -= dt * 60; // dt is seconds → frames
+      if (this._moodEmojiTimer <= 0) this._moodEmoji = "";
+    }
     // ── Speech bubble timer ───────────────────────────────────────
     if (this.speechBubbleLife > 0) {
       this.speechBubbleLife -= dt;
@@ -12307,7 +12317,7 @@ function drawLeftPanel(ctx, tick) {
 
   // Title
   ctx.fillStyle = "#7aa2f7";
-  ctx.font = "bold 12px monospace";
+  ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("◈ AGENTS", W / 2, 22);
   ctx.fillStyle = "#2a2c4e";
@@ -12346,35 +12356,35 @@ function drawLeftPanel(ctx, tick) {
     }
 
     // Role name
-    ctx.fillStyle = isWork ? "#ffffff" : "#c8d3f5";
-    ctx.font = (isWork ? "bold " : "") + "13px monospace";
+    ctx.fillStyle = isWork ? "#ffffff" : "#e0e6ff";
+    ctx.font = "bold 15px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.fillText(role.substring(0, 11), 24, y);
 
     // Tool / state badge
     if (isWork && ad.currentTool) {
       ctx.fillStyle = "#d7bbff";
-      ctx.font = "11px monospace";
-      ctx.fillText(ad.currentTool.substring(0, 11), 24, y + 12);
+      ctx.font = "12px 'Segoe UI', Arial, sans-serif";
+      ctx.fillText(ad.currentTool.substring(0, 11), 24, y + 14);
     } else if (!isWork && sp.activityAnim) {
-      ctx.fillStyle = "#8892b0";
-      ctx.font = "11px monospace";
+      ctx.fillStyle = "#a0a8c8";
+      ctx.font = "12px 'Segoe UI', Arial, sans-serif";
       ctx.fillText(
         sp.activityAnim.replace(/_/g, " ").substring(0, 13),
         24,
-        y + 12,
+        y + 14,
       );
     }
 
-    y += 28;
+    y += 32;
     if (y > H - 28) break;
   }
 
   // Footer — total count
   ctx.fillStyle = "#2a2c4e";
   ctx.fillRect(6, H - 28, W - 12, 1);
-  ctx.fillStyle = "#a9b3d6";
-  ctx.font = "bold 12px monospace";
+  ctx.fillStyle = "#c0c8e8";
+  ctx.font = "bold 13px 'Segoe UI', Arial, sans-serif";
   ctx.textAlign = "center";
   const total = entries.length;
   const working = entries.filter(([, s]) => s.isWorking).length;
@@ -12394,7 +12404,7 @@ function drawRightPanel(ctx, tick) {
 
   // Title
   ctx.fillStyle = "#bb9af7";
-  ctx.font = "bold 12px monospace";
+  ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
   ctx.textAlign = "center";
   ctx.fillText("◈ STATS", panelX + W / 2, 22);
   ctx.fillStyle = "#2a2c4e";
@@ -12402,12 +12412,12 @@ function drawRightPanel(ctx, tick) {
 
   const label = (txt, val, col, yy) => {
     ctx.fillStyle = "#a9b3d6";
-    ctx.font = "bold 11px monospace";
+    ctx.font = "bold 13px 'Segoe UI', Arial, sans-serif";
     ctx.textAlign = "left";
     ctx.fillText(txt, panelX + 8, yy);
     ctx.fillStyle = col || "#ffffff";
-    ctx.font = "bold 16px monospace";
-    ctx.fillText(String(val), panelX + 8, yy + 17);
+    ctx.font = "bold 18px 'Segoe UI', Arial, sans-serif";
+    ctx.fillText(String(val), panelX + 8, yy + 18);
   };
 
   // Uptime
@@ -12465,7 +12475,7 @@ function drawRightPanel(ctx, tick) {
     ? "💩 mess!"
     : _catMoods[cat.state] || "🐱 roaming";
   ctx.fillStyle = cat.messExists ? "#f7768e" : "#ffffff";
-  ctx.font = "bold 13px monospace";
+  ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
   ctx.fillText(catMood, panelX + 8, 286);
 
   // Goose status
