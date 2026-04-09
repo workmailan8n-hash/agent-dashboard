@@ -7143,7 +7143,7 @@ function buildBackground() {
     lg.addColorStop(0, "#fffff0");
     lg.addColorStop(1, "transparent");
     ctx.fillStyle = lg;
-    ctx.fillRect(OX, ly, CW - OX * 2, T * 8);
+    ctx.fillRect(OX, ly, CW - OX - OX_RIGHT, T * 8);
     ctx.restore();
   }
 
