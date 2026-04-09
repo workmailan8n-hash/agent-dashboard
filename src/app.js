@@ -15420,10 +15420,14 @@ function applyWallPositions() {
   if (saved.wall_zone !== undefined) ACT_ZONE_Y = Math.round(saved.wall_zone);
   if (saved.wall_right !== undefined) {
     COLS = Math.round(saved.wall_right);
-    CW = OX + COLS * T + OX_RIGHT;
+  }
+  // Always reconcile CW + canvas width with current COLS/OX/OX_RIGHT so the
+  // right panel sits flush against the canvas edge instead of over the wall.
+  CW = OX + COLS * T + OX_RIGHT;
+  {
     const cv = document.getElementById("office");
     if (cv) cv.width = CW;
-    bgBuf.width = CW;
+    if (typeof bgBuf !== "undefined" && bgBuf) bgBuf.width = CW;
   }
   if (saved.wall_bottom !== undefined) {
     ROWS = Math.round(saved.wall_bottom);
