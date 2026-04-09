@@ -6601,15 +6601,15 @@ function drawDynamicWindows(ctx) {
   // (nameplate spans tx ~12..22; windows sit at tx 2, 8, 24, 30).
   const WINDOW_TX = [2, 8, 24, 30];
   for (let i = 0; i < WINDOW_TX.length; i++) {
-    // Align inner sky rect exactly with the static window frame drawn in
-    // buildBackground: frame outer = (wx, wy, T-8, T-10), so inner pane
-    // starts at (wx+1, wy+1) with size (T-10, T-12).
+    // Fill EXACTLY the same rect that buildBackground uses for the dark
+    // placeholder: (wx, wy, T-8, T-10). Frame/cross lines are redrawn on
+    // top after the sky so they stay visible.
     const wx = OX + WINDOW_TX[i] * T + 4,
       wy = OY + 5;
-    const ix = wx + 1,
-      iy = wy + 1,
-      ww = T - 10,
-      wh = T - 12;
+    const ix = wx,
+      iy = wy,
+      ww = T - 8,
+      wh = T - 10;
 
     // Clip every per-window draw to the inner window rect so weather,
     // clouds, moon, glow etc. cannot bleed past the window frame.
@@ -6767,6 +6767,19 @@ function drawDynamicWindows(ctx) {
 
     // End per-window clip (light shaft is intentionally drawn outside it)
     ctx.restore();
+
+    // Redraw the window frame + mullion cross on top of the dynamic sky
+    // (static bg layer is covered by the sky fill now).
+    ctx.strokeStyle = "#3a3860";
+    ctx.lineWidth = 1.5;
+    ctx.strokeRect(wx + 0.5, wy + 0.5, T - 9, T - 11);
+    ctx.strokeStyle = "#3a386080";
+    ctx.beginPath();
+    ctx.moveTo(wx + (T - 8) / 2, wy);
+    ctx.lineTo(wx + (T - 8) / 2, wy + T - 10);
+    ctx.moveTo(wx, wy + (T - 10) / 2);
+    ctx.lineTo(wx + T - 8, wy + (T - 10) / 2);
+    ctx.stroke();
 
     // Light shaft into room
     if (sky.shaft > 0) {
