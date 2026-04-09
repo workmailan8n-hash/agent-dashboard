@@ -155,6 +155,7 @@ function resetBall(gs, scoringSide) {
   gs.ball.vx = dir * BASE_SPEED * Math.cos(ang);
   gs.ball.vy = BASE_SPEED * Math.sin(ang);
   gs.serving = true;
+  gs.scoreLock = false;
 }
 
 // ─── Main game ──────────────────────────────────────────────────
@@ -219,6 +220,7 @@ export function launchFoosballGame() {
     serving: true,
     over: false,
     speed: BASE_SPEED,
+    scoreLock: false, // блок повторного скоринга пока ball не сброшен
   };
   for (const rod of RODS) gs.rodY[rod.x] = GH / 2;
 
@@ -246,6 +248,7 @@ export function launchFoosballGame() {
     gs.over = false;
     gs.flash = 0;
     gs.speed = BASE_SPEED;
+    gs.scoreLock = false;
     for (const rod of RODS) gs.rodY[rod.x] = GH / 2;
     resetBall(gs, "cpu");
   }
@@ -327,18 +330,29 @@ export function launchFoosballGame() {
 
       // Goal detection. Player keeper at x=70 (LEFT) → left goal принадлежит
       // игроку, значит мяч в LEFT = CPU забил. И наоборот.
-      if (gs.ball.x - BALL_R < 0) {
-        // Ball in player's (left) goal → CPU scores
-        gs.score.cpu++;
-        gs.flash = 1.2;
-        gs.flashSide = "cpu";
-        checkWin("cpu");
-      } else if (gs.ball.x + BALL_R > GW) {
-        // Ball in CPU's (right) goal → player scores
-        gs.score.player++;
-        gs.flash = 1.2;
-        gs.flashSide = "player";
-        checkWin("player");
+      // scoreLock не даёт счёту прыгать пока ball не сброшен (иначе одна
+      // позиция мяча в воротах = +1 за каждый кадр в течение 900ms).
+      if (!gs.scoreLock) {
+        if (gs.ball.x - BALL_R < 0) {
+          gs.score.cpu++;
+          gs.flash = 1.2;
+          gs.flashSide = "cpu";
+          gs.scoreLock = true;
+          // мгновенно убираем ball из ворот, чтобы он не подсветил scoring повторно
+          gs.ball.x = GW / 2;
+          gs.ball.vx = 0;
+          gs.ball.vy = 0;
+          checkWin("cpu");
+        } else if (gs.ball.x + BALL_R > GW) {
+          gs.score.player++;
+          gs.flash = 1.2;
+          gs.flashSide = "player";
+          gs.scoreLock = true;
+          gs.ball.x = GW / 2;
+          gs.ball.vx = 0;
+          gs.ball.vy = 0;
+          checkWin("player");
+        }
       }
     }
 
