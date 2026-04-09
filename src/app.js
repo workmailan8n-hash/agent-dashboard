@@ -41,8 +41,8 @@ import { launchCrystalBallGame } from "./minigames/crystal_ball.js";
 // ════════════════════════════════════════════════════════════════
 let CW = 1400;
 const T = 32; // tile size px
-const OX = 180; // canvas left margin (left panel width)
-const OX_RIGHT = 160; // right panel width
+const OX = 180; // canvas left margin (left side panel width)
+const OX_RIGHT = 160; // canvas right margin (right side panel width)
 const OY = 12; // canvas top margin
 let COLS = 35; // room width in tiles (mutable for wall editor)
 let ROWS = 14;
