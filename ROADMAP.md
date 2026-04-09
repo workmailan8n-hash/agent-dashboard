@@ -76,7 +76,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 - [x] Party mode trigger (balloons, confetti, music notes, dancing)
 - [x] Fire drill (alarm sound, everyone runs to exit)
 - [x] Power outage (lights off, emergency lights, monitors dark)
-- [ ] Holiday decorations auto (Christmas/Halloween by real date)
+- [x] Holiday decorations auto (Christmas/Halloween by real date)
 
 ## Day 10 — Premium Polish
 - [ ] Loading screen with pixel art progress bar
