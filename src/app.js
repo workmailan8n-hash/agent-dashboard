@@ -7121,7 +7121,7 @@ function buildBackground() {
     lg.addColorStop(0, "#fffff0");
     lg.addColorStop(1, "transparent");
     ctx.fillStyle = lg;
-    ctx.fillRect(OX, ly, CW - OX * 2, T * 8);
+    ctx.fillRect(OX, ly, CW - OX - OX_RIGHT, T * 8);
     ctx.restore();
   }
 
@@ -12396,8 +12396,8 @@ function drawLeftPanel(ctx, tick) {
 }
 
 function drawRightPanel(ctx, tick) {
-  const panelX = CW - OX + 3;
-  const W = OX - 6,
+  const panelX = CW - OX_RIGHT + 3;
+  const W = OX_RIGHT - 6,
     H = CH;
 
   // Background
@@ -15386,7 +15386,7 @@ function applyWallPositions() {
   if (saved.wall_zone !== undefined) ACT_ZONE_Y = Math.round(saved.wall_zone);
   if (saved.wall_right !== undefined) {
     COLS = Math.round(saved.wall_right);
-    CW = OX + COLS * T + OX;
+    CW = OX + COLS * T + OX_RIGHT;
     const cv = document.getElementById("office");
     if (cv) cv.width = CW;
     bgBuf.width = CW;
@@ -15711,7 +15711,7 @@ canvas.addEventListener("mousemove", (e) => {
     // Live-resize canvas when dragging outer walls (no rebuild during drag)
     if (w.id === "wall_right") {
       COLS = Math.round(w.pos);
-      CW = OX + COLS * T + OX;
+      CW = OX + COLS * T + OX_RIGHT;
       canvas.width = CW;
       bgBuf.width = CW;
     }
@@ -15783,7 +15783,7 @@ document.addEventListener("mousemove", (e) => {
   }
   if (w.id === "wall_right") {
     COLS = Math.round(w.pos);
-    CW = OX + COLS * T + OX;
+    CW = OX + COLS * T + OX_RIGHT;
     canvas.width = CW;
     bgBuf.width = CW;
   }
@@ -15811,7 +15811,7 @@ document.addEventListener("mouseup", (e) => {
     if (w2.id === "wall_zone") ACT_ZONE_Y = Math.round(w2.pos);
     if (w2.id === "wall_right") {
       COLS = Math.round(w2.pos);
-      CW = OX + COLS * T + OX;
+      CW = OX + COLS * T + OX_RIGHT;
       canvas.width = CW;
       bgBuf.width = CW;
     }
@@ -15846,7 +15846,7 @@ canvas.addEventListener("mouseup", (e) => {
       if (w.id === "wall_zone") ACT_ZONE_Y = Math.round(w.pos);
       if (w.id === "wall_right") {
         COLS = Math.round(w.pos);
-        CW = OX + COLS * T + OX;
+        CW = OX + COLS * T + OX_RIGHT;
         canvas.width = CW;
         bgBuf.width = CW;
       }
@@ -17924,7 +17924,7 @@ document.getElementById("admin-start-pos").onclick = () => {
     window._adminPos = Object.assign({}, BUILTIN_POSITIONS);
     // Reset walls to default sizes
     COLS = 35;
-    CW = OX + COLS * T + OX;
+    CW = OX + COLS * T + OX_RIGHT;
     canvas.width = CW;
     bgBuf.width = CW;
     generateLayout(Math.max(12, Object.keys(agentsData).length));
