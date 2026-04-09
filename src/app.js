@@ -35,6 +35,8 @@ import { launchWhiteboardGame } from "./minigames/whiteboard.js";
 import { launchPlantGame } from "./minigames/plant.js";
 import { launchJukeboxGame } from "./minigames/jukebox.js";
 import { launchCrystalBallGame } from "./minigames/crystal_ball.js";
+import { launchFoosballGame } from "./minigames/foosball.js";
+import { startGifExport } from "./gifExport.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -4057,9 +4059,10 @@ function drawDustMotes(ctx, tick) {
   if (tod.state === "night") return; // no dust at night
   // Init once
   if (dustMotes.length === 0) {
-    for (let w = 0; w < 4; w++) {
+    const _DUST_TX = [1, 33];
+    for (let w = 0; w < _DUST_TX.length; w++) {
       for (let j = 0; j < 3; j++) {
-        const wx = OX + (3 + w * 6) * T + 4;
+        const wx = OX + _DUST_TX[w] * T + 4;
         dustMotes.push({
           x: wx + Math.random() * (T - 12),
           y: OY + 10 + Math.random() * T * 2,
@@ -4099,9 +4102,10 @@ function drawFireflies(ctx, tick) {
     return;
   }
   if (fireflies.length === 0) {
-    for (let w = 0; w < 4; w++) {
+    const _FF_TX = [1, 33];
+    for (let w = 0; w < _FF_TX.length; w++) {
       for (let j = 0; j < 2; j++) {
-        const wx = OX + (3 + w * 6) * T + 4;
+        const wx = OX + _FF_TX[w] * T + 4;
         fireflies.push({
           x: wx + Math.random() * (T - 12),
           y: OY + 6 + Math.random() * (T - 14),
@@ -9058,9 +9062,10 @@ function drawDynamicEffects(ctx, tick) {
     ctx.restore();
   }
 
-  // Animated window light shafts — more visible
-  for (let i = 0; i < 4; i++) {
-    const wx = OX + (3 + i * 6) * T + 4,
+  // Animated window light shafts — keep in sync with WINDOW_TX [1, 33]
+  const _LIGHT_TX = [1, 33];
+  for (let i = 0; i < _LIGHT_TX.length; i++) {
+    const wx = OX + _LIGHT_TX[i] * T + 4,
       wy = OY + 5;
     const alpha = 0.07 + Math.sin(tick * 0.012 + i * 2.1) * 0.025;
     ctx.save();
@@ -16465,6 +16470,12 @@ canvas.addEventListener("click", (e) => {
     setTimeout(() => blip(1100, 0.09, "sine", 0.03), 240);
     return;
   }
+  if (hit.type === "foosball") {
+    launchFoosballGame();
+    blip(440, 0.05, "square", 0.04);
+    setTimeout(() => blip(660, 0.05, "square", 0.04), 80);
+    return;
+  }
   if (clickAnims.some((a) => a.id === hit.id)) return;
   clickAnims.push({
     id: hit.id,
@@ -17997,6 +18008,17 @@ pngBtn.onclick = () => {
   setTimeout(() => blip(1100, 0.08, "sine", 0.03), 100);
 };
 if (_toolbar) _toolbar.appendChild(pngBtn);
+
+const gifBtn = document.createElement("button");
+gifBtn.id = "btn-export-gif";
+gifBtn.textContent = "🎞 GIF";
+gifBtn.title = "Export office as animated GIF (5 sec loop)";
+gifBtn.onclick = () => {
+  const officeCanvas = document.getElementById("office");
+  if (!officeCanvas) return;
+  startGifExport(officeCanvas);
+};
+if (_toolbar) _toolbar.appendChild(gifBtn);
 
 // Admin info panel
 const adminPanel = document.createElement("div");
