@@ -66,6 +66,10 @@ export const OBJECT_SIZES = {
   newtons_cradle: { w: 1.5, h: 1.5 },
   popcorn_machine: { w: 1.5, h: 2 },
   gumball_machine: { w: 1.5, h: 2 },
+  slot_machine: { w: 1.5, h: 2 },
+  water_cooler: { w: 1.2, h: 2 },
+  disco_ball: { w: 1.5, h: 2 },
+  record_player: { w: 1.5, h: 1.5 },
 };
 
 // Strip trailing _N index to get base type.

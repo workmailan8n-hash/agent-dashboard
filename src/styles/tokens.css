@@ -27,12 +27,12 @@
   --radius-sm: 3px;
   --radius-md: 4px;
 
-  --font-main: 'Press Start 2P', monospace;
-  --font-size-xs: 5px;
-  --font-size-sm: 6px;
-  --font-size-md: 7px;
-  --font-size-lg: 8px;
-  --font-size-xl: 10px;
+  --font-main: "JetBrains Mono", "Cascadia Mono", Consolas, monospace;
+  --font-size-xs: 10px;
+  --font-size-sm: 11px;
+  --font-size-md: 12px;
+  --font-size-lg: 13px;
+  --font-size-xl: 16px;
 
   --z-canvas: 1;
   --z-admin: 100;

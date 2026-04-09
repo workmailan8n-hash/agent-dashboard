@@ -34,6 +34,7 @@ import { launchCoffeeGame } from "./minigames/coffee.js";
 import { launchWhiteboardGame } from "./minigames/whiteboard.js";
 import { launchPlantGame } from "./minigames/plant.js";
 import { launchJukeboxGame } from "./minigames/jukebox.js";
+import { launchCrystalBallGame } from "./minigames/crystal_ball.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -6597,8 +6598,8 @@ function drawDynamicWindows(ctx) {
   const sky = skies[tod.state] || skies.day;
 
   // Window x-positions chosen to avoid the central AGENT OFFICE nameplate
-  // (nameplate spans tx ~12..22; windows sit at tx 2, 8, 26, 32).
-  const WINDOW_TX = [2, 8, 26, 32];
+  // (nameplate spans tx ~12..22; windows sit at tx 2, 8, 24, 30).
+  const WINDOW_TX = [2, 8, 24, 30];
   for (let i = 0; i < WINDOW_TX.length; i++) {
     const wx = OX + WINDOW_TX[i] * T + 4,
       wy = OY + 5;
@@ -6608,6 +6609,10 @@ function drawDynamicWindows(ctx) {
     // Clip every per-window draw to the inner window rect so weather,
     // clouds, moon, glow etc. cannot bleed past the window frame.
     ctx.save();
+    ctx.shadowBlur = 0;
+    ctx.shadowColor = "transparent";
+    ctx.shadowOffsetX = 0;
+    ctx.shadowOffsetY = 0;
     ctx.beginPath();
     ctx.rect(wx + 2, wy + 2, ww, wh);
     ctx.clip();
@@ -7109,7 +7114,7 @@ function buildBackground() {
 
   // Windows — static frames only (sky color drawn dynamically)
   // Keep in sync with WINDOW_TX in drawDynamicWindows()
-  const _WINDOW_TX = [2, 8, 26, 32];
+  const _WINDOW_TX = [2, 8, 24, 30];
   for (let i = 0; i < _WINDOW_TX.length; i++) {
     const wx = OX + _WINDOW_TX[i] * T + 4,
       wy = OY + 5;
@@ -10044,7 +10049,7 @@ class AgentState {
       ctx.scale(-1, 1);
       ctx.translate(-this.sx, -this.sy);
     }
-    const AGENT_SCALE = 1.75;
+    const AGENT_SCALE = 1.45;
     ctx.translate(this.sx, this.sy);
     ctx.scale(AGENT_SCALE, AGENT_SCALE);
     ctx.translate(-this.sx, -this.sy);
@@ -12333,7 +12338,7 @@ function drawLeftPanel(ctx, tick) {
   ctx.fillRect(4, 8, 2, 20);
   // Title
   ctx.fillStyle = "#7aa2f7";
-  ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
+  ctx.font = "bold 14px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
   ctx.textAlign = "center";
   ctx.fillText("◈ AGENTS", W / 2, 22);
   ctx.fillStyle = "#2a2c4e";
@@ -12373,18 +12378,19 @@ function drawLeftPanel(ctx, tick) {
 
     // Role name
     ctx.fillStyle = isWork ? "#ffffff" : "#e0e6ff";
-    ctx.font = "bold 15px 'Segoe UI', Arial, sans-serif";
+    ctx.font =
+      "bold 15px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
     ctx.textAlign = "left";
     ctx.fillText(role.substring(0, 11), 24, y);
 
     // Tool / state badge
     if (isWork && ad.currentTool) {
       ctx.fillStyle = "#d7bbff";
-      ctx.font = "12px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "12px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
       ctx.fillText(ad.currentTool.substring(0, 11), 24, y + 14);
     } else if (!isWork && sp.activityAnim) {
       ctx.fillStyle = "#a0a8c8";
-      ctx.font = "12px 'Segoe UI', Arial, sans-serif";
+      ctx.font = "12px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
       ctx.fillText(
         sp.activityAnim.replace(/_/g, " ").substring(0, 13),
         24,
@@ -12400,7 +12406,7 @@ function drawLeftPanel(ctx, tick) {
   ctx.fillStyle = "#2a2c4e";
   ctx.fillRect(6, H - 28, W - 12, 1);
   ctx.fillStyle = "#c0c8e8";
-  ctx.font = "bold 13px 'Segoe UI', Arial, sans-serif";
+  ctx.font = "bold 13px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
   ctx.textAlign = "center";
   const total = entries.length;
   const working = entries.filter(([, s]) => s.isWorking).length;
@@ -12417,11 +12423,11 @@ function drawRightPanel(ctx, tick) {
   ctx.fillStyle = "#1a1c2e";
   ctx.fillRect(panelX - 3, 0, 3, H);
   ctx.fillStyle = "#0d0d1a";
-  ctx.fillRect(panelX, 0, W + 6, H);
+  ctx.fillRect(panelX, 0, W, H);
 
   // Title
   ctx.fillStyle = "#bb9af7";
-  ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
+  ctx.font = "bold 14px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
   ctx.textAlign = "center";
   ctx.fillText("◈ STATS", panelX + W / 2, 22);
   ctx.fillStyle = "#2a2c4e";
@@ -12429,11 +12435,13 @@ function drawRightPanel(ctx, tick) {
 
   const label = (txt, val, col, yy) => {
     ctx.fillStyle = "#a9b3d6";
-    ctx.font = "bold 13px 'Segoe UI', Arial, sans-serif";
+    ctx.font =
+      "bold 13px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
     ctx.textAlign = "left";
     ctx.fillText(txt, panelX + 8, yy);
     ctx.fillStyle = col || "#ffffff";
-    ctx.font = "bold 18px 'Segoe UI', Arial, sans-serif";
+    ctx.font =
+      "bold 18px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
     ctx.fillText(String(val), panelX + 8, yy + 18);
   };
 
@@ -12492,7 +12500,7 @@ function drawRightPanel(ctx, tick) {
     ? "💩 mess!"
     : _catMoods[cat.state] || "🐱 roaming";
   ctx.fillStyle = cat.messExists ? "#f7768e" : "#ffffff";
-  ctx.font = "bold 14px 'Segoe UI', Arial, sans-serif";
+  ctx.font = "bold 14px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
   ctx.fillText(catMood, panelX + 8, 286);
 
   // Goose status
@@ -16388,6 +16396,13 @@ canvas.addEventListener("click", (e) => {
     setTimeout(() => blip(659, 0.08, "sine", 0.03), 200);
     return;
   }
+  if (hit.type === "crystal_ball") {
+    launchCrystalBallGame();
+    blip(660, 0.06, "sine", 0.04);
+    setTimeout(() => blip(880, 0.07, "sine", 0.03), 120);
+    setTimeout(() => blip(1100, 0.09, "sine", 0.03), 240);
+    return;
+  }
   if (clickAnims.some((a) => a.id === hit.id)) return;
   clickAnims.push({
     id: hit.id,
@@ -17903,6 +17918,23 @@ simsBtn.id = "btn-sims";
 simsBtn.textContent = "🎮 SIMS";
 simsBtn.onclick = toggleSimsMode;
 if (_toolbar) _toolbar.appendChild(simsBtn);
+
+const pngBtn = document.createElement("button");
+pngBtn.id = "btn-export-png";
+pngBtn.textContent = "📸 PNG";
+pngBtn.title = "Export office as PNG";
+pngBtn.onclick = () => {
+  const officeCanvas = document.getElementById("office");
+  if (!officeCanvas) return;
+  const link = document.createElement("a");
+  link.download =
+    "agent-office-" + new Date().toISOString().slice(0, 10) + ".png";
+  link.href = officeCanvas.toDataURL("image/png");
+  link.click();
+  blip(880, 0.06, "sine", 0.03);
+  setTimeout(() => blip(1100, 0.08, "sine", 0.03), 100);
+};
+if (_toolbar) _toolbar.appendChild(pngBtn);
 
 // Admin info panel
 const adminPanel = document.createElement("div");
