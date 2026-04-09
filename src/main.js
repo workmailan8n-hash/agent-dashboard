@@ -85,46 +85,186 @@ if (typeof window !== "undefined") {
 })();
 
 // ════════════════════════════════════════════════════════════════
-//  LOADING SCREEN
+//  LOADING SCREEN — pixel art progress bar + walking agent
 // ════════════════════════════════════════════════════════════════
 (function initLoading() {
   const screen = document.getElementById("loading-screen");
-  const bar = document.getElementById("loading-bar");
-  if (!screen || !bar) return;
+  const canvas = document.getElementById("loading-canvas");
+  const statusEl = document.getElementById("loading-status");
+  if (!screen || !canvas) return;
 
+  const ctx = canvas.getContext("2d");
+  const W = 320,
+    H = 80;
+
+  // Block bar config
+  const BLOCKS = 26;
+  const BLK_W = 10;
+  const BLK_GAP = 2;
+  const BAR_W = BLOCKS * BLK_W + (BLOCKS - 1) * BLK_GAP; // 310px
+  const BAR_X = (W - BAR_W) / 2; // 5px
+  const BAR_Y = 54;
+  const BAR_H = 18;
+
+  // Pseudo-progress phases
+  const PHASES = [
+    { t: 0, label: "BOOTING SYSTEM...", target: 0.08 },
+    { t: 500, label: "LOADING AGENTS...", target: 0.25 },
+    { t: 1500, label: "INITIALIZING OFFICE...", target: 0.5 },
+    { t: 3000, label: "CONNECTING TO MATRIX...", target: 0.72 },
+    { t: 4500, label: "SYNCING DATA...", target: 0.88 },
+  ];
+
+  let progress = 0;
+  let target = 0;
+  let tick = 0;
+  let rafId = null;
   let dismissed = false;
+
+  PHASES.forEach(({ t, label, target: tgt }) => {
+    setTimeout(() => {
+      if (!dismissed) {
+        target = tgt;
+        if (statusEl) statusEl.textContent = label;
+      }
+    }, t);
+  });
+
+  const origParse = JSON.parse;
   function dismiss() {
     if (dismissed) return;
     dismissed = true;
-    JSON.parse = origParse; // restore native JSON.parse
-    bar.style.width = "100%";
+    JSON.parse = origParse;
+    target = 1;
+    if (statusEl) statusEl.textContent = "READY!";
     setTimeout(() => {
+      cancelAnimationFrame(rafId);
       screen.classList.add("hidden");
-    }, 400);
+    }, 700);
   }
 
-  // pseudo-progress
-  setTimeout(() => {
-    bar.style.width = "25%";
-  }, 500);
-  setTimeout(() => {
-    bar.style.width = "60%";
-  }, 2000);
-  setTimeout(() => {
-    bar.style.width = "88%";
-  }, 4500);
+  setTimeout(dismiss, 5500);
 
-  // fallback: hide after 5s regardless
-  setTimeout(dismiss, 5000);
-
-  // hook into WebSocket init message
-  const origParse = JSON.parse;
-  const _parse = function (text) {
+  JSON.parse = function (text) {
     const obj = origParse.call(JSON, text);
     if (obj && obj.type === "init") dismiss();
     return obj;
   };
-  JSON.parse = _parse;
+
+  // ── Pixel art walking agent ────────────────────────────────────
+  function drawChar(cx, cy, frame) {
+    const walk = (frame >> 2) & 1; // alternates every 4 frames
+    // shadow
+    ctx.fillStyle = "rgba(0,0,30,0.4)";
+    ctx.fillRect(cx - 5, cy + 1, 10, 2);
+    // hair
+    ctx.fillStyle = "#7aa2f7";
+    ctx.fillRect(cx - 3, cy - 14, 6, 3);
+    // head
+    ctx.fillStyle = "#c89060";
+    ctx.fillRect(cx - 3, cy - 11, 6, 6);
+    // eyes
+    ctx.fillStyle = "#1a1b26";
+    ctx.fillRect(cx - 2, cy - 9, 1, 2);
+    ctx.fillRect(cx + 1, cy - 9, 1, 2);
+    // body
+    ctx.fillStyle = "#7aa2f7";
+    ctx.fillRect(cx - 3, cy - 5, 6, 5);
+    // arms
+    ctx.fillStyle = "#c89060";
+    if (walk) {
+      ctx.fillRect(cx - 5, cy - 4, 2, 3);
+      ctx.fillRect(cx + 3, cy - 3, 2, 3);
+    } else {
+      ctx.fillRect(cx - 5, cy - 3, 2, 3);
+      ctx.fillRect(cx + 3, cy - 4, 2, 3);
+    }
+    // pants
+    ctx.fillStyle = "#3d59a1";
+    ctx.fillRect(cx - 3, cy, 6, 3);
+    // legs
+    ctx.fillStyle = "#c89060";
+    if (walk) {
+      ctx.fillRect(cx - 3, cy + 3, 2, 4);
+      ctx.fillRect(cx + 1, cy + 1, 2, 4);
+    } else {
+      ctx.fillRect(cx - 3, cy + 1, 2, 4);
+      ctx.fillRect(cx + 1, cy + 3, 2, 4);
+    }
+    // shoes
+    ctx.fillStyle = "#1a1b26";
+    if (walk) {
+      ctx.fillRect(cx - 4, cy + 7, 3, 2);
+      ctx.fillRect(cx + 1, cy + 5, 3, 2);
+    } else {
+      ctx.fillRect(cx - 4, cy + 5, 3, 2);
+      ctx.fillRect(cx + 1, cy + 7, 3, 2);
+    }
+  }
+
+  // ── Render loop ────────────────────────────────────────────────
+  function render() {
+    tick++;
+    progress += (target - progress) * 0.04;
+    if (target - progress < 0.001) progress = target;
+
+    ctx.clearRect(0, 0, W, H);
+    ctx.fillStyle = "#0a0a18";
+    ctx.fillRect(0, 0, W, H);
+
+    // Outer border
+    ctx.strokeStyle = "#3a3860";
+    ctx.lineWidth = 1;
+    ctx.strokeRect(BAR_X - 3, BAR_Y - 3, BAR_W + 6, BAR_H + 6);
+
+    // Pixel blocks
+    const litCount = Math.round(progress * BLOCKS);
+    for (let i = 0; i < BLOCKS; i++) {
+      const bx = BAR_X + i * (BLK_W + BLK_GAP);
+      if (i < litCount) {
+        ctx.fillStyle = "#7aa2f7";
+        ctx.fillRect(bx, BAR_Y, BLK_W, BAR_H);
+        // top highlight
+        ctx.fillStyle = "#a9c7ff";
+        ctx.fillRect(bx, BAR_Y, BLK_W, 2);
+        // scanlines
+        ctx.fillStyle = "rgba(0,0,0,0.22)";
+        ctx.fillRect(bx, BAR_Y + 7, BLK_W, 2);
+        ctx.fillRect(bx, BAR_Y + 14, BLK_W, 2);
+        // glow edge on leading block
+        if (i === litCount - 1) {
+          ctx.shadowColor = "#7aa2f7";
+          ctx.shadowBlur = 8;
+          ctx.fillStyle = "#c8d8ff";
+          ctx.fillRect(bx + BLK_W - 2, BAR_Y, 2, BAR_H);
+          ctx.shadowBlur = 0;
+        }
+      } else {
+        // unlit
+        ctx.fillStyle = "#0d1226";
+        ctx.fillRect(bx, BAR_Y, BLK_W, BAR_H);
+        ctx.fillStyle = "#1a1e3a";
+        ctx.fillRect(bx, BAR_Y, BLK_W, 1);
+        ctx.fillRect(bx, BAR_Y, 1, BAR_H);
+      }
+    }
+
+    // Percentage label
+    const pct = Math.round(progress * 100);
+    ctx.font = '6px "Press Start 2P",monospace';
+    ctx.textAlign = "center";
+    ctx.textBaseline = "middle";
+    ctx.fillStyle = progress > 0.45 ? "#0a0a18" : "#3a4870";
+    ctx.fillText(pct + "%", W / 2, BAR_Y + BAR_H / 2);
+
+    // Walking agent on top of bar
+    const charX = BAR_X + Math.min(progress, 0.99) * BAR_W;
+    drawChar(charX, BAR_Y, tick);
+
+    rafId = requestAnimationFrame(render);
+  }
+
+  rafId = requestAnimationFrame(render);
 })();
 
 // ════════════════════════════════════════════════════════════════

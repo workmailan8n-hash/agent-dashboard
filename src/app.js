@@ -33,6 +33,7 @@ import {
 import { launchSlotMachineGame } from "./minigames/slot_machine.js";
 import { launchCoffeeGame } from "./minigames/coffee.js";
 import { launchWhiteboardGame } from "./minigames/whiteboard.js";
+import { launchPlantGame } from "./minigames/plant.js";
 
 // ════════════════════════════════════════════════════════════════
 //  CONSTANTS
@@ -16653,6 +16654,13 @@ canvas.addEventListener("click", (e) => {
     launchWhiteboardGame();
     blip(660, 0.05, "triangle", 0.04);
     setTimeout(() => blip(880, 0.04, "triangle", 0.03), 100);
+    return;
+  }
+  if (hit.type === "plant") {
+    launchPlantGame();
+    blip(550, 0.05, "sine", 0.04);
+    setTimeout(() => blip(660, 0.04, "sine", 0.03), 120);
+    setTimeout(() => blip(880, 0.04, "sine", 0.02), 240);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;
