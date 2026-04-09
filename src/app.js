@@ -10043,7 +10043,7 @@ class AgentState {
       ctx.scale(-1, 1);
       ctx.translate(-this.sx, -this.sy);
     }
-    const AGENT_SCALE = 1.15;
+    const AGENT_SCALE = 1.75;
     ctx.translate(this.sx, this.sy);
     ctx.scale(AGENT_SCALE, AGENT_SCALE);
     ctx.translate(-this.sx, -this.sy);
@@ -10092,10 +10092,22 @@ class AgentState {
       ctx.save();
       ctx.globalAlpha =
         clamp((this.totalTicks - 2) / 2, 0, 1) * this.labelScale;
-      ctx.font = "20px sans-serif";
+      ctx.font = "28px sans-serif";
       ctx.textAlign = "center";
       ctx.textBaseline = "middle";
-      ctx.fillText(this._moodEmoji, this.sx, this.sy - 44 + bob);
+      const _mex = this.sx,
+        _mey = this.sy - 56 + bob;
+      // Soft warm glow
+      ctx.shadowColor = "#fff5b0";
+      ctx.shadowBlur = 12;
+      ctx.fillText(this._moodEmoji, _mex, _mey);
+      ctx.shadowBlur = 0;
+      // Crisp white outline for pop against floor
+      ctx.lineWidth = 4;
+      ctx.strokeStyle = "#ffffff";
+      ctx.strokeText(this._moodEmoji, _mex, _mey);
+      // Redraw fill on top at full opacity
+      ctx.fillText(this._moodEmoji, _mex, _mey);
       ctx.restore();
     }
     // ── Wave / nod emoji (shown when passing another agent) ───────
