@@ -14,8 +14,7 @@ const _cache = new Map();
 // padX/padY shift the draw origin so objects that render *above* their
 // (x,y) anchor still land within the offscreen canvas bounds.
 const SPRITE_CONFIGS = {
-  hammock: { w: 76, h: 52, padX: 4, padY: 34 },
-  jukebox: { w: 34, h: 62, padX: 4, padY: 6 },
+  jukebox: { w: 56, h: 100, padX: 4, padY: 6 },
   pinball: { w: 34, h: 62, padX: 4, padY: 6 },
   rubber_duck: { w: 44, h: 62, padX: 4, padY: 4 },
   lava_lamp: { w: 34, h: 80, padX: 4, padY: 4 },

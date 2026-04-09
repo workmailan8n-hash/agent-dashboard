@@ -11,7 +11,6 @@ import {
   drawTerrarium,
   drawLavaLamp,
   drawPinballMachine,
-  drawHammock,
   drawJukebox,
   drawCrystalBall,
   drawRecordPlayer,
@@ -32,6 +31,8 @@ import {
 } from "./adminPos.js";
 import { launchSlotMachineGame } from "./minigames/slot_machine.js";
 import { launchCoffeeGame } from "./minigames/coffee.js";
+import { launchWhiteboardGame } from "./minigames/whiteboard.js";
+import { launchPlantGame } from "./minigames/plant.js";
 import { launchJukeboxGame } from "./minigames/jukebox.js";
 
 // ════════════════════════════════════════════════════════════════
@@ -5924,20 +5925,6 @@ function generateLayout(n) {
     type: "shelf",
     w: 5,
   });
-  // ── Hammock (recreation zone, col 29-32, row ACT+12) ─────────────
-  IDLE_SPOTS.push({
-    tx: 30.5,
-    ty: ACT_ZONE_Y + 12,
-    anim: "in_hammock",
-    type: "hammock",
-    w: 5,
-    _objId: "hammock",
-    _defObjTx: 29,
-    _defObjTy: ACT_ZONE_Y + 11,
-    _offsetX: 1.5,
-    _offsetY: 1,
-  });
-
   // ── Vending machine spot (inside kitchen) ────────────────────────
   IDLE_SPOTS.push({
     tx: KITCHEN_WALL_COL + 1.5,
@@ -6192,8 +6179,6 @@ function buildObstacleGrid() {
     markRect(jbObsTx, jbObsTy, 2, 2);
     const [pbObsTx, pbObsTy] = getAdminPos("pinball", 32, ACT_ZONE_Y + 9);
     markRect(pbObsTx, pbObsTy, 2, 2);
-    const [hmObsTx, hmObsTy] = getAdminPos("hammock", 29, ACT_ZONE_Y + 11);
-    markRect(hmObsTx, hmObsTy, 4, 2);
   }
 
   // ── Zone 2: MAKERS LAB obstacles (ACT_ZONE+14) ─────
@@ -8357,19 +8342,6 @@ function buildBackground() {
     ctx.ellipse(djx - 4, djy + djH * 0.3 + 6, 4, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
-    // ── Hammock (recreation zone, col 29) ───────────────────────
-    {
-      const [_hmTx, _hmTy] = getAdminPos("hammock", 29, ACT_ZONE_Y + 11);
-      const [hmx, hmy] = ts(_hmTx, _hmTy);
-      drawObjectCached(
-        ctx,
-        "hammock",
-        hmx - T / 2,
-        hmy + 4,
-        globalTick,
-        drawHammock,
-      );
-    }
     // ── Jukebox (gaming room, col 25) ──────────────────────────
     {
       const [_jbTx, _jbTy] = getAdminPos("jukebox", 25, ACT_ZONE_Y + 9);
@@ -13928,7 +13900,6 @@ function loop(now) {
         telescope: "Telescope",
         espresso: "Espresso",
         shelf: "Bookshelf",
-        hammock: "Hammock",
         photo_booth: "Photo Booth",
       };
       const label = spotLabels[hs.type] || hs.type;
@@ -16087,6 +16058,8 @@ const CLICK_OBJ_MAP = {
   crystal_ball: "crystal_ball",
   neon_sign: "neon_sign",
   whiteboard: "whiteboard",
+  plant_0: "plant",
+  plant_1: "plant",
   kitchen_table: "kitchen_table",
   bookshelf: "bookshelf",
   conf_table: "conf_table",
@@ -16133,6 +16106,8 @@ function findClickableAt(tx, ty) {
     { id: "corkboard", w: 2.5, h: 1.6 },
     { id: "neon_sign", w: 3, h: 1 },
     { id: "whiteboard", w: 3, h: 1.6 },
+    { id: "plant_0", w: 1, h: 1.5 },
+    { id: "plant_1", w: 1, h: 1.5 },
     { id: "trophy_cabinet", w: 2, h: 2.5 },
     { id: "lava_lamp", w: 1.5, h: 2.5 },
     { id: "jukebox", w: 2, h: 2.5 },
@@ -16369,6 +16344,16 @@ canvas.addEventListener("click", (e) => {
     launchCoffeeGame();
     blip(440, 0.06, "sine", 0.04);
     setTimeout(() => blip(550, 0.05, "sine", 0.03), 120);
+    return;
+  }
+  if (hit.type === "whiteboard") {
+    launchWhiteboardGame();
+    blip(660, 0.08, "square", 0.04);
+    return;
+  }
+  if (hit.type === "plant") {
+    launchPlantGame();
+    blip(520, 0.08, "sine", 0.04);
     return;
   }
   if (hit.type === "jukebox") {

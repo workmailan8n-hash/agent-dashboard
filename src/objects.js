@@ -691,45 +691,40 @@ export function drawHammock(ctx, x, y, tick) {
 
 export function drawJukebox(ctx, x, y, tick) {
   const t = tick * 0.025;
-  // Scale up 1.7x — was too small next to pingpong table
-  ctx.save();
-  ctx.translate(x, y);
-  ctx.scale(1.7, 1.7);
-  x = 0;
-  y = 0;
-  const jW = 22,
-    jH = 48;
+  // Enlarged base constants (~1.4x) — no ctx.scale to avoid clipping
+  const jW = 31,
+    jH = 67;
   // Cabinet base
-  fillR(ctx, x + 1, y + jH - 6, jW - 2, 6, "#2a1a08");
-  fillR(ctx, x + 3, y + jH - 8, jW - 6, 4, "#3a2a10");
+  fillR(ctx, x + 1.4, y + jH - 8, jW - 3, 8, "#2a1a08");
+  fillR(ctx, x + 4, y + jH - 11, jW - 8, 6, "#3a2a10");
   // Main body
   ctx.save();
   ctx.shadowColor = "#ff880060";
-  ctx.shadowBlur = 10;
-  fillR(ctx, x, y + 8, jW, jH - 14, "#3a1a08");
+  ctx.shadowBlur = 14;
+  fillR(ctx, x, y + 11, jW, jH - 20, "#3a1a08");
   ctx.restore();
   // Top arch dome
   ctx.save();
   ctx.fillStyle = "#ff9030";
   ctx.beginPath();
-  ctx.ellipse(x + jW / 2, y + 9, jW / 2, 10, 0, Math.PI, 0);
+  ctx.ellipse(x + jW / 2, y + 13, jW / 2, 14, 0, Math.PI, 0);
   ctx.fill();
   ctx.fillStyle = "#ffb040";
   ctx.beginPath();
-  ctx.ellipse(x + jW / 2, y + 9, jW / 2 - 3, 7, 0, Math.PI, 0);
+  ctx.ellipse(x + jW / 2, y + 13, jW / 2 - 4, 10, 0, Math.PI, 0);
   ctx.fill();
   ctx.restore();
   // Speaker grill (center)
   ctx.save();
   ctx.fillStyle = "#1a1008";
-  fillR(ctx, x + 4, y + 18, jW - 8, 18, "#1a1008");
+  fillR(ctx, x + 6, y + 25, jW - 12, 25, "#1a1008");
   // Grill lines
   ctx.strokeStyle = "#5a3a18";
-  ctx.lineWidth = 1;
+  ctx.lineWidth = 1.4;
   for (let gi = 0; gi < 5; gi++) {
     ctx.beginPath();
-    ctx.moveTo(x + 5, y + 20 + gi * 3);
-    ctx.lineTo(x + jW - 5, y + 20 + gi * 3);
+    ctx.moveTo(x + 7, y + 28 + gi * 4.2);
+    ctx.lineTo(x + jW - 7, y + 28 + gi * 4.2);
     ctx.stroke();
   }
   ctx.restore();
@@ -738,18 +733,18 @@ export function drawJukebox(ctx, x, y, tick) {
   ctx.save();
   ctx.globalAlpha = 0.6;
   ctx.fillStyle = `hsl(${hue},100%,55%)`;
-  fillR(ctx, x + 2, y + 16, jW - 4, 3, `hsl(${hue},100%,55%)`);
+  fillR(ctx, x + 3, y + 22, jW - 6, 4, `hsl(${hue},100%,55%)`);
   ctx.fillStyle = `hsl(${(hue + 120) % 360},100%,55%)`;
-  fillR(ctx, x + 2, y + 37, jW - 4, 3, `hsl(${(hue + 120) % 360},100%,55%)`);
+  fillR(ctx, x + 3, y + 52, jW - 6, 4, `hsl(${(hue + 120) % 360},100%,55%)`);
   ctx.restore();
   // Dome glow (animated)
   ctx.save();
   ctx.globalAlpha = 0.3 + Math.sin(t * 3) * 0.15;
   ctx.shadowColor = "#ff8820";
-  ctx.shadowBlur = 14;
+  ctx.shadowBlur = 20;
   ctx.fillStyle = "#ff8820";
   ctx.beginPath();
-  ctx.ellipse(x + jW / 2, y + 5, 8, 5, 0, 0, Math.PI * 2);
+  ctx.ellipse(x + jW / 2, y + 7, 11, 7, 0, 0, Math.PI * 2);
   ctx.fill();
   ctx.restore();
   // Buttons row
@@ -758,18 +753,17 @@ export function drawJukebox(ctx, x, y, tick) {
     const pulse = Math.sin(t * 4 + bi * 1.1) > 0.3;
     ctx.fillStyle = pulse ? btnCols[bi] : btnCols[bi] + "60";
     ctx.beginPath();
-    ctx.arc(x + 5 + bi * 5, y + 42, 2, 0, Math.PI * 2);
+    ctx.arc(x + 7 + bi * 7, y + 59, 2.8, 0, Math.PI * 2);
     ctx.fill();
   }
   // Label
   ctx.save();
   ctx.fillStyle = "#ffcc60";
-  ctx.font = "bold 5px 'Press Start 2P', monospace";
+  ctx.font = "bold 7px 'Press Start 2P', monospace";
   ctx.textAlign = "center";
-  ctx.fillText("JUKE", x + jW / 2, y + 15);
+  ctx.fillText("JUKE", x + jW / 2, y + 21);
   ctx.textAlign = "left";
   ctx.restore();
-  ctx.restore(); // scale
 }
 
 export function drawCrystalBall(ctx, x, y, tick) {
