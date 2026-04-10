@@ -550,3 +550,45 @@ if (typeof window !== "undefined") {
     localStorage.setItem(key, JSON.stringify(lb));
   };
 })();
+
+// ════════════════════════════════════════════════════════════════
+//  SCREENSHOT EXPORT — capture office canvas as PNG
+// ════════════════════════════════════════════════════════════════
+(function initScreenshot() {
+  const btn = document.getElementById("btn-screenshot");
+  if (!btn) return;
+
+  btn.addEventListener("click", () => {
+    const canvas = document.getElementById("office");
+    if (!canvas) return;
+
+    // Flash effect
+    btn.textContent = "⏳";
+    btn.disabled = true;
+
+    // Use timeout so the current frame finishes rendering
+    setTimeout(() => {
+      try {
+        const dataUrl = canvas.toDataURL("image/png");
+        const link = document.createElement("a");
+        const now = new Date();
+        const stamp =
+          now.getFullYear() +
+          String(now.getMonth() + 1).padStart(2, "0") +
+          String(now.getDate()).padStart(2, "0") +
+          "_" +
+          String(now.getHours()).padStart(2, "0") +
+          String(now.getMinutes()).padStart(2, "0") +
+          String(now.getSeconds()).padStart(2, "0");
+        link.download = "agent-office_" + stamp + ".png";
+        link.href = dataUrl;
+        link.click();
+      } catch (e) {
+        console.error("[screenshot] failed:", e);
+      } finally {
+        btn.textContent = "📸 PNG";
+        btn.disabled = false;
+      }
+    }, 50);
+  });
+})();

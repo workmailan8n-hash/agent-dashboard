@@ -81,7 +81,7 @@ Autonomous development — Claude works on it daily, deploying improvements.
 ## Day 10 — Premium Polish
 - [x] Loading screen with pixel art progress bar
 - [x] Settings panel (toggle sounds, particles, animations)
-- [ ] Export office as PNG screenshot
+- [x] Export office as PNG screenshot
 - [ ] Export as GIF animation (5 second loop)
 
 ## Day 11 — Social Features
