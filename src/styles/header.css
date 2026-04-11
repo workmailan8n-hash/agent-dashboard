@@ -43,7 +43,8 @@ header {
 }
 
 #btn-leaderboard,
-#btn-settings {
+#btn-settings,
+#btn-screenshot {
   background: #2a2848;
   color: #c8d3f5;
   border: 1px solid #3a3860;
@@ -55,7 +56,8 @@ header {
   border-radius: 4px;
 }
 #btn-leaderboard:hover,
-#btn-settings:hover {
+#btn-settings:hover,
+#btn-screenshot:hover {
   border-color: var(--color-accent);
   color: var(--color-accent);
 }

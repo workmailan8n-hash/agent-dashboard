@@ -4188,8 +4188,8 @@ function drawDartAnimation(ctx, tick) {
   }
 
   const [_dBx, _dBy] = getAdminPos("darts", rX + 1.5, 0);
-  const boardX = OX + _dBx * T;
-  const boardY = OY + _dBy * T + 4;
+  const boardX = OX + (_dBx + 1) * T;
+  const boardY = OY + (_dBy + 0.5) * T;
   // Agent throw position
   const throwX = OX + dartPlayer.sx ? dartPlayer.sx - OX : (rX + 1.5) * T;
   const throwY = dartPlayer.sy ? dartPlayer.sy - 16 : OY + 7 * T;
@@ -14158,6 +14158,32 @@ function loop(now) {
 // ════════════════════════════════════════════════════════════════
 //  HEATMAP OVERLAY
 // ════════════════════════════════════════════════════════════════
+function drawOverlayEmptyState(ctx, title, accent) {
+  ctx.save();
+  const panW = 280,
+    panH = 80;
+  const panX = OX + 4,
+    panY = OY + 4;
+  ctx.fillStyle = "#0d1226ee";
+  ctx.fillRect(panX, panY, panW, panH);
+  ctx.strokeStyle = accent + "50";
+  ctx.lineWidth = 1;
+  ctx.strokeRect(panX + 0.5, panY + 0.5, panW - 1, panH - 1);
+  ctx.fillStyle = accent;
+  ctx.font = "7px 'Press Start 2P',monospace";
+  ctx.textAlign = "left";
+  ctx.fillText(title, panX + 10, panY + 18);
+  ctx.fillStyle = "#565f89";
+  ctx.font = "6px 'Press Start 2P',monospace";
+  ctx.textAlign = "center";
+  ctx.fillText("NO AGENT DATA YET", panX + panW / 2, panY + 44);
+  ctx.font = "5px 'Press Start 2P',monospace";
+  ctx.fillStyle = "#3a4070";
+  ctx.fillText("RUN DEMO OR WAIT FOR AGENTS", panX + panW / 2, panY + 62);
+  ctx.textAlign = "left";
+  ctx.restore();
+}
+
 function drawHeatmap(ctx) {
   ctx.save();
   // Draw each cell as a colored rectangle
@@ -14220,7 +14246,10 @@ function drawHeatmap(ctx) {
 // ════════════════════════════════════════════════════════════════
 function drawProductivityChart(ctx) {
   const agents = Object.values(agentStates);
-  if (agents.length === 0) return;
+  if (agents.length === 0) {
+    drawOverlayEmptyState(ctx, "PRODUCTIVITY [P]", "#bb9af7");
+    return;
+  }
   ctx.save();
   const panW = 230,
     rowH = 22,
@@ -14300,7 +14329,10 @@ function drawProductivityChart(ctx) {
 // ════════════════════════════════════════════════════════════════
 function drawTimeline(ctx) {
   const agents = Object.values(agentStates);
-  if (agents.length === 0) return;
+  if (agents.length === 0) {
+    drawOverlayEmptyState(ctx, "TIMELINE [T]", "#7aa2f7");
+    return;
+  }
   ctx.save();
 
   const now = Date.now();

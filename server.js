@@ -367,18 +367,15 @@ const server = http.createServer((req, res) => {
     return handleGetMyTasks(req, res, myTasks);
 
   if (method === "POST" && url === "/api/mytasks") {
-    if (!requireAuth(req, res)) return;
     return handlePostMyTask(req, res, myTasks, saveTasks, broadcast);
   }
 
   if (method === "PATCH" && url.startsWith("/api/mytasks/")) {
-    if (!requireAuth(req, res)) return;
     const taskId = url.slice("/api/mytasks/".length);
     return handlePatchMyTask(req, res, myTasks, saveTasks, broadcast, taskId);
   }
 
   if (method === "DELETE" && url.startsWith("/api/mytasks/")) {
-    if (!requireAuth(req, res)) return;
     const taskId = url.slice("/api/mytasks/".length);
     return handleDeleteMyTask(req, res, myTasks, saveTasks, broadcast, taskId);
   }
@@ -413,12 +410,10 @@ const server = http.createServer((req, res) => {
     );
 
   if (method === "POST" && url === "/api/demo") {
-    if (!requireAuth(req, res)) return;
     return handlePostDemo(req, res, agents, broadcast);
   }
 
   if (method === "DELETE" && url.startsWith("/api/demo/")) {
-    if (!requireAuth(req, res)) return;
     const demoId = url.slice("/api/demo/".length);
     return handleDeleteDemo(req, res, agents, broadcast, demoId);
   }
