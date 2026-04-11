@@ -1263,9 +1263,10 @@ function buildBackground() {
     fillR(ctx, aqx - 1, aqy - 2, aqW + 2, 4, "#606070");
 
     // ── 2. Dartboard (ON the top wall — row 0) ──────────────────
+    // Visual centered on middle of click hitbox (tx+1, ty+0.5) for pixel-perfect clicks
     const [_dartTx, _dartTy] = getAdminPos("darts", rX + 1.5, 0);
-    const dartWallX = OX + _dartTx * T;
-    const dartWallY = OY + _dartTy * T + 4;
+    const dartWallX = OX + (_dartTx + 1) * T;
+    const dartWallY = OY + (_dartTy + 0.5) * T;
     const DR = 13;
     // Wooden backing
     ctx.save();

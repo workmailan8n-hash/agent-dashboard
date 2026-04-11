@@ -511,6 +511,9 @@ if (typeof window !== "undefined") {
   );
   btnClose.addEventListener("click", close);
   backdrop.addEventListener("click", close);
+  document.addEventListener("keydown", (e) => {
+    if (e.key === "Escape" && panel.classList.contains("open")) close();
+  });
 
   tabs.forEach((tab) => {
     tab.addEventListener("click", () => {

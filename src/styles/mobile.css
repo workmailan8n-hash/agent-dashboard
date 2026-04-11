@@ -8,10 +8,20 @@
   header {
     max-width: 100%;
     gap: 8px;
+    flex-wrap: wrap;
+  }
+
+  /* Scroll canvas horizontally instead of scaling (preserves pixel art) */
+  .canvas-wrapper {
+    width: 100%;
+    max-width: 100%;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
   }
 
   canvas#office {
-    max-width: 100%;
+    max-width: none;
+    display: block;
   }
 
   #task-view {
@@ -74,7 +84,9 @@
   }
 
   #btn-leaderboard,
-  #btn-settings {
+  #btn-screenshot,
+  #btn-settings,
+  #btn-demo {
     min-height: 36px;
     min-width: 36px;
     padding: 4px 8px;
@@ -190,7 +202,9 @@
   }
 
   #btn-leaderboard,
-  #btn-settings {
+  #btn-screenshot,
+  #btn-settings,
+  #btn-demo {
     font-size: 4px;
     padding: 3px 6px;
   }
