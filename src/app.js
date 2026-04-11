@@ -5155,6 +5155,9 @@ let PER_ROW = 3,
   STEP_Y = 4,
   START_ROW = 1; // desk layout constants (global for obstacle grid / kanban)
 let ACT_ZONE_Y = 0; // Y row where gym/gaming/ping-pong zone starts
+// 4-room partition below ACT_ZONE_Y (Gaming/Gym/Lounge/Cafe)
+let ROOMS_DIVIDER_COL = 18; // vertical wall col splitting Gaming|Gym and Lounge|Cafe
+let ROOMS_MID_ROW = 0; // horizontal wall row splitting top rooms from bottom rooms (set in generateLayout)
 // Ping pong ball — shared between both players
 let PP_L = { tx: 0, ty: 0 },
   PP_R = { tx: 0, ty: 0 }; // player tile positions
@@ -5208,6 +5211,8 @@ function generateLayout(n) {
   const baseRows = LOUNGE_Y + couchRows * 3 + 1; // 1-row gap between lounge and activity zone
   ACT_ZONE_Y = baseRows;
   ROWS = Math.max(baseRows + 24, 70); // min 70 rows to fit all BUILTIN objects
+  // 4-room partition: horizontal wall sits halfway between top and bottom of activity zone
+  ROOMS_MID_ROW = ACT_ZONE_Y + 11; // ~10 rows for top rooms (Gaming/Gym), rest for bottom
   CH = OY + ROWS * T + OY;
   const cv = document.getElementById("office");
   if (cv) cv.height = CH;
@@ -6067,8 +6072,39 @@ function buildObstacleGrid() {
     if (c >= loungeDoorL && c <= loungeDoorR) continue;
     mark(c, 21);
   }
-  // (Activity wall removed — open flow between lounge and activity zone)
-  // (Sports wall, gym/gaming divider, sports/social divider all removed — open layout)
+
+  // ── 4-ROOM PARTITION BELOW ACT_ZONE_Y ─────────────────────────────
+  // Four themed rooms in 2x2 grid: Gaming|Gym (top) / Lounge|Cafe (bottom)
+  if (ACT_ZONE_Y > 0) {
+    const roomsTopRow = ACT_ZONE_Y + 1; // skip 1-row gap below couches
+    const roomsDividerCol = ROOMS_DIVIDER_COL;
+    const roomsMidRow = ROOMS_MID_ROW;
+    const roomsBottomRow = Math.min(ROWS - 2, roomsMidRow + 10);
+
+    // Vertical wall: Gaming | Gym (top half)
+    for (let r = roomsTopRow; r < roomsMidRow; r++) {
+      if (r >= roomsMidRow - 6 && r <= roomsMidRow - 5) continue; // door
+      mark(roomsDividerCol, r);
+    }
+    // Horizontal wall: top rooms / bottom rooms
+    const topBotDoor1L = Math.max(3, Math.floor(roomsDividerCol * 0.4));
+    const topBotDoor1R = topBotDoor1L + 1;
+    const topBotDoor2L = Math.min(
+      COLS - 4,
+      roomsDividerCol + Math.floor((COLS - roomsDividerCol) * 0.55),
+    );
+    const topBotDoor2R = topBotDoor2L + 1;
+    for (let c = 1; c < COLS - 1; c++) {
+      if (c >= topBotDoor1L && c <= topBotDoor1R) continue;
+      if (c >= topBotDoor2L && c <= topBotDoor2R) continue;
+      mark(c, roomsMidRow);
+    }
+    // Vertical wall: Lounge | Cafe (bottom half)
+    for (let r = roomsMidRow + 1; r <= roomsBottomRow; r++) {
+      if (r >= roomsMidRow + 5 && r <= roomsMidRow + 6) continue; // door
+      mark(roomsDividerCol, r);
+    }
+  }
 
   const rXobs = PER_ROW * STEP_X + 2;
 
@@ -7730,12 +7766,47 @@ function buildBackground() {
   // ── Lounge wall (horizontal, row 21, door in center) ──
   drawHWall(21, 1, COLS - 2, Math.floor(COLS * 0.3), Math.floor(COLS * 0.5));
 
-  // (Activity zone wall and gym/gaming divider removed — open layout)
+  // ── 4-ROOM PARTITION (below ACT_ZONE_Y) ──
+  if (ACT_ZONE_Y > 0 && ROOMS_MID_ROW > 0) {
+    const roomsTopRow = ACT_ZONE_Y + 1;
+    const dCol = ROOMS_DIVIDER_COL;
+    const mRow = ROOMS_MID_ROW;
+    const botRow = Math.min(ROWS - 2, mRow + 10);
 
-  // (Sports wall and dividers removed — open layout below lounge)
+    // Vertical wall: Gaming | Gym (top half)
+    drawVWall(dCol, roomsTopRow, mRow - 1, mRow - 6, mRow - 5);
 
-  // ── Room labels (small, subtle) ──
-  // (Room labels removed — clean open layout)
+    // Horizontal wall: top rooms / bottom rooms (2 doors)
+    const topBotDoor1L = Math.max(3, Math.floor(dCol * 0.4));
+    const topBotDoor2L = Math.min(
+      COLS - 4,
+      dCol + Math.floor((COLS - dCol) * 0.55),
+    );
+    // First segment (Gaming row → door → Gym row)
+    drawHWall(mRow, 1, dCol - 1, topBotDoor1L, topBotDoor1L + 1);
+    // Vertical divider crossing
+    fillR(ctx, OX + dCol * T, OY + mRow * T, T, T, "#252344");
+    // Second segment (Gym row → door → Cafe)
+    drawHWall(mRow, dCol + 1, COLS - 2, topBotDoor2L, topBotDoor2L + 1);
+
+    // Vertical wall: Lounge | Cafe (bottom half)
+    drawVWall(dCol, mRow + 1, botRow, mRow + 5, mRow + 6);
+
+    // Room labels (subtle)
+    ctx.save();
+    ctx.font = "bold 6px 'Press Start 2P',monospace";
+    ctx.textAlign = "center";
+    ctx.fillStyle = "#3a3860";
+    ctx.fillText("GAMING", OX + (dCol / 2) * T, OY + (roomsTopRow + 1) * T + 4);
+    ctx.fillText(
+      "GYM",
+      OX + ((dCol + COLS) / 2) * T,
+      OY + (roomsTopRow + 1) * T + 4,
+    );
+    ctx.fillText("LOUNGE", OX + (dCol / 2) * T, OY + (mRow + 2) * T + 4);
+    ctx.fillText("CAFE", OX + ((dCol + COLS) / 2) * T, OY + (mRow + 2) * T + 4);
+    ctx.restore();
+  }
 
   // Nameplate
   const npX = OX + Math.floor((COLS - 10) / 2) * T,
@@ -15556,6 +15627,26 @@ function buildAdminObjects() {
       col2: COLS,
       isOuter: true,
     },
+    {
+      id: "wall_rooms_divider",
+      label: "Rooms Divider \u2194",
+      type: "vertical",
+      pos: ROOMS_DIVIDER_COL,
+      min: 10,
+      max: COLS - 6,
+      row1: ACT_ZONE_Y + 1,
+      row2: Math.min(ROWS - 2, ROOMS_MID_ROW + 10),
+    },
+    {
+      id: "wall_rooms_mid",
+      label: "Rooms Mid \u2195",
+      type: "horizontal",
+      pos: ROOMS_MID_ROW,
+      min: ACT_ZONE_Y + 5,
+      max: ROWS - 4,
+      col1: 1,
+      col2: COLS - 2,
+    },
   ];
   const savedWalls = JSON.parse(localStorage.getItem("admin_walls") || "{}");
   for (const w of adminWalls) {
@@ -15589,6 +15680,10 @@ function applyWallPositions() {
     if (cv) cv.height = CH;
     bgBuf.height = CH;
   }
+  if (saved.wall_rooms_divider !== undefined)
+    ROOMS_DIVIDER_COL = Math.round(saved.wall_rooms_divider);
+  if (saved.wall_rooms_mid !== undefined)
+    ROOMS_MID_ROW = Math.round(saved.wall_rooms_mid);
   KITCHEN_DOOR_ROW = KITCHEN_START_ROW + 1;
 }
 
@@ -16012,6 +16107,8 @@ document.addEventListener("mouseup", (e) => {
       canvas.height = CH;
       bgBuf.height = CH;
     }
+    if (w2.id === "wall_rooms_divider") ROOMS_DIVIDER_COL = Math.round(w2.pos);
+    if (w2.id === "wall_rooms_mid") ROOMS_MID_ROW = Math.round(w2.pos);
   }
   buildBackground();
   buildObstacleGrid();
@@ -16047,6 +16144,8 @@ canvas.addEventListener("mouseup", (e) => {
         canvas.height = CH;
         bgBuf.height = CH;
       }
+      if (w.id === "wall_rooms_divider") ROOMS_DIVIDER_COL = Math.round(w.pos);
+      if (w.id === "wall_rooms_mid") ROOMS_MID_ROW = Math.round(w.pos);
     }
     // Rebuild everything
     buildBackground();

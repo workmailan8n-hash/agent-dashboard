@@ -77,41 +77,44 @@ export const BUILTIN_POSITIONS = {
   couch_18: { tx: 10, ty: 27.5 },
   couch_19: { tx: 18, ty: 25 },
 
-  // ═══ ACTIVITY ZONE ═══
-  server_rack: { tx: 1, ty: 46 },
-  printer_3d: { tx: 5, ty: 46 },
-  arcade: { tx: 3, ty: 46 },
-  rowing_machine: { tx: 7, ty: 46.5 },
-  tv: { tx: 11.5, ty: 47 },
-  gaming_sofa: { tx: 11.5, ty: 51 },
-  foosball: { tx: 8, ty: 53 },
-  pingpong: { tx: 18, ty: 51.5 },
-  jukebox: { tx: 28, ty: 51.5 },
-  pinball: { tx: 5, ty: 52 },
-  trophy_cabinet: { tx: 24.5, ty: 46 },
-  bookshelf: { tx: 26.5, ty: 46 },
-  slot_machine: { tx: 7, ty: 49.5 },
-  water_cooler: { tx: 24, ty: 6.5 },
-  disco_ball: { tx: 15, ty: 45 },
-  record_player: { tx: 25, ty: 54.2 },
+  // ═══ GAMING ROOM (top-left: cols 1-17, rows 44-53) ═══
+  arcade: { tx: 2, ty: 44 },
+  pinball: { tx: 5, ty: 44 },
+  slot_machine: { tx: 8, ty: 44 },
+  jukebox: { tx: 10, ty: 44 },
+  dj_console: { tx: 13, ty: 44 },
+  record_player: { tx: 13, ty: 46 },
+  foosball: { tx: 2, ty: 47 },
+  pingpong: { tx: 6, ty: 47 },
+  tv: { tx: 12, ty: 48 },
+  gaming_sofa: { tx: 12, ty: 51 },
+  neon_sign: { tx: 2, ty: 52 },
+  disco_ball: { tx: 8, ty: 51 },
 
-  // ═══ GYM & SPORTS ═══
-  gym: { tx: 2, ty: 56 },
-  basketball: { tx: 28.5, ty: 56 },
-  crystal_ball: { tx: 19.5, ty: 57 },
+  // ═══ GYM ROOM (top-right: cols 19-33, rows 44-53) ═══
+  gym: { tx: 20, ty: 45 },
+  rowing_machine: { tx: 26, ty: 45 },
+  basketball: { tx: 29, ty: 48 },
 
-  // ═══ BOTTOM ZONE ═══
-  dj_console: { tx: 25.2, ty: 52.5 },
-  rubber_duck: { tx: 16, ty: 66 },
-  nap_pod: { tx: 27, ty: 62 },
-  conf_table: { tx: 12, ty: 62 },
-  espresso_bar: { tx: 20, ty: 63 },
-  photo_booth: { tx: 16, ty: 53 },
-  zen_garden: { tx: 24, ty: 63 },
-  terrarium: { tx: 30, ty: 61 },
-  newtons_cradle: { tx: 32, ty: 61 },
-  popcorn_machine: { tx: 17, ty: 57 },
-  gumball_machine: { tx: 14, ty: 57 },
+  // ═══ LOUNGE ROOM (bot-left: cols 1-17, rows 55-64) ═══
+  photo_booth: { tx: 2, ty: 55 },
+  crystal_ball: { tx: 5, ty: 55 },
+  trophy_cabinet: { tx: 8, ty: 55 },
+  nap_pod: { tx: 10, ty: 55 },
+  zen_garden: { tx: 14, ty: 55 },
+  conf_table: { tx: 3, ty: 59 },
+  server_rack: { tx: 11, ty: 59 },
+  printer_3d: { tx: 14, ty: 59 },
+  rubber_duck: { tx: 10, ty: 62 },
+
+  // ═══ CAFE ROOM (bot-right: cols 19-33, rows 55-64) ═══
+  espresso_bar: { tx: 20, ty: 55 },
+  popcorn_machine: { tx: 24, ty: 55 },
+  gumball_machine: { tx: 27, ty: 55 },
+  bookshelf: { tx: 29, ty: 55 },
+  water_cooler: { tx: 20, ty: 59 },
+  terrarium: { tx: 23, ty: 59 },
+  newtons_cradle: { tx: 26, ty: 59 },
 };
 
 // Get position for an object — returns saved admin position or default
@@ -122,7 +125,7 @@ export function getAdminPos(id, defTx, defTy) {
 
 // Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
 // saved admin overrides in localStorage are wiped automatically.
-export const POS_SCHEMA = "6";
+export const POS_SCHEMA = "7";
 
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {
