@@ -47,7 +47,7 @@ class AgentState {
   constructor(id, slug) {
     this.id = id;
     this.slug = slug;
-    // Spawn on a random couch in the lounge (then walk to activity)
+    // Spawn AT THE DOOR (right wall, centred on lounge rug) and walk in to a couch.
     const couchPositions =
       COUCH_SLOTS.length > 0
         ? COUCH_SLOTS
@@ -55,16 +55,20 @@ class AgentState {
             { tx: 5, ty: 24 },
             { tx: 10, ty: 24 },
           ];
+    const doorTy =
+      COUCH_DEFS.length > 0 ? COUCH_DEFS[0].ty : Math.floor(ROWS * 0.38);
+    this.tx = COLS - 0.5;
+    this.ty = doorTy + 0.5;
     const spawnCouch =
       couchPositions[Math.floor(Math.random() * couchPositions.length)];
-    this.tx = spawnCouch.tx + (Math.random() - 0.5) * 0.5;
-    this.ty = spawnCouch.ty + (Math.random() - 0.5) * 0.5;
-    this.targetTx = this.tx;
-    this.targetTy = this.ty;
+    this.targetTx = spawnCouch.tx + (Math.random() - 0.5) * 0.5;
+    this.targetTy = spawnCouch.ty + (Math.random() - 0.5) * 0.5;
+    this.waypoints =
+      astar(this.tx, this.ty, this.targetTx, this.targetTy) || [];
     this.palette = getPalette(slug);
     // state machine
-    this.state = "sitting_couch"; // start sitting on couch
-    this._spawnSitTimer = 2 + Math.random() * 3; // sit for 2-5 seconds before moving
+    this.state = "walking_in"; // entering through the door, heading to a couch
+    this._spawnSitTimer = 0; // set when walking_in completes
     this._simsWaiting = false;
     this._simsTarget = null;
     this._queuedActivity = null; // {slotIdx, tx, ty, activityAnim} — next sims activity queued while busy
@@ -107,8 +111,11 @@ class AgentState {
     this.flip = Math.abs(h) % 3 === 1; // зеркалит позу на диване
     this.prevStatus = "";
     this.prevTool = ""; // track tool completion
-    this.waypoints = []; // A* path waypoints
-    this.facing = "S"; // direction: N,NE,E,SE,S,SW,W,NW,IDLE
+    // waypoints already initialised in spawn block above (astar to couch)
+    this.facing = "W"; // walking in from the door, facing west
+    // departure (exit through door) state
+    this._departing = false; // true once server signalled removal
+    this._readyToRemove = false; // true when arrived at door during walkout
     // mood tracking
     this.workTicks = 0; // accumulated seconds in working state
     this.totalTicks = 0; // total accumulated seconds alive
@@ -143,6 +150,24 @@ class AgentState {
     this.nextState = next;
     this.animTime = 0;
     this.animT = 0;
+  }
+
+  // Kick off exit animation: walk back to the door, then allow removal.
+  startDeparture() {
+    if (this._departing) return;
+    const doorTy =
+      COUCH_DEFS.length > 0 ? COUCH_DEFS[0].ty : Math.floor(ROWS * 0.38);
+    const doorTx = COLS - 0.5;
+    this.targetTx = doorTx;
+    this.targetTy = doorTy + 0.5;
+    this.waypoints =
+      astar(this.tx, this.ty, this.targetTx, this.targetTy) || [];
+    this.state = "walking_out";
+    this._departing = true;
+    this.isCleaning = false;
+    this._departingDesk = false;
+    this.arrived = false;
+    this.slotIdx = -1;
   }
 
   // Set movement target and compute pathfinding waypoints
@@ -209,6 +234,22 @@ class AgentState {
     // ── Spawn scale-in spring ─────────────────────────────────────
     if (this.spawnScale < 1) {
       this.spawnScale = Math.min(1, this.spawnScale + dt * 4);
+    }
+
+    // ── Door-exit walk (agent is leaving) ─────────────────────────
+    if (this._departing) {
+      if (this.moveToward(dt)) this._readyToRemove = true;
+      return;
+    }
+
+    // ── Door-entry walk (just spawned at the door) ────────────────
+    if (this.state === "walking_in") {
+      if (this.moveToward(dt)) {
+        // Arrived at a couch: sit and settle in, then join the normal flow.
+        this.state = "sitting_couch";
+        this._spawnSitTimer = 2 + Math.random() * 3;
+      }
+      return;
     }
 
     // ── Wave / nod timer decay ────────────────────────────────────

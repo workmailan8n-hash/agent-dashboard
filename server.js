@@ -296,6 +296,9 @@ function parseNewLines(filePath) {
 const SCAN_MAX_AGE_MS = 24 * 60 * 60 * 1000; // 24h
 // Max number of agents kept in memory (used by pruneAgents, defined here for hoisting)
 const MAX_AGENTS = 20;
+// Demo agents (flabber, content, etc — posted via /api/demo) stay on-screen for 15 min
+// of idleness before exiting. Users like seeing their bot "hang around the office".
+const DEMO_IDLE_REMOVAL_MS = 15 * 60 * 1000;
 
 function collectJsonlFiles(dir, results = [], depth = 0) {
   if (depth > 4) return results;
@@ -542,7 +545,7 @@ if (fs.existsSync(CLAUDE_PROJECTS_DIR)) {
   );
 }
 
-// Mark agents as idle after 30s, keep max 20 most recent agents
+// Mark agents as idle after 20s; reap demo agents after 15 min of idleness; cap non-demo to MAX_AGENTS
 function pruneAgents() {
   const now = Date.now();
   for (const agent of Object.values(agents)) {
@@ -555,14 +558,19 @@ function pruneAgents() {
       agent.currentToolLabel = null;
       broadcast({ type: "agent_update", agent: { ...agent } });
     }
+
+    // Demo agents (manually posted bots) exit after 15 min of inactivity.
+    if (agent.version === "demo" && ageMs > DEMO_IDLE_REMOVAL_MS) {
+      delete agents[agent.id];
+      broadcast({ type: "agent_remove", id: agent.id });
+    }
   }
 
-  // Keep only MAX_AGENTS most recently active — the rest "go home"
-  const sorted = Object.values(agents).sort(
-    (a, b) => new Date(b.lastActivity) - new Date(a.lastActivity),
-  );
-  if (sorted.length > MAX_AGENTS) {
-    for (const stale of sorted.slice(MAX_AGENTS)) {
+  // Non-demo agents (Claude Code via .jsonl): keep only MAX_AGENTS most recent
+  const nonDemo = Object.values(agents).filter((a) => a.version !== "demo");
+  nonDemo.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
+  if (nonDemo.length > MAX_AGENTS) {
+    for (const stale of nonDemo.slice(MAX_AGENTS)) {
       delete agents[stale.id];
       broadcast({ type: "agent_remove", id: stale.id });
     }

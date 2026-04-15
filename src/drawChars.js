@@ -37,8 +37,38 @@ function shd(ctx, cx, cy, rx = 8, ry = 3) {
   ctx.restore();
 }
 
+// ── Level 1 detail helpers ───────────────────────────────────────
+// Per-agent deterministic blink: ~120ms blink every 3.5-5.5 seconds.
+// Keyed off the palette string so each character blinks on its own rhythm.
+function _autoBlink(pal) {
+  if (!pal || !pal.hair || pal.robot || pal.alien) return false;
+  const h = pal.hair;
+  const seed =
+    (h.charCodeAt(1) || 0) * 31 +
+    (h.charCodeAt(2) || 0) * 7 +
+    (h.charCodeAt(3) || 0);
+  const period = 3.5 + ((seed * 17) % 200) / 100;
+  const t = (performance.now() / 1000 + seed * 0.13) % period;
+  return t < 0.12;
+}
+
+// Lighter highlight strand across the top of the hair for subtle depth.
+// Skips fantasy faces that already have custom headgear (robot/alien/hats/buns).
+function _hairHighlight(ctx, cx, cy, pal, yOffset = -16) {
+  if (!pal || !pal.hair || pal.robot || pal.alien || pal.bun || pal.hat) return;
+  const hex = pal.hair;
+  if (!hex.startsWith("#") || hex.length < 7) return;
+  const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + 40);
+  const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + 40);
+  const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + 40);
+  const tint = `rgb(${r},${g},${b})`;
+  px(ctx, cx - 5, cy + yOffset, 4, 1, tint);
+  px(ctx, cx + 1, cy + yOffset, 3, 1, tint);
+}
+
 // ── helpers: голова с аксессуарами ───────────────────────────────
 function drawHeadFront(ctx, cx, cy, pal, blink) {
+  blink = blink || _autoBlink(pal);
   // шея
   px(ctx, cx - 2, cy + 2, 4, 4, pal.skin);
   // ── Special pre-head features ───────────────────────────────────
@@ -165,6 +195,7 @@ function drawHeadFront(ctx, cx, cy, pal, blink) {
     ctx.fill();
     px(ctx, cx - 7, cy - 14, 4, 5, pal.hair);
     px(ctx, cx + 3, cy - 14, 4, 5, pal.hair);
+    _hairHighlight(ctx, cx, cy, pal, -16);
   }
   // глаза
   if (blink) {
@@ -345,6 +376,7 @@ function drawHeadBack(ctx, cx, cy, pal) {
     ctx.ellipse(cx, cy - 8, headW, 9, 0, 0, Math.PI * 2);
     ctx.fill();
     px(ctx, cx - 6, cy - 2, 12, 5, pal.hair);
+    _hairHighlight(ctx, cx, cy, pal, -14);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -423,6 +455,7 @@ function drawHeadSide(ctx, cx, cy, pal, flipLeft) {
     ctx.beginPath();
     ctx.ellipse(cx + d * 2, cy - 7, 5, 7, 0, 0, Math.PI * 2);
     ctx.fill();
+    _hairHighlight(ctx, cx - d * 2, cy, pal, -14);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -558,6 +591,7 @@ function drawHeadFront34(ctx, cx, cy, pal, flipLeft) {
     ctx.fill();
     px(ctx, cx - 7, cy - 14, 4, 5, pal.hair);
     px(ctx, cx + 3, cy - 14, 4, 5, pal.hair);
+    _hairHighlight(ctx, cx, cy, pal, -16);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -702,6 +736,7 @@ function drawHeadBack34(ctx, cx, cy, pal, flipLeft) {
     ctx.ellipse(cx + d * 4, cy - 6, 3, 6, 0, 0, Math.PI * 2);
     ctx.fill();
     px(ctx, cx - 6, cy - 2, 12, 5, pal.hair);
+    _hairHighlight(ctx, cx - d * 1, cy, pal, -14);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -3541,6 +3576,8 @@ function drawWritingWhiteboard(ctx, cx, cy, pal, t) {
 // ── DISPATCH: state name → draw fn ───────────────────────────────
 const CHAR_DRAW = {
   walking: drawWalking,
+  walking_in: drawWalking,
+  walking_out: drawWalking,
   sitting_down: drawSittingDown,
   standing_up: drawStandingUp,
   typing_normal: drawTypingNormal,

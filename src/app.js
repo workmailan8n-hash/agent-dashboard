@@ -23,7 +23,13 @@ import {
   drawDiscoBall,
 } from "./objects.js";
 import { drawObjectCached } from "./spriteCache.js";
-import { PALETTES, AGENT_TYPE_ROLES, getPalette, getRole } from "./agents.js";
+import {
+  PALETTES,
+  AGENT_TYPE_ROLES,
+  getPalette,
+  getRole,
+  getDisplayName,
+} from "./agents.js";
 import {
   BUILTIN_POSITIONS,
   getAdminPos,
@@ -418,8 +424,33 @@ function shd(ctx, cx, cy, rx = 8, ry = 3) {
   ctx.restore();
 }
 
+// ── Level 1 detail helpers ───────────────────────────────────────
+function _autoBlink(pal) {
+  if (!pal || !pal.hair || pal.robot || pal.alien) return false;
+  const h = pal.hair;
+  const seed =
+    (h.charCodeAt(1) || 0) * 31 +
+    (h.charCodeAt(2) || 0) * 7 +
+    (h.charCodeAt(3) || 0);
+  const period = 3.5 + ((seed * 17) % 200) / 100;
+  const t = (performance.now() / 1000 + seed * 0.13) % period;
+  return t < 0.12;
+}
+function _hairHighlight(ctx, cx, cy, pal, yOffset = -16) {
+  if (!pal || !pal.hair || pal.robot || pal.alien || pal.bun || pal.hat) return;
+  const hex = pal.hair;
+  if (!hex.startsWith("#") || hex.length < 7) return;
+  const r = Math.min(255, parseInt(hex.slice(1, 3), 16) + 40);
+  const g = Math.min(255, parseInt(hex.slice(3, 5), 16) + 40);
+  const b = Math.min(255, parseInt(hex.slice(5, 7), 16) + 40);
+  const tint = `rgb(${r},${g},${b})`;
+  px(ctx, cx - 5, cy + yOffset, 4, 1, tint);
+  px(ctx, cx + 1, cy + yOffset, 3, 1, tint);
+}
+
 // ── helpers: голова с аксессуарами ───────────────────────────────
 function drawHeadFront(ctx, cx, cy, pal, blink) {
+  blink = blink || _autoBlink(pal);
   // шея
   px(ctx, cx - 2, cy + 2, 4, 4, pal.skin);
   // ── Special pre-head features ───────────────────────────────────
@@ -463,23 +494,24 @@ function drawHeadFront(ctx, cx, cy, pal, blink) {
     ctx.fill();
   }
   if (pal.alien) {
-    // Alien antennae
+    // Alien antennae — sway on a slow sin wave
+    const sway = Math.sin(performance.now() / 700) * 2;
     ctx.strokeStyle = pal.hair;
     ctx.lineWidth = 1.5;
     ctx.beginPath();
     ctx.moveTo(cx - 3, cy - 16);
-    ctx.quadraticCurveTo(cx - 8, cy - 26, cx - 6, cy - 28);
+    ctx.quadraticCurveTo(cx - 8 + sway, cy - 26, cx - 6 + sway, cy - 28);
     ctx.stroke();
     ctx.beginPath();
     ctx.moveTo(cx + 3, cy - 16);
-    ctx.quadraticCurveTo(cx + 8, cy - 26, cx + 6, cy - 28);
+    ctx.quadraticCurveTo(cx + 8 + sway, cy - 26, cx + 6 + sway, cy - 28);
     ctx.stroke();
     ctx.fillStyle = pal.accent;
     ctx.beginPath();
-    ctx.arc(cx - 6, cy - 28, 2.5, 0, Math.PI * 2);
+    ctx.arc(cx - 6 + sway, cy - 28, 2.5, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
-    ctx.arc(cx + 6, cy - 28, 2.5, 0, Math.PI * 2);
+    ctx.arc(cx + 6 + sway, cy - 28, 2.5, 0, Math.PI * 2);
     ctx.fill();
   }
   // голова
@@ -546,6 +578,7 @@ function drawHeadFront(ctx, cx, cy, pal, blink) {
     ctx.fill();
     px(ctx, cx - 7, cy - 14, 4, 5, pal.hair);
     px(ctx, cx + 3, cy - 14, 4, 5, pal.hair);
+    _hairHighlight(ctx, cx, cy, pal, -16);
   }
   // глаза
   if (blink) {
@@ -569,17 +602,22 @@ function drawHeadFront(ctx, cx, cy, pal, blink) {
     ctx.ellipse(cx + 4, cy - 10, 3, 2, 0, 0, Math.PI * 2);
     ctx.fill();
   } else if (pal.robot) {
-    // Visor / LED eyes
+    // Visor / LED eyes — pulsing glow
+    const pulse = 0.7 + 0.3 * Math.sin(performance.now() / 450);
     ctx.fillStyle = "#001828";
     ctx.fillRect(cx - 6, cy - 12, 12, 5);
     ctx.fillStyle = pal.accent;
     ctx.fillRect(cx - 5, cy - 11, 10, 3);
-    ctx.fillStyle = "#ffffff80";
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = "#ffffffaa";
     ctx.fillRect(cx - 5, cy - 11, 4, 2);
-    ctx.fillStyle = "#ffffff40";
+    ctx.fillStyle = "#ffffff66";
     ctx.fillRect(cx + 2, cy - 11, 3, 2);
+    ctx.restore();
   } else if (pal.demon) {
-    // Glowing eyes
+    // Glowing eyes that breathe a flame pulse
+    const pulse = 0.75 + 0.25 * Math.sin(performance.now() / 320);
     ctx.fillStyle = "#ff2000";
     ctx.beginPath();
     ctx.ellipse(cx - 3, cy - 10, 3, 2.5, 0, 0, Math.PI * 2);
@@ -587,13 +625,16 @@ function drawHeadFront(ctx, cx, cy, pal, blink) {
     ctx.beginPath();
     ctx.ellipse(cx + 3, cy - 10, 3, 2.5, 0, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = "#ff8000aa";
+    ctx.save();
+    ctx.globalAlpha = pulse;
+    ctx.fillStyle = "#ffb040";
     ctx.beginPath();
     ctx.arc(cx - 3, cy - 10, 2, 0, Math.PI * 2);
     ctx.fill();
     ctx.beginPath();
     ctx.arc(cx + 3, cy - 10, 2, 0, Math.PI * 2);
     ctx.fill();
+    ctx.restore();
   } else {
     ctx.fillStyle = "#1a1b26";
     ctx.fillRect(cx - 4, cy - 11, 4, 3);
@@ -601,6 +642,11 @@ function drawHeadFront(ctx, cx, cy, pal, blink) {
     ctx.fillStyle = "#ffffff80";
     ctx.fillRect(cx - 4, cy - 11, 2, 2);
     ctx.fillRect(cx + 1, cy - 11, 2, 2);
+    // Eyebrows — thin darker line above each eye for face definition.
+    if (!pal.hat) {
+      px(ctx, cx - 5, cy - 12, 5, 1, pal.hair + "cc");
+      px(ctx, cx + 1, cy - 12, 5, 1, pal.hair + "cc");
+    }
     if (pal.fatigue) {
       ctx.fillStyle = "#80405050";
       ctx.fillRect(cx - 4, cy - 8, 4, 1);
@@ -726,6 +772,7 @@ function drawHeadBack(ctx, cx, cy, pal) {
     ctx.ellipse(cx, cy - 8, headW, 9, 0, 0, Math.PI * 2);
     ctx.fill();
     px(ctx, cx - 6, cy - 2, 12, 5, pal.hair);
+    _hairHighlight(ctx, cx, cy, pal, -14);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -804,6 +851,7 @@ function drawHeadSide(ctx, cx, cy, pal, flipLeft) {
     ctx.beginPath();
     ctx.ellipse(cx + d * 2, cy - 7, 5, 7, 0, 0, Math.PI * 2);
     ctx.fill();
+    _hairHighlight(ctx, cx - d * 2, cy, pal, -14);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -939,6 +987,7 @@ function drawHeadFront34(ctx, cx, cy, pal, flipLeft) {
     ctx.fill();
     px(ctx, cx - 7, cy - 14, 4, 5, pal.hair);
     px(ctx, cx + 3, cy - 14, 4, 5, pal.hair);
+    _hairHighlight(ctx, cx, cy, pal, -16);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -1083,6 +1132,7 @@ function drawHeadBack34(ctx, cx, cy, pal, flipLeft) {
     ctx.ellipse(cx + d * 4, cy - 6, 3, 6, 0, 0, Math.PI * 2);
     ctx.fill();
     px(ctx, cx - 6, cy - 2, 12, 5, pal.hair);
+    _hairHighlight(ctx, cx - d * 1, cy, pal, -14);
   } else if (pal.robot) {
     ctx.fillStyle = "#304050";
     ctx.beginPath();
@@ -1107,6 +1157,13 @@ function drawWalkS(ctx, cx, cy, pal, t) {
   const aL = Math.sin(ph + Math.PI) * 4;
   const aR = Math.sin(ph) * 4;
   shd(ctx, cx, cy + 16);
+  // Cat tail — draws first so body covers its root. Swings with the walk.
+  if (pal.cat) {
+    const tailSwing = Math.sin(ph + Math.PI * 0.5) * 3;
+    px(ctx, cx + 7, cy + 4 - bob, 2, 6, pal.hair);
+    px(ctx, cx + 8 + tailSwing, cy - 1 - bob, 2, 5, pal.hair);
+    px(ctx, cx + 9 + tailSwing, cy - 5 - bob, 2, 4, pal.hair);
+  }
   px(ctx, cx - 5, cy + 4 + lL, 5, 9, pal.pants);
   px(ctx, cx + 1, cy + 4 + lR, 5, 9, pal.pants);
   px(ctx, cx - 6, cy + 12 + lL, 6, 4, "#1a1a2a");
@@ -1116,6 +1173,8 @@ function drawWalkS(ctx, cx, cy, pal, t) {
   px(ctx, cx - 6, cy - 2 - bob, 12, 9, pal.shirt);
   px(ctx, cx - 1, cy - 1 - bob, 2, 3, pal.skin);
   px(ctx, cx + 2, cy + 1 - bob, 3, 4, "#ffffff1a");
+  px(ctx, cx - 6, cy - 2 - bob, 12, 1, "#00000033"); // shoulder seam
+  px(ctx, cx - 6, cy + 6 - bob, 12, 1, "#00000044"); // shirt hem
   px(ctx, cx - 10, cy + aL - bob, 4, 7, pal.skin);
   px(ctx, cx - 10, cy + 6 + aL - bob, 4, 3, pal.skin);
   px(ctx, cx + 6, cy + aR - bob, 4, 7, pal.skin);
@@ -1316,6 +1375,8 @@ function drawSittingDown(ctx, cx, cy, pal, t) {
   const e = ease.inOut(t);
   const sinkY = e * 9; // body sinks into chair
   const legFold = e * 5; // legs fold under
+  // Slow breathing once the sit-down is complete (e≈1): torso bobs ±1px.
+  const breath = e > 0.95 ? Math.sin(performance.now() / 1200) * 0.8 : 0;
   shd(ctx, cx, cy + 14);
   // legs bending as agent lowers
   px(ctx, cx - 4, cy + 6 + sinkY, 4, Math.max(3, 8 - legFold) | 0, pal.pants);
@@ -1327,15 +1388,16 @@ function drawSittingDown(ctx, cx, cy, pal, t) {
     px(ctx, cx + 1, cy + 13, 5, 3, "#1a1a2a");
     ctx.globalAlpha = 1;
   }
-  // torso sinking
-  px(ctx, cx - 5, cy - 2 + sinkY, 11, 9, pal.shirt);
-  px(ctx, cx, cy - 1 + sinkY, 1, 7, "#ffffff18");
+  // torso sinking (with subtle breathing once sat)
+  px(ctx, cx - 5, cy - 2 + sinkY + breath, 11, 9, pal.shirt);
+  px(ctx, cx, cy - 1 + sinkY + breath, 1, 7, "#ffffff18");
+  px(ctx, cx - 5, cy - 2 + sinkY + breath, 11, 1, "#00000033"); // shoulder seam
   // arms settling onto desk
   const armDrop = e * 4;
   px(ctx, cx - 11, cy + 1 + armDrop, 7, 3, pal.skin);
   px(ctx, cx + 4, cy + 1 + armDrop, 7, 3, pal.skin);
-  // head follows body
-  drawHeadFront(ctx, cx, cy - 12 + sinkY * 0.75, pal, false);
+  // head follows body (breath adds micro head bob too)
+  drawHeadFront(ctx, cx, cy - 12 + sinkY * 0.75 + breath, pal, false);
 }
 
 // ── typing_normal (back to viewer, slow bob) ──────────────────────
@@ -1343,6 +1405,7 @@ function drawTypingNormal(ctx, cx, cy, pal, t) {
   const ph = t * Math.PI * 2;
   const arm = Math.sin(ph) * 2.5;
   const nod = Math.sin(ph * 0.3) * 1.5;
+  const twist = Math.sin(ph * 0.5) * 1; // subtle torso twist
   shd(ctx, cx, cy + 16);
   // legs
   px(ctx, cx - 5, cy + 5, 5, 9, pal.pants);
@@ -1352,11 +1415,14 @@ function drawTypingNormal(ctx, cx, cy, pal, t) {
   // keyboard glow
   ctx.fillStyle = "#3a60d840";
   ctx.fillRect((cx - 12) | 0, (cy + 2) | 0, 24, 3);
-  // body
+  // body (with gentle twist)
+  cx += twist;
   px(ctx, cx - 6, cy - 3, 13, 9, pal.shirt);
   px(ctx, cx - 1, cy - 2, 2, 7, "#ffffff18");
   px(ctx, cx - 8, cy - 1, 3, 4, pal.shirt);
   px(ctx, cx + 5, cy - 1, 3, 4, pal.shirt);
+  // shoulder seam darker line for depth
+  px(ctx, cx - 6, cy - 3, 13, 1, "#00000033");
   // arms reaching to keyboard
   px(ctx, cx - 13, cy + arm, 8, 3, pal.skin);
   px(ctx, cx - 13, cy + 3 + arm, 5, 4, pal.skin);
@@ -1389,6 +1455,7 @@ function drawTypingFurious(ctx, cx, cy, pal, t) {
   // leaning body
   px(ctx, cx - 6 + shk, cy - 4, 13, 11, pal.shirt);
   px(ctx, cx - 1 + shk, cy - 3, 2, 8, "#ffffff18");
+  px(ctx, cx - 6 + shk, cy - 4, 13, 1, "#00000033"); // shoulder seam
   // arms flying
   px(ctx, cx - 15 + shk, cy - 1 + arm, 10, 3, pal.skin);
   px(ctx, cx + 5 + shk, cy - 1 - arm, 10, 3, pal.skin);
@@ -1411,6 +1478,7 @@ function drawTypingFurious(ctx, cx, cy, pal, t) {
 // ── thinking (side profile, hand on chin) ────────────────────────
 function drawThinking(ctx, cx, cy, pal, t) {
   const bob = Math.sin(t * Math.PI * 2 * 0.3) * 1.5;
+  const tilt = Math.sin(t * Math.PI * 2 * 0.22) * 2; // subtle side head tilt
   const eyeLid = Math.abs(Math.sin(t * Math.PI * 2 * 0.4)); // slow blink
   shd(ctx, cx, cy + 14);
   px(ctx, cx - 4, cy + 7, 4, 7, pal.pants);
@@ -1424,7 +1492,7 @@ function drawThinking(ctx, cx, cy, pal, t) {
   px(ctx, cx + 8, cy - 4, 5, 3, pal.skin); // forearm to chin
   // head (side profile) — turned slightly
   ctx.save();
-  ctx.translate(cx, cy - 9 + bob);
+  ctx.translate(cx + tilt, cy - 9 + bob);
   ctx.fillStyle = pal.skin;
   ctx.beginPath();
   ctx.ellipse(-1, 0, 6, 8, 0, 0, Math.PI * 2);
@@ -5168,7 +5236,7 @@ let printerActive = 0; // countdown timer for printer animation
 let trashLevel = 0; // 0-10: how full the trash can is
 let trashAgentId = null; // agent currently assigned to stomp trash
 
-let _maxLayoutN = 12; // minimum 12 agents worth of space — office never shrinks
+let _maxLayoutN = 20; // FOUNDATION: office always sized for 20 agents — ACT_ZONE_Y=43 fixed, 4-room layout positions are static and stable
 function generateLayout(n) {
   const count = Math.max(1, n);
   _maxLayoutN = Math.max(_maxLayoutN, count);
@@ -5210,7 +5278,7 @@ function generateLayout(n) {
   const couchRows = Math.ceil(stableCount / COUCH_PER_ROW);
   const baseRows = LOUNGE_Y + couchRows * 3 + 1; // 1-row gap between lounge and activity zone
   ACT_ZONE_Y = baseRows;
-  ROWS = Math.max(baseRows + 24, 70); // min 70 rows to fit all BUILTIN objects
+  ROWS = Math.max(baseRows + 23, 66); // tight: rooms end at row 64, outer wall row 65
   // 4-room partition: horizontal wall sits halfway between top and bottom of activity zone
   ROOMS_MID_ROW = ACT_ZONE_Y + 11; // ~10 rows for top rooms (Gaming/Gym), rest for bottom
   CH = OY + ROWS * T + OY;
@@ -7117,6 +7185,36 @@ function buildBackground() {
         row >= KIT_ROW_START &&
         row <= KIT_ROW_END &&
         !(row >= KIT_ROW_START + 2 && row <= KIT_ROW_START + 5);
+
+      // 4-room zone classification (below ACT_ZONE_Y, inside their bounds)
+      const roomsTop = ACT_ZONE_Y > 0 ? ACT_ZONE_Y + 1 : 0;
+      const roomsMid = ROOMS_MID_ROW > 0 ? ROOMS_MID_ROW : 0;
+      const roomsBot = Math.min(ROWS - 2, roomsMid + 10);
+      const dCol = ROOMS_DIVIDER_COL;
+      const inGamingRoom =
+        roomsTop > 0 &&
+        row >= roomsTop &&
+        row < roomsMid &&
+        col >= 1 &&
+        col < dCol;
+      const inGymRoom =
+        roomsTop > 0 &&
+        row >= roomsTop &&
+        row < roomsMid &&
+        col > dCol &&
+        col < COLS - 1;
+      const inLoungeRoom =
+        roomsMid > 0 &&
+        row > roomsMid &&
+        row <= roomsBot &&
+        col >= 1 &&
+        col < dCol;
+      const inCafeRoom =
+        roomsMid > 0 &&
+        row > roomsMid &&
+        row <= roomsBot &&
+        col > dCol &&
+        col < COLS - 1;
       if (wall) {
         if (row === 0) {
           fillR(ctx, x, y, T, T, "#16152e");
@@ -7137,6 +7235,103 @@ function buildBackground() {
         fillR(ctx, x, y, T, T, checker ? "#cec8bc" : "#c4beb2");
         fillR(ctx, x, y + T - 1, T, 1, "rgba(0,0,0,0.13)"); // grout H
         fillR(ctx, x + T - 1, y, 1, T, "rgba(0,0,0,0.13)"); // grout V
+      } else if (inGamingRoom) {
+        // ── GAMING — Cyberpunk neon grid carpet ──────────────────
+        // Base: deep midnight blue
+        fillR(ctx, x, y, T, T, "#121030");
+        // Radial gradient-ish darker spots via sparse fills
+        fillR(ctx, x + 2, y + 2, T - 4, T - 4, "#161438");
+        fillR(ctx, x + 5, y + 5, T - 10, T - 10, "#1a1842");
+        // Neon grid lines (thin cyan/magenta at tile edges)
+        const gridColor = (row + col) % 2 === 0 ? "#2a5aa0" : "#6a2a8a";
+        fillR(ctx, x, y, T, 1, gridColor + "70"); // top
+        fillR(ctx, x, y, 1, T, gridColor + "70"); // left
+        // Diagonal neon stripe every 5 tiles
+        if ((row + col) % 5 === 0) {
+          fillR(ctx, x + 6, y + 6, 2, 2, "#00ffff");
+          fillR(ctx, x + T - 8, y + T - 8, 2, 2, "#ff00aa");
+        }
+        // Random bright pixels — glowing specks
+        if ((row * 13 + col * 7) % 11 === 0)
+          fillR(
+            ctx,
+            x + ((col * 17) % (T - 4)),
+            y + ((row * 11) % (T - 4)),
+            1,
+            1,
+            "#aaccff",
+          );
+        if ((row * 7 + col * 13) % 17 === 0)
+          fillR(
+            ctx,
+            x + ((col * 23) % (T - 4)),
+            y + ((row * 19) % (T - 4)),
+            1,
+            1,
+            "#ff6adc",
+          );
+      } else if (inGymRoom) {
+        // ── GYM — Basketball court hardwood (rich polished planks) ──
+        // Alternating plank shades with 3-row period
+        const pi = (row + ((col / 4) | 0)) % 3;
+        const plankC = ["#8a5a2e", "#7a4d26", "#694120"][pi];
+        fillR(ctx, x, y, T, T, plankC);
+        // Strong plank seam at bottom
+        fillR(ctx, x, y + T - 2, T, 2, "#3a2010");
+        fillR(ctx, x, y + T - 1, T, 1, "#1a0e04");
+        // Vertical plank joint every 4 cols
+        if (col % 4 === 0) fillR(ctx, x, y, 1, T, "#3a2010");
+        // Wood grain streaks — varied per tile
+        const grainX = (col * 7 + row * 3) % (T - 4);
+        fillR(ctx, x + grainX, y + 2, 1, T - 4, "rgba(50,25,8,0.25)");
+        if ((col * 11 + row * 5) % 7 === 0) {
+          const gx = (col * 19) % (T - 6);
+          fillR(ctx, x + gx, y + 4, 1, T - 8, "rgba(255,220,170,0.08)");
+        }
+        // Highlight shine at top of plank
+        fillR(ctx, x, y, T, 1, "rgba(255,230,180,0.12)");
+      } else if (inLoungeRoom) {
+        // ── LOUNGE — Persian rug / soft wool carpet ──
+        // Base deep forest green
+        fillR(ctx, x, y, T, T, "#2a5032");
+        // Diamond pattern via 4 inner rects
+        const dark = "#22452a";
+        const lite = "#356040";
+        fillR(ctx, x + 2, y + 2, T - 4, T - 4, dark);
+        fillR(ctx, x + 6, y + 6, T - 12, T - 12, lite);
+        // Center dot
+        fillR(ctx, x + T / 2 - 2, y + T / 2 - 2, 4, 4, "#4a7a55");
+        fillR(ctx, x + T / 2 - 1, y + T / 2 - 1, 2, 2, "#6aa070");
+        // Corner ornamental dots
+        const ornC = "#6a8060";
+        fillR(ctx, x + 4, y + 4, 2, 2, ornC);
+        fillR(ctx, x + T - 6, y + 4, 2, 2, ornC);
+        fillR(ctx, x + 4, y + T - 6, 2, 2, ornC);
+        fillR(ctx, x + T - 6, y + T - 6, 2, 2, ornC);
+        // Soft border line between rug pieces
+        fillR(ctx, x, y + T - 1, T, 1, "rgba(0,0,0,0.3)");
+        fillR(ctx, x + T - 1, y, 1, T, "rgba(0,0,0,0.3)");
+      } else if (inCafeRoom) {
+        // ── CAFE — Hexagonal terracotta mosaic ──
+        // Warm sandstone base
+        const ck = (row + col) % 2;
+        const base = ck ? "#d4b280" : "#c09860";
+        fillR(ctx, x, y, T, T, base);
+        // Hex-ish inset via corner cuts (diamonds between corners)
+        fillR(ctx, x, y, 4, 4, ck ? "#a87840" : "#906530"); // top-left corner
+        fillR(ctx, x + T - 4, y, 4, 4, ck ? "#a87840" : "#906530"); // top-right
+        fillR(ctx, x, y + T - 4, 4, 4, ck ? "#a87840" : "#906530"); // bot-left
+        fillR(ctx, x + T - 4, y + T - 4, 4, 4, ck ? "#a87840" : "#906530"); // bot-right
+        // Tile center highlight
+        fillR(ctx, x + 6, y + 6, T - 12, T - 12, ck ? "#deba8a" : "#cca570");
+        // Grout lines
+        fillR(ctx, x, y + T - 1, T, 1, "#5a3820");
+        fillR(ctx, x + T - 1, y, 1, T, "#5a3820");
+        // Accent tile — dark mosaic chip every ~6 tiles
+        if ((row * 3 + col * 5) % 11 === 0) {
+          fillR(ctx, x + T / 2 - 2, y + T / 2 - 2, 4, 4, "#5a2f10");
+          fillR(ctx, x + T / 2 - 1, y + T / 2 - 1, 2, 2, "#3a1a06");
+        }
       } else {
         // Wood floor planks — rows of alternating shades with grain
         const pi = (row + ((col / 5) | 0)) % 3;
@@ -9582,7 +9777,7 @@ class AgentState {
   constructor(id, slug) {
     this.id = id;
     this.slug = slug;
-    // Spawn on a random couch in the lounge (then walk to activity)
+    // Spawn AT THE DOOR (right wall, centred on lounge rug) and walk in to a couch.
     const couchPositions =
       COUCH_SLOTS.length > 0
         ? COUCH_SLOTS
@@ -9590,16 +9785,23 @@ class AgentState {
             { tx: 5, ty: 24 },
             { tx: 10, ty: 24 },
           ];
+    const doorTy =
+      COUCH_DEFS.length > 0 ? COUCH_DEFS[0].ty : Math.floor(ROWS * 0.38);
+    this.tx = COLS - 0.5;
+    this.ty = doorTy + 0.5;
     const spawnCouch =
       couchPositions[Math.floor(Math.random() * couchPositions.length)];
-    this.tx = spawnCouch.tx + (Math.random() - 0.5) * 0.5;
-    this.ty = spawnCouch.ty + (Math.random() - 0.5) * 0.5;
-    this.targetTx = this.tx;
-    this.targetTy = this.ty;
-    this.palette = getPalette(slug);
+    this.targetTx = spawnCouch.tx + (Math.random() - 0.5) * 0.5;
+    this.targetTy = spawnCouch.ty + (Math.random() - 0.5) * 0.5;
+    this.waypoints =
+      astar(this.tx, this.ty, this.targetTx, this.targetTy) || [];
+    this.palette = getPalette(slug, id);
     // state machine
-    this.state = "sitting_couch"; // start sitting on couch
-    this._spawnSitTimer = 2 + Math.random() * 3; // sit for 2-5 seconds before moving
+    this.state = "walking_in"; // entering through the door, heading to a couch
+    this._spawnSitTimer = 0; // set when walking_in completes
+    // departure (exit through door) state
+    this._departing = false; // true once server signalled removal
+    this._readyToRemove = false; // true when arrived at door during walkout
     this._simsWaiting = false;
     this._simsTarget = null;
     this._simsArrivalPending = false;
@@ -9642,8 +9844,8 @@ class AgentState {
     this.flip = Math.abs(h) % 3 === 1; // зеркалит позу на диване
     this.prevStatus = "";
     this.prevTool = ""; // track tool completion
-    this.waypoints = []; // A* path waypoints
-    this.facing = "S"; // direction: N,NE,E,SE,S,SW,W,NW,IDLE
+    // waypoints already initialised in spawn block above (astar to couch)
+    this.facing = "W"; // walking in from the door, facing west
     // mood tracking
     this.workTicks = 0; // accumulated seconds in working state
     this.totalTicks = 0; // total accumulated seconds alive
@@ -9680,6 +9882,23 @@ class AgentState {
     this.nextState = next;
     this.animTime = 0;
     this.animT = 0;
+  }
+
+  // Kick off exit animation: walk back to the door, then allow removal.
+  startDeparture() {
+    if (this._departing) return;
+    const doorTy =
+      COUCH_DEFS.length > 0 ? COUCH_DEFS[0].ty : Math.floor(ROWS * 0.38);
+    this.targetTx = COLS - 0.5;
+    this.targetTy = doorTy + 0.5;
+    this.waypoints =
+      astar(this.tx, this.ty, this.targetTx, this.targetTy) || [];
+    this.state = "walking_out";
+    this._departing = true;
+    this.isCleaning = false;
+    this._departingDesk = false;
+    this.arrived = false;
+    this.slotIdx = -1;
   }
 
   // Set movement target and compute pathfinding waypoints
@@ -9746,6 +9965,52 @@ class AgentState {
     // ── Spawn scale-in spring ─────────────────────────────────────
     if (this.spawnScale < 1) {
       this.spawnScale = Math.min(1, this.spawnScale + dt * 4);
+    }
+
+    // ── Door-exit walk (agent is leaving) ─────────────────────────
+    if (this._departing) {
+      // keep the walk cycle animating while moving
+      const cfg = ANIM.walking;
+      this.animTime += dt;
+      this.animT = ((this.animTime * cfg.fps) / cfg.frames) % 1;
+      if (this.moveToward(dt)) this._readyToRemove = true;
+      return;
+    }
+
+    // ── Door-entry walk (just spawned at the door) ────────────────
+    if (this.state === "walking_in") {
+      const cfg = ANIM.walking;
+      this.animTime += dt;
+      this.animT = ((this.animTime * cfg.fps) / cfg.frames) % 1;
+      // If the agent is already busy, skip the couch detour — head straight to a desk.
+      const busyNow =
+        agentData?.status === "working" || agentData?.status === "thinking";
+      if (busyNow && this.slotIdx === -1) {
+        for (let i = 0; i < DESK_SLOTS.length; i++) {
+          if (!deskSet.has(i)) {
+            this.slotIdx = i;
+            deskSet.add(i);
+            const sp = DESK_SLOTS[i];
+            this.setTarget(sp.tx, sp.ty);
+            break;
+          }
+        }
+      }
+      if (this.moveToward(dt)) {
+        if (busyNow) {
+          // Arrived at a desk while busy — let the normal state machine take over immediately.
+          this.state = "walking";
+          this.arrived = true;
+          this.isWorking = true;
+        } else {
+          // Arrived at a couch idle: sit briefly, then join the normal flow.
+          this.state = "sitting_couch";
+          this._spawnSitTimer = 2 + Math.random() * 3;
+        }
+        this.animTime = 0;
+        this.animT = 0;
+      }
+      return;
     }
 
     // ── Wave / nod timer decay ────────────────────────────────────
@@ -10216,10 +10481,13 @@ class AgentState {
     ctx.translate(this.sx, this.sy);
     ctx.scale(AGENT_SCALE, AGENT_SCALE);
     ctx.translate(-this.sx, -this.sy);
-    const fn =
-      this.state === "walking"
-        ? (WALK_DIR_FN[this.facing] ?? drawWalkS)
-        : (CHAR_DRAW[this.state] ?? drawWalking);
+    const isWalking =
+      this.state === "walking" ||
+      this.state === "walking_in" ||
+      this.state === "walking_out";
+    const fn = isWalking
+      ? (WALK_DIR_FN[this.facing] ?? drawWalkS)
+      : (CHAR_DRAW[this.state] ?? drawWalking);
     fn(ctx, this.sx, this.sy, this.palette, this.animT);
     ctx.restore();
   }
@@ -10229,7 +10497,7 @@ class AgentState {
       ctx,
       this.sx,
       this.sy,
-      getRole(this.lastAgentData || { slug: this.slug }),
+      getDisplayName(this.lastAgentData || { id: this.id, slug: this.slug }),
       this.labelScale,
       this.burnout,
       this.trait,
@@ -12750,20 +13018,26 @@ function loop(now) {
   // ── Sync ─────────────────────────────────────────────────────
   for (const id of Object.keys(agentStates)) {
     if (!agentsData[id]) {
-      // Release any held idle slot (including queued reservations)
-      for (const k of Object.keys(idleOccupied)) {
-        const v = idleOccupied[k];
-        if (v === id || v === "__queued_" + id) delete idleOccupied[k];
+      const st = agentStates[id];
+      // Kick off the walk-to-door animation on first removal signal.
+      if (!st._departing) {
+        // Release any held idle slot (including queued reservations)
+        for (const k of Object.keys(idleOccupied)) {
+          const v = idleOccupied[k];
+          if (v === id || v === "__queued_" + id) delete idleOccupied[k];
+        }
+        st.startDeparture();
+        doorAnim.target = 1;
+        doorAnim.timer = 1.8; // door opens as they approach
       }
-      PS.puff(
-        agentStates[id].sx,
-        agentStates[id].sy,
-        agentStates[id].palette.accent,
-      );
-      sndRemove();
-      doorAnim.target = 1;
-      doorAnim.timer = 1.8; // door opens on departure
-      delete agentStates[id];
+      // Finalise only when the agent has reached the door.
+      if (st._readyToRemove) {
+        PS.puff(st.sx, st.sy, st.palette.accent);
+        sndRemove();
+        doorAnim.target = 1;
+        doorAnim.timer = 1.8;
+        delete agentStates[id];
+      }
     }
   }
   for (const [id, a] of Object.entries(agentsData)) {
@@ -12772,7 +13046,7 @@ function loop(now) {
       PS.burst(
         agentStates[id].sx,
         agentStates[id].sy,
-        getPalette(a.slug).accent,
+        getPalette(a.slug, id).accent,
       );
       sndSpawn();
       doorAnim.target = 1;
@@ -14549,15 +14823,13 @@ function renderCard(agent) {
     card.id = `c-${id}`;
     grid.appendChild(card);
   }
-  const pal = getPalette(slug);
+  const pal = getPalette(slug, id);
   card.style.setProperty("--ac", pal.accent);
   card.style.setProperty("--ac-glow", pal.accent + "50");
   card.style.setProperty("--ac-badge", pal.accent + "28");
   card.className = `card ${status}`;
   card.innerHTML = `<div class="card-dot"></div><div class="card-name"></div><div class="card-status"><span class="status-label"></span><br><span class="dim">🕐 <span id="t-${id}"></span> · 💬 <span class="msg-count"></span></span></div><div class="scan"></div>`;
-  card.querySelector(".card-name").textContent = slug
-    .replace(/-/g, " ")
-    .toUpperCase();
+  card.querySelector(".card-name").textContent = getDisplayName(agent);
   const sl = card.querySelector(".status-label");
   if (status === "working" && currentToolLabel) {
     sl.className = "t";
