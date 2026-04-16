@@ -14,8 +14,14 @@ jobs:
 
       - run: npm ci
 
+      - name: Format check
+        run: npm run format:check
+
       - name: Build (Vite)
         run: npm run build
+
+      - name: Unit tests (vitest)
+        run: npm test
 
       - name: Check for E2E tests
         id: check_tests

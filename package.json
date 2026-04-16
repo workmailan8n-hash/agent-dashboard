@@ -8,8 +8,12 @@
     "build": "npx vite build",
     "start": "node server.js",
     "preview": "npx vite preview",
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "test:e2e": "npx playwright test"
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:e2e": "npx playwright test",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "prepare": "husky"
   },
   "keywords": [],
   "author": "",
@@ -23,6 +27,13 @@
   "devDependencies": {
     "@playwright/test": "^1.58.2",
     "concurrently": "^9.2.1",
-    "vite": "^8.0.3"
+    "husky": "^9.1.7",
+    "lint-staged": "^15.2.10",
+    "prettier": "^3.4.2",
+    "vite": "^8.0.3",
+    "vitest": "^2.1.8"
+  },
+  "lint-staged": {
+    "*.{ts,tsx,js,jsx,json,md,css}": "prettier --write"
   }
 }
