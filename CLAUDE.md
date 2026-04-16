@@ -1,24 +1,49 @@
-<!-- VERCEL BEST PRACTICES START -->
-## Best practices for developing on Vercel
+# Agent Dashboard
 
-These defaults are optimized for AI coding agents (and humans) working on apps that deploy to Vercel.
+Pixel-art office simulator visualizing Claude Code agents. Canvas 2D, vanilla JS frontend, Node HTTP + WebSocket backend.
 
-- Treat Vercel Functions as stateless + ephemeral (no durable RAM/FS, no background daemons), use Blob or marketplace integrations for preserving state
-- Edge Functions (standalone) are deprecated; prefer Vercel Functions
-- Don't start new projects on Vercel KV/Postgres (both discontinued); use Marketplace Redis/Postgres instead
-- Store secrets in Vercel Env Variables; not in git or `NEXT_PUBLIC_*`
-- Provision Marketplace native integrations with `vercel integration add` (CI/agent-friendly)
-- Sync env + project settings with `vercel env pull` / `vercel pull` when you need local/offline parity
-- Use `waitUntil` for post-response work; avoid the deprecated Function `context` parameter
-- Set Function regions near your primary data source; avoid cross-region DB/service roundtrips
-- Tune Fluid Compute knobs (e.g., `maxDuration`, memory/CPU) for long I/O-heavy calls (LLMs, APIs)
-- Use Runtime Cache for fast **regional** caching + tag invalidation (don't treat it as global KV)
-- Use Cron Jobs for schedules; cron runs in UTC and triggers your production URL via HTTP GET
-- Use Vercel Blob for uploads/media; Use Edge Config for small, globally-read config
-- If Enable Deployment Protection is enabled, use a bypass secret to directly access them
-- Add OpenTelemetry via `@vercel/otel` on Node; don't expect OTEL support on the Edge runtime
-- Enable Web Analytics + Speed Insights early
-- Use AI Gateway for model routing, set AI_GATEWAY_API_KEY, using a model string (e.g. 'anthropic/claude-sonnet-4.6'), Gateway is already default in AI SDK
-  needed. Always curl https://ai-gateway.vercel.sh/v1/models first; never trust model IDs from memory
-- For durable agent loops or untrusted code: use Workflow (pause/resume/state) + Sandbox; use Vercel MCP for secure infra access
-<!-- VERCEL BEST PRACTICES END -->
+## Stack
+- Node.js (vanilla HTTP + `ws`), file-watcher of `~/.claude/projects/*.jsonl`
+- Vite 5 (build + HMR)
+- Canvas 2D, no frontend framework
+- Playwright E2E, Vitest unit
+- Railway deploy (see ADR-0002)
+
+## Run locally
+```bash
+npm run dev          # server :3737 + Vite HMR
+npm run build        # build to dist/
+npm start            # production server on :3737
+node demo.js         # inject 6 demo agents
+npm test             # vitest
+npm run test:e2e     # playwright
+```
+
+## Deploy
+- Railway: `git push origin master` (auto-deploy). Preview environments per PR via sprint flow.
+- See [docs/runbook.md](docs/runbook.md), [docs/adr/0002-railway-over-vercel.md](docs/adr/0002-railway-over-vercel.md).
+
+## Conventions
+- Branch: `feat/...`, `fix/...`, `refactor/...`
+- Commits: Conventional Commits
+- Canvas 2D only; no frontend npm deps
+- Positions in `src/adminPos.js` (BUILTIN_POSITIONS); bump `POS_SCHEMA` on change
+
+## Key files
+- [src/app.js](src/app.js) — **LIVE runtime** (~9500 LOC, draw + loop)
+- [src/main.js](src/main.js) — entry, CSS imports
+- [src/adminPos.js](src/adminPos.js) — single source of truth for positions
+- [src/layout.js](src/layout.js) — A* pathfinding + obstacle grid
+- [src/background.js](src/background.js) — walls/floors/windows
+- [src/minigames/](src/minigames/) — per-object minigames
+- [server.js](server.js) + [src/server/](src/server/) — HTTP router, WS, auth, sprint-git, logger
+
+## Gotchas
+- **Dead duplicate files:** `src/agentState.js` and `src/drawChars.js` exist but are NOT the runtime. Live code is in `src/app.js`. Always grep `app.js` before editing a symbol — see [src/CLAUDE.md](src/CLAUDE.md) and [docs/adr/0001-single-file-frontend-pixel-art.md](docs/adr/0001-single-file-frontend-pixel-art.md).
+- `POS_SCHEMA` bump is the ONLY way to clear stale localStorage for admin positions.
+- Sprint flow: `sprint-staging` branch → PR → TG approve buttons. See [docs/runbook.md](docs/runbook.md).
+
+## Links
+- Notion: 335002d3-0d68-814c-aa8f-ddfdee3586f3
+- Repo: github.com/workmailan8n-hash/agent-dashboard
+- Live: https://agent-dashboard-production-a178.up.railway.app
