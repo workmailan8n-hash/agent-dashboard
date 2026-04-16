@@ -1,2 +1,8 @@
 #!/usr/bin/env sh
 npx lint-staged
+
+# Run unit tests only if JS source files are staged
+if git diff --cached --name-only --diff-filter=ACM | grep -qE '\.(js|jsx|mjs|cjs)$'; then
+  echo "[pre-commit] running vitest..."
+  npm test -- --run || { echo "[pre-commit] tests failed — commit blocked"; exit 1; }
+fi
