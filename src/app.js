@@ -7382,88 +7382,51 @@ function buildBackground() {
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.13)'); // grout H
         fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.13)'); // grout V
       } else if (inGamingRoom) {
-        // ── GAMING — Cyberpunk neon grid carpet ──────────────────
-        // Base: deep midnight blue
-        fillR(ctx, x, y, T, T, '#121030');
-        // Radial gradient-ish darker spots via sparse fills
-        fillR(ctx, x + 2, y + 2, T - 4, T - 4, '#161438');
-        fillR(ctx, x + 5, y + 5, T - 10, T - 10, '#1a1842');
-        // Neon grid lines (thin cyan/magenta at tile edges)
-        const gridColor = (row + col) % 2 === 0 ? '#2a5aa0' : '#6a2a8a';
-        fillR(ctx, x, y, T, 1, gridColor + '70'); // top
-        fillR(ctx, x, y, 1, T, gridColor + '70'); // left
-        // Diagonal neon stripe every 5 tiles
-        if ((row + col) % 5 === 0) {
-          fillR(ctx, x + 6, y + 6, 2, 2, '#00ffff');
-          fillR(ctx, x + T - 8, y + T - 8, 2, 2, '#ff00aa');
+        // ── GAMING — Neon arcade floor ──
+        // Base: alternating deep purple-black checker
+        const gbase = (row + col) % 2 === 0 ? '#0d0a1e' : '#141028';
+        fillR(ctx, x, y, T, T, gbase);
+        // Grid lines on tile edges
+        fillR(ctx, x, y, T, 1, '#5a4c9a'); // top
+        fillR(ctx, x, y, 1, T, '#5a4c9a'); // left
+        // Glow dot 2×2 at intersections every 4 tiles
+        if (row % 4 === 0 && col % 4 === 0) {
+          fillR(ctx, x, y, 2, 2, '#a090ff');
         }
-        // Random bright pixels — glowing specks
-        if ((row * 13 + col * 7) % 11 === 0)
-          fillR(ctx, x + ((col * 17) % (T - 4)), y + ((row * 11) % (T - 4)), 1, 1, '#aaccff');
-        if ((row * 7 + col * 13) % 17 === 0)
-          fillR(ctx, x + ((col * 23) % (T - 4)), y + ((row * 19) % (T - 4)), 1, 1, '#ff6adc');
       } else if (inGymRoom) {
-        // ── GYM — Basketball court hardwood (rich polished planks) ──
-        // Alternating plank shades with 3-row period
-        const pi = (row + ((col / 4) | 0)) % 3;
-        const plankC = ['#8a5a2e', '#7a4d26', '#694120'][pi];
+        // ── GYM — Dark wood parquet ──
+        const pi = (row + col) % 3;
+        const plankC = ['#4a3020', '#5a3a26', '#50321e'][pi];
         fillR(ctx, x, y, T, T, plankC);
-        // Strong plank seam at bottom
-        fillR(ctx, x, y + T - 2, T, 2, '#3a2010');
-        fillR(ctx, x, y + T - 1, T, 1, '#1a0e04');
-        // Vertical plank joint every 4 cols
-        if (col % 4 === 0) fillR(ctx, x, y, 1, T, '#3a2010');
-        // Wood grain streaks — varied per tile
-        const grainX = (col * 7 + row * 3) % (T - 4);
-        fillR(ctx, x + grainX, y + 2, 1, T - 4, 'rgba(50,25,8,0.25)');
-        if ((col * 11 + row * 5) % 7 === 0) {
-          const gx = (col * 19) % (T - 6);
-          fillR(ctx, x + gx, y + 4, 1, T - 8, 'rgba(255,220,170,0.08)');
-        }
-        // Highlight shine at top of plank
-        fillR(ctx, x, y, T, 1, 'rgba(255,230,180,0.12)');
+        // Bottom grain line
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.2)');
       } else if (inLoungeRoom) {
-        // ── LOUNGE — Persian rug / soft wool carpet ──
-        // Base deep forest green
-        fillR(ctx, x, y, T, T, '#2a5032');
-        // Diamond pattern via 4 inner rects
-        const dark = '#22452a';
-        const lite = '#356040';
-        fillR(ctx, x + 2, y + 2, T - 4, T - 4, dark);
-        fillR(ctx, x + 6, y + 6, T - 12, T - 12, lite);
-        // Center dot
-        fillR(ctx, x + T / 2 - 2, y + T / 2 - 2, 4, 4, '#4a7a55');
-        fillR(ctx, x + T / 2 - 1, y + T / 2 - 1, 2, 2, '#6aa070');
-        // Corner ornamental dots
-        const ornC = '#6a8060';
-        fillR(ctx, x + 4, y + 4, 2, 2, ornC);
-        fillR(ctx, x + T - 6, y + 4, 2, 2, ornC);
-        fillR(ctx, x + 4, y + T - 6, 2, 2, ornC);
-        fillR(ctx, x + T - 6, y + T - 6, 2, 2, ornC);
-        // Soft border line between rug pieces
-        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.3)');
-        fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.3)');
-      } else if (inCafeRoom) {
-        // ── CAFE — Hexagonal terracotta mosaic ──
-        // Warm sandstone base
-        const ck = (row + col) % 2;
-        const base = ck ? '#d4b280' : '#c09860';
-        fillR(ctx, x, y, T, T, base);
-        // Hex-ish inset via corner cuts (diamonds between corners)
-        fillR(ctx, x, y, 4, 4, ck ? '#a87840' : '#906530'); // top-left corner
-        fillR(ctx, x + T - 4, y, 4, 4, ck ? '#a87840' : '#906530'); // top-right
-        fillR(ctx, x, y + T - 4, 4, 4, ck ? '#a87840' : '#906530'); // bot-left
-        fillR(ctx, x + T - 4, y + T - 4, 4, 4, ck ? '#a87840' : '#906530'); // bot-right
-        // Tile center highlight
-        fillR(ctx, x + 6, y + 6, T - 12, T - 12, ck ? '#deba8a' : '#cca570');
-        // Grout lines
-        fillR(ctx, x, y + T - 1, T, 1, '#5a3820');
-        fillR(ctx, x + T - 1, y, 1, T, '#5a3820');
-        // Accent tile — dark mosaic chip every ~6 tiles
-        if ((row * 3 + col * 5) % 11 === 0) {
-          fillR(ctx, x + T / 2 - 2, y + T / 2 - 2, 4, 4, '#5a2f10');
-          fillR(ctx, x + T / 2 - 1, y + T / 2 - 1, 2, 2, '#3a1a06');
+        // ── LOUNGE — Green felt ──
+        fillR(ctx, x, y, T, T, '#0e3a24');
+        // Diagonal cross-hatch every 3px
+        for (let d = 0; d < T; d += 3) {
+          // '\' direction
+          if (d < T) fillR(ctx, x + d, y + d, 1, 1, '#0a2e1c');
+          // '/' direction
+          if (d < T) fillR(ctx, x + d, y + (T - 1 - d), 1, 1, '#0a2e1c');
         }
+        // Pseudorandom flecks
+        const fh = (row * 13 + col * 17) % 23;
+        if (fh < 5) {
+          fillR(ctx, x + ((col * 7) % (T - 1)), y + ((row * 11) % (T - 1)), 1, 1, '#154a2c');
+        }
+        if (fh > 18) {
+          fillR(ctx, x + ((col * 19) % (T - 1)), y + ((row * 23) % (T - 1)), 1, 1, '#154a2c');
+        }
+      } else if (inCafeRoom) {
+        // ── CAFE — Light tile ──
+        const ck = (row + col) % 2;
+        fillR(ctx, x, y, T, T, ck ? '#eae4d4' : '#e0dac8');
+        // Grout lines bottom + right
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.15)');
+        fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.15)');
+        // Center speckle highlight
+        fillR(ctx, x + (T >> 1), y + (T >> 1), 1, 1, 'rgba(255,255,255,0.08)');
       } else {
         // Wood floor planks — rows of alternating shades with grain
         const pi = (row + ((col / 5) | 0)) % 3;
