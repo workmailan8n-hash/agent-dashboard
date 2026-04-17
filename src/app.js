@@ -32,6 +32,9 @@ import { launchPlantGame } from './minigames/plant.js';
 import { launchJukeboxGame } from './minigames/jukebox.js';
 import { launchCrystalBallGame } from './minigames/crystal_ball.js';
 import { launchFoosballGame } from './minigames/foosball.js';
+import { launchPokerGame } from './minigames/poker.js';
+import { launchRouletteGame } from './minigames/roulette.js';
+import { launchBlackjackGame } from './minigames/blackjack.js';
 import { startGifExport } from './gifExport.js';
 
 // ════════════════════════════════════════════════════════════════
@@ -3939,6 +3942,177 @@ function launchDartsGame() {
   loop();
 }
 
+// ── Casino table draw helpers (poker, roulette, blackjack) ────────
+function drawPokerTable(ctx, x, y, tick) {
+  const tw = T * 3;
+  const th = T * 2;
+  ctx.save();
+  // Floor shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(x + tw / 2, y + th + 4, tw * 0.48, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Wood trim
+  ctx.fillStyle = '#3a1e0a';
+  ctx.beginPath();
+  ctx.ellipse(x + tw / 2, y + th / 2, tw * 0.48, th * 0.45, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Felt
+  ctx.fillStyle = '#0c5a32';
+  ctx.beginPath();
+  ctx.ellipse(x + tw / 2, y + th / 2, tw * 0.44, th * 0.4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Felt highlight
+  ctx.fillStyle = '#0e6a3a';
+  ctx.beginPath();
+  ctx.ellipse(x + tw / 2, y + th / 2 - 2, tw * 0.36, th * 0.28, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Chip stacks on felt
+  const stacks = [
+    { cx: x + tw * 0.28, cy: y + th * 0.45, col: '#d03030' },
+    { cx: x + tw * 0.72, cy: y + th * 0.45, col: '#2060c0' },
+    { cx: x + tw * 0.5, cy: y + th * 0.6, col: '#2a2a2a' },
+  ];
+  for (const s of stacks) {
+    for (let i = 0; i < 4; i++) {
+      ctx.fillStyle = i === 3 ? s.col : '#ffffff';
+      ctx.fillRect((s.cx - 4) | 0, (s.cy - i * 2 - 2) | 0, 8, 2);
+      ctx.fillStyle = s.col;
+      ctx.fillRect((s.cx - 3) | 0, (s.cy - i * 2 - 2) | 0, 6, 2);
+    }
+  }
+  // Cards fanned center
+  ctx.save();
+  ctx.translate(x + tw / 2, y + th * 0.48);
+  for (let i = 0; i < 3; i++) {
+    ctx.save();
+    ctx.rotate((i - 1) * 0.25);
+    ctx.fillStyle = '#ffffff';
+    ctx.fillRect(-3, -6, 6, 10);
+    ctx.fillStyle = '#1a2a4e';
+    ctx.fillRect(-2, -5, 4, 8);
+    ctx.restore();
+  }
+  ctx.restore();
+  // Small chairs on edges
+  ctx.fillStyle = '#5a3a1a';
+  ctx.fillRect((x + tw * 0.1) | 0, (y + th * 0.15) | 0, 6, 8);
+  ctx.fillRect((x + tw * 0.85) | 0, (y + th * 0.15) | 0, 6, 8);
+  ctx.fillStyle = '#3a2410';
+  ctx.fillRect((x + tw * 0.1) | 0, (y + th * 0.1) | 0, 6, 3);
+  ctx.fillRect((x + tw * 0.85) | 0, (y + th * 0.1) | 0, 6, 3);
+  ctx.restore();
+}
+
+function drawRouletteWheel(ctx, x, y, tick) {
+  const tw = T * 2;
+  const th = T * 2;
+  const cx = x + tw / 2;
+  const cy = y + th / 2;
+  ctx.save();
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(cx, y + th + 3, tw * 0.45, 4, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Wood outer
+  ctx.fillStyle = '#3a1e0a';
+  ctx.beginPath();
+  ctx.arc(cx, cy, tw * 0.48, 0, Math.PI * 2);
+  ctx.fill();
+  // Wheel slices (simplified 12 segments alternating red/black/green)
+  const segs = 12;
+  const rot = tick * 0.02;
+  for (let i = 0; i < segs; i++) {
+    const a0 = rot + (i / segs) * Math.PI * 2;
+    const a1 = rot + ((i + 1) / segs) * Math.PI * 2;
+    ctx.beginPath();
+    ctx.moveTo(cx, cy);
+    ctx.arc(cx, cy, tw * 0.4, a0, a1);
+    ctx.closePath();
+    if (i === 0) ctx.fillStyle = '#2a7a3a';
+    else ctx.fillStyle = i % 2 ? '#a01020' : '#101018';
+    ctx.fill();
+  }
+  // Inner hub
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath();
+  ctx.arc(cx, cy, tw * 0.18, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.fillStyle = '#e0af68';
+  ctx.beginPath();
+  ctx.arc(cx, cy, tw * 0.08, 0, Math.PI * 2);
+  ctx.fill();
+  // Ball orbiting
+  const ba = -rot * 1.4 + 0.3;
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(cx + Math.cos(ba) * tw * 0.34, cy + Math.sin(ba) * tw * 0.34, 2, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawBlackjackTable(ctx, x, y, tick) {
+  const tw = T * 3;
+  const th = T * 2;
+  ctx.save();
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.28)';
+  ctx.beginPath();
+  ctx.ellipse(x + tw / 2, y + th + 4, tw * 0.48, 5, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Arc felt (half-circle facing forward)
+  ctx.fillStyle = '#3a1e0a';
+  ctx.beginPath();
+  ctx.arc(x + tw / 2, y + th * 0.9, tw * 0.46, Math.PI, Math.PI * 2);
+  ctx.closePath();
+  ctx.fill();
+  ctx.fillStyle = '#0c5a32';
+  ctx.beginPath();
+  ctx.arc(x + tw / 2, y + th * 0.9, tw * 0.42, Math.PI, Math.PI * 2);
+  ctx.closePath();
+  ctx.fill();
+  // "BLACKJACK PAYS 3 TO 2" arc text (simplified as yellow arc line)
+  ctx.strokeStyle = '#e0af68';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.arc(x + tw / 2, y + th * 0.9, tw * 0.34, Math.PI + 0.15, Math.PI * 2 - 0.15);
+  ctx.stroke();
+  ctx.fillStyle = '#e0af68';
+  ctx.font = "4px 'Press Start 2P', monospace";
+  ctx.textAlign = 'center';
+  ctx.textBaseline = 'middle';
+  ctx.fillText('BLACKJACK', (x + tw / 2) | 0, (y + th * 0.55) | 0);
+  ctx.textAlign = 'left';
+  ctx.textBaseline = 'alphabetic';
+  // Dealer indicator (chip tray line at the top/flat edge)
+  ctx.fillStyle = '#2a1610';
+  ctx.fillRect((x + tw * 0.2) | 0, (y + th * 0.82) | 0, (tw * 0.6) | 0, 3);
+  // Bet circles
+  for (let i = 0; i < 3; i++) {
+    const bx = x + tw * (0.32 + i * 0.18);
+    const by = y + th * 0.72;
+    ctx.strokeStyle = '#e0af6880';
+    ctx.lineWidth = 1;
+    ctx.beginPath();
+    ctx.arc(bx, by, 5, 0, Math.PI * 2);
+    ctx.stroke();
+  }
+  // Pair of cards on table
+  ctx.save();
+  ctx.translate(x + tw * 0.5, y + th * 0.45);
+  ctx.fillStyle = '#ffffff';
+  ctx.fillRect(-6, -4, 5, 8);
+  ctx.fillRect(0, -4, 5, 8);
+  ctx.fillStyle = '#d03040';
+  ctx.font = '6px monospace';
+  ctx.fillText('A', -5, 2);
+  ctx.fillStyle = '#101018';
+  ctx.fillText('K', 1, 2);
+  ctx.restore();
+  ctx.restore();
+}
+
 // ── Aquarium fish animation ───────────────────────────────────────
 const aquariumFish = [
   { x: 0.3, y: 0.4, speed: 0.012, color: '#ff6040', size: 4, phase: 0 },
@@ -5967,6 +6141,44 @@ function generateLayout(n) {
   });
   GROUP_PAIRS[12] = [ci12A, ci12B];
 
+  // ── Casino tables (poker, roulette, blackjack) — Lounge room
+  IDLE_SPOTS.push({
+    tx: 4.5,
+    ty: 63,
+    anim: 'sitting_couch',
+    type: 'poker',
+    w: 3,
+    _objId: 'poker_table',
+    _defObjTx: 3,
+    _defObjTy: 62,
+    _offsetX: 1.5,
+    _offsetY: 1,
+  });
+  IDLE_SPOTS.push({
+    tx: 8,
+    ty: 63,
+    anim: 'sitting_couch',
+    type: 'roulette',
+    w: 2,
+    _objId: 'roulette',
+    _defObjTx: 7,
+    _defObjTy: 62,
+    _offsetX: 1,
+    _offsetY: 1,
+  });
+  IDLE_SPOTS.push({
+    tx: 14.5,
+    ty: 63,
+    anim: 'sitting_couch',
+    type: 'blackjack',
+    w: 3,
+    _objId: 'blackjack_table',
+    _defObjTx: 13,
+    _defObjTy: 62,
+    _offsetX: 1.5,
+    _offsetY: 1,
+  });
+
   // Cat bowl positions (preserve state across layout changes)
   const prevBowls = CAT_BOWLS;
   CAT_BOWLS = [
@@ -6166,6 +6378,14 @@ function buildObstacleGrid() {
 
     const [smObsTx, smObsTy] = getAdminPos('slot_machine', 1, 50);
     markRect(smObsTx, smObsTy, 1.5, 2);
+
+    // Casino tables (Lounge room)
+    const [ptObsTx, ptObsTy] = getAdminPos('poker_table', 3, 62);
+    markRect(ptObsTx, ptObsTy, 3, 2);
+    const [rObsTx, rObsTy] = getAdminPos('roulette', 7, 62);
+    markRect(rObsTx, rObsTy, 2, 2);
+    const [bjObsTx, bjObsTy] = getAdminPos('blackjack_table', 13, 62);
+    markRect(bjObsTx, bjObsTy, 3, 2);
   }
 
   // ── Zone 3: CAFE obstacles (ACT_ZONE+14) ─────
@@ -13078,6 +13298,25 @@ function loop(now) {
   }
   // Retro Telephone removed
 
+  // Casino objects (Lounge room)
+  if (ACT_ZONE_Y > 0) {
+    {
+      const [_ptTx, _ptTy] = getAdminPos('poker_table', 3, 62);
+      const [ptx, pty] = ts(_ptTx, _ptTy);
+      drawPokerTable(ctx, ptx - T / 2, pty - 4, globalTick);
+    }
+    {
+      const [_rTx, _rTy] = getAdminPos('roulette', 7, 62);
+      const [rx, ry] = ts(_rTx, _rTy);
+      drawRouletteWheel(ctx, rx - T / 2, ry - 4, globalTick);
+    }
+    {
+      const [_bjTx, _bjTy] = getAdminPos('blackjack_table', 13, 62);
+      const [bjx, bjy] = ts(_bjTx, _bjTy);
+      drawBlackjackTable(ctx, bjx - T / 2, bjy - 4, globalTick);
+    }
+  }
+
   // Trophy Cabinet (near main office wall)
   {
     const [_tcTx, _tcTy] = getAdminPos('trophy_cabinet', 5, 2);
@@ -14828,6 +15067,30 @@ function buildAdminObjects() {
     w: 1.5,
     h: 2,
   });
+  adminObjects.push({
+    id: 'poker_table',
+    label: '🃏 Poker Table',
+    tx: 3,
+    ty: 62,
+    w: 3,
+    h: 2,
+  });
+  adminObjects.push({
+    id: 'roulette',
+    label: '🎡 Roulette',
+    tx: 7,
+    ty: 62,
+    w: 2,
+    h: 2,
+  });
+  adminObjects.push({
+    id: 'blackjack_table',
+    label: '🂡 Blackjack',
+    tx: 13,
+    ty: 62,
+    w: 3,
+    h: 2,
+  });
 
   // Snapshot default positions (before applying saved overrides)
   if (!window._defaultPositions) {
@@ -15593,6 +15856,9 @@ const CLICK_OBJ_MAP = {
   slot_machine: 'slot_machine',
   water_cooler: 'water_cooler',
   disco_ball: 'disco_ball',
+  poker_table: 'poker_table',
+  roulette: 'roulette',
+  blackjack_table: 'blackjack_table',
 };
 
 // Dynamic: desks and couches
@@ -15644,6 +15910,9 @@ function findClickableAt(tx, ty) {
     { id: 'slot_machine', w: 1.5, h: 2 },
     { id: 'water_cooler', w: 1.2, h: 2 },
     { id: 'disco_ball', w: 1.5, h: 2 },
+    { id: 'poker_table', w: 3, h: 2 },
+    { id: 'roulette', w: 2, h: 2 },
+    { id: 'blackjack_table', w: 3, h: 2 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++) checks.push({ id: 'desk_' + i, w: 3.5, h: 3 });
@@ -15883,6 +16152,21 @@ canvas.addEventListener('click', (e) => {
     launchFoosballGame();
     blip(440, 0.05, 'square', 0.04);
     setTimeout(() => blip(660, 0.05, 'square', 0.04), 80);
+    return;
+  }
+  if (hit.type === 'poker_table') {
+    launchPokerGame();
+    blip(660, 0.08, 'square', 0.04);
+    return;
+  }
+  if (hit.type === 'roulette') {
+    launchRouletteGame();
+    blip(550, 0.08, 'square', 0.04);
+    return;
+  }
+  if (hit.type === 'blackjack_table') {
+    launchBlackjackGame();
+    blip(770, 0.08, 'square', 0.04);
     return;
   }
   if (clickAnims.some((a) => a.id === hit.id)) return;

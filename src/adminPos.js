@@ -34,6 +34,13 @@ export const BUILTIN_POSITIONS = {
   //   win(1), darts(6-8), corkboard(12-14.5), [nameplate 12-22],
   //   whiteboard(27-30), clock(30.5-32), win(33).
   neon_sign: { tx: 28, ty: 44.5 },
+  // Casino tables: placed in Lounge room (cols 1..17, rows ROOMS_MID_ROW+1..+10)
+  // For N=20 baseline: ACT_ZONE_Y=43, ROOMS_MID_ROW=54 → rows 62-63
+  // Moved below conf_table (rows 59-61) and photo_booth/crystal_ball/trophy_cabinet (rows 55-57).
+  // Col shifts keep 1-tile walkable gap between poker↔roulette, roulette↔rubber_duck(10,62), rubber_duck↔blackjack.
+  poker_table: { tx: 3, ty: 62 },
+  roulette: { tx: 7, ty: 62 },
+  blackjack_table: { tx: 13, ty: 62 },
   darts: { tx: 6, ty: 0 },
   corkboard: { tx: 12, ty: 0 },
   whiteboard: { tx: 27, ty: 0 },
@@ -124,7 +131,7 @@ export function getAdminPos(id, defTx, defTy) {
 
 // Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
 // saved admin overrides in localStorage are wiped automatically.
-export const POS_SCHEMA = '7';
+export const POS_SCHEMA = '10';
 
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {

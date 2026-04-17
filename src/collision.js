@@ -69,6 +69,10 @@ export const OBJECT_SIZES = {
   water_cooler: { w: 1.2, h: 2 },
   disco_ball: { w: 1.5, h: 2 },
   record_player: { w: 1.5, h: 1.5 },
+  // Casino tables
+  poker_table: { w: 3, h: 2 },
+  roulette: { w: 2, h: 2 },
+  blackjack_table: { w: 3, h: 2 },
 };
 
 // Strip trailing _N index to get base type.
