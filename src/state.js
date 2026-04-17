@@ -4,39 +4,38 @@
 //  binding restrictions on reassignment.
 // ════════════════════════════════════════════════════════════════
 const S = {
-  agentsData:    {},
-  agentStates:   {},
-  idleOccupied:  {},
-  doorAnim:      { open: 0, target: 0, timer: 0 },
-  globalTick:    0,
-  lastTime:      0,
-  startTime:     Date.now(),
-  myTasks:       [],
+  agentsData: {},
+  agentStates: {},
+  idleOccupied: {},
+  doorAnim: { open: 0, target: 0, timer: 0 },
+  globalTick: 0,
+  lastTime: 0,
+  startTime: Date.now(),
   // Admin state
-  adminMode:     false,
-  simsMode:      false,
+  adminMode: false,
+  simsMode: false,
   simsSelectedAgent: null,
-  adminObjects:  [],
+  adminObjects: [],
   adminSelected: null,
   adminDragging: false,
-  adminDragOff:  {x:0, y:0},
-  adminHover:    null,
-  adminWalls:    [],
-  adminHoverWall:    null,
+  adminDragOff: { x: 0, y: 0 },
+  adminHover: null,
+  adminWalls: [],
+  adminHoverWall: null,
   adminSelectedWall: null,
   adminDraggingWall: false,
-  adminAuthed:   false,
+  adminAuthed: false,
   // Printer / trash
   printerActive: 0,
-  trashLevel:    0,
-  trashAgentId:  null,
+  trashLevel: 0,
+  trashAgentId: null,
   // Bowl refill tracking
-  bowlRefills:   {},
+  bowlRefills: {},
   // Click anims
-  clickAnims:    [],
+  clickAnims: [],
   // Canvas/ctx
-  canvas:        null,
-  ctx:           null,
+  canvas: null,
+  ctx: null,
 };
 window.S = S;
 export default S;

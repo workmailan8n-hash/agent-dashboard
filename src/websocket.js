@@ -1,13 +1,12 @@
 // ════════════════════════════════════════════════════════════════
 //  WEBSOCKET
 // ════════════════════════════════════════════════════════════════
-import { agentsData, agentStates, adminMode, setMyTasks } from "./state.js";
-import { renderCard, updateUI } from "./ui.js";
-import { renderTasks } from "./tasks.js";
-import { buildBackground } from "./background.js";
-import { buildObstacleGrid } from "./layout.js";
-import { syncIdleSpotsToAdmin, applyWallPositions } from "./admin.js";
-import { BUILTIN_POSITIONS, applyCustomPositions } from "./adminPos.js";
+import { agentsData, agentStates, adminMode } from './state.js';
+import { renderCard, updateUI } from './ui.js';
+import { buildBackground } from './background.js';
+import { buildObstacleGrid } from './layout.js';
+import { syncIdleSpotsToAdmin, applyWallPositions } from './admin.js';
+import { BUILTIN_POSITIONS, applyCustomPositions } from './adminPos.js';
 
 // ════════════════════════════════════════════════════════════════
 //  WEBSOCKET
@@ -16,14 +15,14 @@ let wsActive = false;
 function connect() {
   if (wsActive) return;
   wsActive = true;
-  const proto = location.protocol === "https:" ? "wss:" : "ws:";
+  const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
   const ws = new WebSocket(`${proto}//${location.host}`);
-  const led = document.getElementById("led"),
-    lbl = document.getElementById("conn-label");
+  const led = document.getElementById('led'),
+    lbl = document.getElementById('conn-label');
   ws.onopen = () => {
     wsActive = true;
-    led.className = "led";
-    lbl.textContent = "online";
+    led.className = 'led';
+    lbl.textContent = 'online';
   };
   ws.onmessage = ({ data }) => {
     let msg;
@@ -32,56 +31,43 @@ function connect() {
     } catch {
       return;
     }
-    if (msg.type === "init") {
+    if (msg.type === 'init') {
       for (const a of msg.agents) {
         agentsData[a.id] = a;
         renderCard(a);
       }
       updateUI();
     }
-    if (msg.type === "agent_update") {
+    if (msg.type === 'agent_update') {
       agentsData[msg.agent.id] = msg.agent;
       renderCard(msg.agent);
       updateUI();
     }
-    if (msg.type === "mytasks_init" || msg.type === "mytasks_update") {
-      setMyTasks(msg.tasks);
-      renderTasks();
-    }
-    if (msg.type === "agent_remove") {
+    if (msg.type === 'agent_remove') {
       delete agentsData[msg.id];
       document.getElementById(`c-${msg.id}`)?.remove();
       updateUI();
     }
-    if (msg.type === "layout_update" && msg.layout) {
+    if (msg.type === 'layout_update' && msg.layout) {
       // Another admin moved objects — apply their layout
       if (msg.layout.positions && !adminMode) {
-        window._adminPos = Object.assign(
-          {},
-          BUILTIN_POSITIONS,
-          msg.layout.positions,
-        );
-        localStorage.setItem(
-          "admin_positions",
-          JSON.stringify(msg.layout.positions),
-        );
-        if (msg.layout.walls)
-          localStorage.setItem("admin_walls", JSON.stringify(msg.layout.walls));
+        window._adminPos = Object.assign({}, BUILTIN_POSITIONS, msg.layout.positions);
+        localStorage.setItem('admin_positions', JSON.stringify(msg.layout.positions));
+        if (msg.layout.walls) localStorage.setItem('admin_walls', JSON.stringify(msg.layout.walls));
         applyWallPositions();
         syncIdleSpotsToAdmin();
         buildBackground();
         buildObstacleGrid();
       }
     }
-    if (msg.type === "public_url") {
-      if (typeof window.updateTunnelStatus === "function")
-        window.updateTunnelStatus(msg.url);
+    if (msg.type === 'public_url') {
+      if (typeof window.updateTunnelStatus === 'function') window.updateTunnelStatus(msg.url);
     }
   };
   ws.onclose = () => {
     wsActive = false;
-    led.className = "led off";
-    lbl.textContent = "polling";
+    led.className = 'led off';
+    lbl.textContent = 'polling';
     setTimeout(connect, 2000);
     startPolling();
   };
@@ -99,7 +85,7 @@ function startPolling() {
       return;
     }
     try {
-      const res = await fetch("/api/state");
+      const res = await fetch('/api/state');
       if (!res.ok) return;
       const data = await res.json();
       if (data.agents) {
@@ -116,15 +102,11 @@ function startPolling() {
           renderCard(a);
         }
       }
-      if (data.myTasks) {
-        setMyTasks(data.myTasks);
-        renderTasks();
-      }
       updateUI();
-      const led = document.getElementById("led"),
-        lbl = document.getElementById("conn-label");
-      led.className = "led";
-      lbl.textContent = "polling";
+      const led = document.getElementById('led'),
+        lbl = document.getElementById('conn-label');
+      led.className = 'led';
+      lbl.textContent = 'polling';
     } catch {}
   }, 2000);
 }

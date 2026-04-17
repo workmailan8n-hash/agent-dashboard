@@ -108,134 +108,12 @@
     .led { width: 5px; height: 5px; border-radius: 50%; background: #9ece6a; box-shadow: 0 0 4px #9ece6a; animation: blink 2s step-end infinite; }
     .led.off { background: #f7768e; box-shadow: 0 0 4px #f7768e; animation: none; }
 
-    .view-tabs { display: flex; gap: 6px; }
-    .tab-btn {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      background: #0c0d1e;
-      color: #3a4060;
-      border: 1px solid #1e2240;
-      padding: 5px 10px;
-      cursor: pointer;
-      transition: all .2s;
-    }
-    .tab-btn:hover { color: #7aa2f7; border-color: #7aa2f7; }
-    .tab-btn.active { color: #7aa2f7; border-color: #7aa2f7; background: #0d1020; box-shadow: 0 0 10px #7aa2f730; }
-
-    #task-view {
-      display: none;
-      width: 100%;
-      max-width: 1200px;
-      flex-direction: column;
-      gap: 10px;
-    }
-    #task-view.visible { display: flex; }
-
-    .task-add-form {
-      display: flex; gap: 6px; align-items: center;
-      background: #0a0b1a; border: 1px solid #1e2240;
-      padding: 10px 12px; border-radius: 4px;
-    }
-    .task-input {
-      flex: 1;
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      background: #06070f;
-      color: #c8d3f5;
-      border: 1px solid #2a3060;
-      padding: 7px 10px;
-      outline: none;
-      border-radius: 2px;
-    }
-    .task-input:focus { border-color: #7aa2f7; }
-    .task-select {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 6px;
-      background: #06070f;
-      color: #7a8aaa;
-      border: 1px solid #2a3060;
-      padding: 7px 6px;
-      border-radius: 2px;
-      cursor: pointer;
-    }
-    .task-add-btn {
-      font-family: 'Press Start 2P', monospace;
-      font-size: 7px;
-      background: #7aa2f7;
-      color: #06070f;
-      border: none;
-      padding: 8px 12px;
-      cursor: pointer;
-      border-radius: 2px;
-      transition: background .2s;
-      white-space: nowrap;
-    }
-    .task-add-btn:hover { background: #9ab8ff; }
-
-    #task-summary {
-      font-size: 6px; color: #3a4060;
-      display: flex; gap: 16px; padding: 2px 0;
-    }
-    #task-summary span { color: #7aa2f7; }
-
-    .task-section { display: flex; flex-direction: column; gap: 6px; }
-    .task-section-title {
-      font-size: 7px; color: #4a5080;
-      padding: 6px 0 4px;
-      border-bottom: 1px solid #1e2240;
-      letter-spacing: 1px;
-    }
-    .task-section-title.done { color: #3a5a30; }
-
-    .task-item {
-      display: flex; align-items: center; gap: 10px;
-      background: #0a0b1a;
-      border: 1px solid #1e2240;
-      border-left: 3px solid #2a3060;
-      border-radius: 2px;
-      padding: 9px 12px;
-      font-size: 7px; color: #c8d3f5;
-      transition: border-color .2s, opacity .2s;
-      cursor: default;
-    }
-    .task-item:hover { border-left-color: #7aa2f7; }
-    .task-item.done-item { opacity: 0.45; border-left-color: #2a4a28; }
-    .task-item.done-item .task-title { text-decoration: line-through; color: #4a5a40; }
-    .task-item .task-check {
-      width: 14px; height: 14px; min-width: 14px;
-      border: 1px solid #3a4060; border-radius: 2px;
-      cursor: pointer; display: flex; align-items: center; justify-content: center;
-      font-size: 8px; transition: all .15s;
-    }
-    .task-item .task-check:hover { border-color: #9ece6a; color: #9ece6a; }
-    .task-item.done-item .task-check { background: #1a3a18; border-color: #3a6a30; color: #9ece6a; }
-    .task-item .task-title { flex: 1; line-height: 1.7; }
-    .task-item .task-meta { font-size: 5px; color: #3a4060; white-space: nowrap; }
-    .task-item .task-del {
-      font-size: 9px; color: #2a2a40; cursor: pointer; padding: 0 2px;
-      transition: color .15s;
-    }
-    .task-item .task-del:hover { color: #f7768e; }
-    .task-pri-dot { width: 6px; height: 6px; min-width:6px; border-radius: 50%; }
-    .task-pri-dot.high   { background: #f7768e; }
-    .task-pri-dot.medium { background: #e0af68; }
-    .task-pri-dot.low    { background: #3a4060; }
-    .task-empty { font-size: 6px; color: #2a2e4a; padding: 16px 0; text-align: center; }
-    .task-assignee-tag {
-      font-size: 5px; color: #3a4070; background: #0d0e1e;
-      border: 1px solid #1e2240; padding: 2px 5px; border-radius: 2px;
-      white-space: nowrap;
-    }
   </style>
 </head>
 <body>
 
 <header>
   <span class="logo">▶ AGENT OFFICE <span class="blink">_</span></span>
-  <div class="view-tabs">
-    <button class="tab-btn active" id="tab-office" onclick="switchTab('office')">🖥 OFFICE</button>
-    <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">📋 TASKS</button>
-  </div>
   <span id="agent-count">0 agents</span>
   <a id="public-url" class="loading" href="#" target="_blank">⏳ tunnel...</a>
 </header>
@@ -243,41 +121,6 @@
 <canvas id="office" width="1400" height="600"></canvas>
 
 <div id="grid"></div>
-
-<div id="task-view">
-  <!-- Add task form -->
-  <div class="task-add-form" id="task-add-form">
-    <input type="text" id="task-input" class="task-input" placeholder="Новая задача..." maxlength="120" />
-    <select id="task-assignee" class="task-select">
-      <option value="me">Я</option>
-      <option value="team">Команда</option>
-      <option value="claude">Claude</option>
-    </select>
-    <select id="task-priority" class="task-select">
-      <option value="high">🔴 Высокий</option>
-      <option value="medium" selected>🟡 Средний</option>
-      <option value="low">🟢 Низкий</option>
-    </select>
-    <button class="task-add-btn" onclick="addTask()">+ ДОБАВИТЬ</button>
-  </div>
-
-  <!-- Stats bar -->
-  <div id="task-summary">
-    <div>Всего: <span id="ts-total">0</span></div>
-    <div>В работе: <span id="ts-active">0</span></div>
-    <div>Готово: <span id="ts-done">0</span></div>
-  </div>
-
-  <!-- Two sections: current + done -->
-  <div class="task-section">
-    <div class="task-section-title">⚡ ТЕКУЩИЕ</div>
-    <div id="tasks-current"></div>
-  </div>
-  <div class="task-section">
-    <div class="task-section-title done">✅ ВЫПОЛНЕННЫЕ</div>
-    <div id="tasks-done"></div>
-  </div>
-</div>
 
 <div class="conn">
   <div class="led" id="led"></div>
@@ -3034,7 +2877,7 @@ let DESK_DEFS=[], DESK_SLOTS=[], COUCH_DEFS=[], COUCH_SLOTS=[], layoutN=0;
 let IDLE_SPOTS=[];   // all activity spots for idle agents
 let GROUP_PAIRS={};  // groupId -> [slotIndexA, slotIndexB]
 let KITCHEN_WALL_COL=0, KITCHEN_START_ROW=0, KITCHEN_DOOR_ROW=0; // enclosed kitchen
-let PER_ROW=3, STEP_X=7, STEP_Y=4, START_ROW=1; // desk layout constants (global for obstacle grid / kanban)
+let PER_ROW=3, STEP_X=7, STEP_Y=4, START_ROW=1; // desk layout constants (global for obstacle grid)
 let ACT_ZONE_Y = 0;  // Y row where gym/gaming/ping-pong zone starts
 // Ping pong ball — shared between both players
 let PP_L = {tx:0,ty:0}, PP_R = {tx:0,ty:0}; // player tile positions
@@ -3377,15 +3220,6 @@ function buildObstacleGrid() {
     markRect(gmTx, gmTy, 5, 3);
   }
 
-  // ── Kanban board (right entertainment zone) ─────
-  {
-    const rXkb = PER_ROW * STEP_X + 2;
-    const [kbTx,kbTy] = getAdminPos('kanban', rXkb+0.2, 2.5);
-    const kanbanCol = Math.floor(kbTx);
-    const kanbanW = Math.min(5, COLS - 1 - kanbanCol);
-    if (kanbanW >= 2) markRect(kanbanCol, Math.floor(kbTy), kanbanW, 4);
-  }
-
   // ── Bookshelf ─────
   if (ACT_ZONE_Y > 0) {
     const [bsTx,bsTy] = getAdminPos('bookshelf', COLS-5.5, ACT_ZONE_Y+13.2);
@@ -3573,113 +3407,6 @@ function astar(fromTx, fromTy, toTx, toTy) {
 // ════════════════════════════════════════════════════════════════
 //  NEW FEATURE DRAW FUNCTIONS
 // ════════════════════════════════════════════════════════════════
-
-// ── Kanban board — shows myTasks on the office wall ──────────────
-// Positioned on the right wall of the main office, ABOVE the kitchen partition
-function drawKanban(ctx) {
-  if (!myTasks || KITCHEN_WALL_COL === 0) return;
-  // Position: right entertainment zone, below darts and above aquarium
-  const rX = PER_ROW * STEP_X + 2;
-  const [_kbTx, _kbTy] = getAdminPos('kanban', rX + 0.2, 2.5);
-  const bx = OX + _kbTx * T;
-  const by = OY + _kbTy * T;
-  const bw = Math.min((COLS - 1 - _kbTx - 0.3) * T, T * 6);
-  const bh = T * 3;
-
-  if (bw < T * 2) return; // not enough space
-
-  // Board background (corkboard feel)
-  ctx.save();
-  ctx.shadowColor = '#00000060'; ctx.shadowBlur = 10; ctx.shadowOffsetY = 4;
-  ctx.fillStyle = '#6b4c28';
-  ctx.fillRect(bx, by, bw, bh);
-  ctx.restore();
-  ctx.fillStyle = '#c8a870';
-  ctx.fillRect(bx + 3, by + 3, bw - 6, bh - 6);
-  // Cork texture dots
-  ctx.fillStyle = '#b89860';
-  for (let i = 0; i < 20; i++) {
-    const dx = 8 + ((i * 37) % (bw - 16));
-    const dy = 20 + ((i * 53) % (bh - 30));
-    ctx.beginPath(); ctx.arc(bx + dx, by + dy, 1, 0, Math.PI*2); ctx.fill();
-  }
-
-  // Header
-  ctx.fillStyle = '#3d2a0a';
-  ctx.font = "bold 11px monospace";
-  ctx.textAlign = 'center';
-  ctx.fillText('KANBAN', bx + bw/2, by + 16);
-
-  // Divider line
-  ctx.fillStyle = '#a08050';
-  ctx.fillRect(bx + 4, by + 20, bw - 8, 2);
-
-  // Two columns
-  const colW = (bw - 12) / 2;
-  const col1x = bx + 5, col2x = bx + 7 + colW;
-  const colY = by + 26;
-
-  // Column headers
-  ctx.font = "bold 9px monospace";
-  ctx.textAlign = 'left';
-  ctx.fillStyle = '#e0af68'; ctx.fillText('TODO', col1x + 2, colY + 2);
-  ctx.fillStyle = '#9ece6a'; ctx.fillText('DONE', col2x + 2, colY + 2);
-  ctx.fillStyle = '#a08050';
-  ctx.fillRect(bx + colW + 6, by + 20, 2, bh - 24); // column divider
-
-  // Task cards
-  const todo = myTasks.filter(t => t.status === 'todo').slice(0, 6);
-  const done = myTasks.filter(t => t.status === 'done').slice(0, 6);
-  const cardH = 16, gap = 3;
-
-  todo.forEach((task, i) => {
-    const cy2 = colY + 8 + i * (cardH + gap);
-    if (cy2 + cardH > by + bh - 4) return;
-    ctx.fillStyle = '#e0af6830';
-    ctx.fillRect(col1x, cy2, colW - 2, cardH);
-    ctx.fillStyle = '#e0af68';
-    ctx.fillRect(col1x, cy2, 3, cardH); // priority bar
-    ctx.fillStyle = '#3d2a0a';
-    ctx.font = '8px monospace';
-    const maxChars = Math.floor((colW - 14) / 5);
-    const label = task.title.substring(0, maxChars);
-    ctx.fillText(label, col1x + 6, cy2 + 11);
-  });
-
-  done.forEach((task, i) => {
-    const cy2 = colY + 8 + i * (cardH + gap);
-    if (cy2 + cardH > by + bh - 4) return;
-    ctx.fillStyle = '#9ece6a20';
-    ctx.fillRect(col2x, cy2, colW - 2, cardH);
-    ctx.fillStyle = '#9ece6a';
-    ctx.fillRect(col2x, cy2, 3, cardH);
-    ctx.fillStyle = '#3d2a0a80';
-    ctx.font = '8px monospace';
-    const maxChars = Math.floor((colW - 14) / 5);
-    const label = task.title.substring(0, maxChars);
-    ctx.fillText(label, col2x + 6, cy2 + 11);
-    // Strikethrough line
-    ctx.fillStyle = '#3d2a0a50';
-    ctx.fillRect(col2x + 6, cy2 + 8, Math.min(label.length * 5, colW - 14), 1);
-  });
-
-  if (myTasks.length === 0) {
-    ctx.fillStyle = '#a08050';
-    ctx.font = '8px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('no tasks yet', bx + bw/2, colY + 14);
-  }
-
-  // Pushpin decorations
-  [[col1x + colW/2, by + 12],[col2x + colW/2, by + 12]].forEach(([px, py2]) => {
-    ctx.fillStyle = '#c04040';
-    ctx.beginPath(); ctx.arc(px, py2, 3, 0, Math.PI*2); ctx.fill();
-    ctx.fillStyle = '#ff6060';
-    ctx.beginPath(); ctx.arc(px - 1, py2 - 1, 1.2, 0, Math.PI*2); ctx.fill();
-  });
-
-  ctx.textAlign = 'left';
-}
 
 // ── Dynamic windows — sky color changes with time of day ─────────
 function getTimeOfDay() {
@@ -7276,14 +7003,6 @@ function drawRightPanel(ctx, tick) {
   label('WORKING', working, '#e0af68', 118);
   label('IDLE', idle, '#565f89', 152);
 
-  // Tasks
-  const doneTasks = (typeof myTasks !== 'undefined') ? myTasks.filter(t=>t.status==='done').length : 0;
-  const todoTasks = (typeof myTasks !== 'undefined') ? myTasks.filter(t=>t.status==='todo').length : 0;
-  ctx.fillStyle = '#2a2c4e';
-  ctx.fillRect(panelX+6, 180, W-12, 1);
-  label('TODO', todoTasks, '#e0af68', 194);
-  label('DONE', doneTasks, '#9ece6a', 228);
-
   // Cat status
   ctx.fillStyle = '#2a2c4e';
   ctx.fillRect(panelX+6, 256, W-12, 1);
@@ -7665,9 +7384,6 @@ function loop(now) {
   drawDynamicEffects(ctx, globalTick);
   drawAquariumFish(ctx, globalTick); // before agents so fish stay behind
 
-  // Kanban board (live tasks)
-  drawKanban(ctx);
-
   // Dynamic windows (sky based on time of day)
   drawDynamicWindows(ctx);
   drawDustMotes(ctx, globalTick);
@@ -7862,102 +7578,6 @@ function updateUI() {
 }
 
 // ════════════════════════════════════════════════════════════════
-//  PERSONAL TASK BOARD
-// ════════════════════════════════════════════════════════════════
-let myTasks = [];
-
-function switchTab(tab) {
-  const isOffice = tab === 'office';
-  document.getElementById('tab-office').classList.toggle('active', isOffice);
-  document.getElementById('tab-tasks').classList.toggle('active', !isOffice);
-  document.getElementById('office').style.display = isOffice ? 'block' : 'none';
-  document.getElementById('grid').style.display = isOffice ? 'grid' : 'none';
-  document.getElementById('task-view').classList.toggle('visible', !isOffice);
-  if (!isOffice) renderTasks();
-}
-
-function addTask() {
-  const input = document.getElementById('task-input');
-  const title = input.value.trim();
-  if (!title) return;
-  const assignee = document.getElementById('task-assignee').value;
-  const priority = document.getElementById('task-priority').value;
-  fetch('/api/mytasks', {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ title, assignee, priority })
-  }).then(() => { input.value = ''; });
-}
-
-function toggleTask(id) {
-  const t = myTasks.find(x => x.id === id);
-  if (!t) return;
-  fetch(`/api/mytasks/${id}`, {
-    method: 'PATCH',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({ status: t.status === 'done' ? 'todo' : 'done' })
-  });
-}
-
-function deleteTask(id) {
-  fetch(`/api/mytasks/${id}`, { method: 'DELETE' });
-}
-
-function renderTasks() {
-  const current = document.getElementById('tasks-current');
-  const done    = document.getElementById('tasks-done');
-  current.innerHTML = done.innerHTML = '';
-
-  const active = myTasks.filter(t => t.status !== 'done');
-  const doneList = myTasks.filter(t => t.status === 'done');
-
-  const ASSIGNEE = { me: 'Я', team: 'Команда', claude: 'Claude' };
-
-  function makeItem(t) {
-    const el = document.createElement('div');
-    el.className = 'task-item' + (t.status === 'done' ? ' done-item' : '');
-
-    const checkEl = document.createElement('div');
-    checkEl.className = 'task-check';
-    checkEl.textContent = t.status === 'done' ? '✓' : '';
-    checkEl.onclick = () => toggleTask(t.id);
-
-    const dot = document.createElement('div');
-    dot.className = `task-pri-dot ${t.priority}`;
-
-    const titleEl = document.createElement('div');
-    titleEl.className = 'task-title';
-    titleEl.textContent = t.title;
-
-    const tag = document.createElement('div');
-    tag.className = 'task-assignee-tag';
-    tag.textContent = ASSIGNEE[t.assignee] || t.assignee;
-
-    const del = document.createElement('div');
-    del.className = 'task-del';
-    del.textContent = '✕';
-    del.onclick = () => deleteTask(t.id);
-
-    el.append(checkEl, dot, titleEl, tag, del);
-    return el;
-  }
-
-  if (active.length === 0) current.innerHTML = '<div class="task-empty">— нет задач —</div>';
-  else active.forEach(t => current.appendChild(makeItem(t)));
-
-  if (doneList.length === 0) done.innerHTML = '<div class="task-empty">— нет выполненных —</div>';
-  else doneList.forEach(t => done.appendChild(makeItem(t)));
-
-  document.getElementById('ts-total').textContent  = myTasks.length;
-  document.getElementById('ts-active').textContent = active.length;
-  document.getElementById('ts-done').textContent   = doneList.length;
-}
-
-document.addEventListener('keydown', e => {
-  if (e.key === 'Enter' && document.activeElement.id === 'task-input') addTask();
-});
-
-// ════════════════════════════════════════════════════════════════
 //  WEBSOCKET
 // ════════════════════════════════════════════════════════════════
 let wsActive=false;
@@ -7971,7 +7591,6 @@ function connect() {
     let msg; try { msg=JSON.parse(data); } catch { return; }
     if (msg.type==='init')         { for (const a of msg.agents) { agentsData[a.id]=a; renderCard(a); } updateUI(); }
     if (msg.type==='agent_update') { agentsData[msg.agent.id]=msg.agent; renderCard(msg.agent); updateUI(); }
-    if (msg.type==='mytasks_init' || msg.type==='mytasks_update') { myTasks = msg.tasks; renderTasks(); }
     if (msg.type==='agent_remove') { delete agentsData[msg.id]; document.getElementById(`c-${msg.id}`)?.remove(); updateUI(); }
     if (msg.type==='layout_update' && msg.layout) {
       // Another admin moved objects — apply their layout
@@ -8013,7 +7632,6 @@ function startPolling() {
         }
         for (const a of data.agents) { agentsData[a.id] = a; renderCard(a); }
       }
-      if (data.myTasks) { myTasks = data.myTasks; renderTasks(); }
       updateUI();
       const led = document.getElementById('led'), lbl = document.getElementById('conn-label');
       led.className = 'led'; lbl.textContent = 'polling';
@@ -8144,10 +7762,6 @@ function buildAdminObjects() {
     adminObjects.push({id:'espresso_bar', label:'☕ Espresso Bar', tx:13, ty:ACT_ZONE_Y+14, w:3, h:1.5});
   }
 
-  // Kanban board
-  const rXkb = PER_ROW * STEP_X + 2;
-  adminObjects.push({id:'kanban', label:'📋 Kanban', tx:rXkb+0.2, ty:2.5, w:4.5, h:4});
-
   // Snapshot default positions (before applying saved overrides)
   if (!window._defaultPositions) {
     window._defaultPositions = {};
@@ -8223,7 +7837,6 @@ const BUILTIN_POSITIONS = {
   // ═══ RIGHT PANEL (cols 24-34) ═══
   "clock": {"tx": 24, "ty": 0},
   "darts": {"tx": 30, "ty": 0},
-  "kanban": {"tx": 24, "ty": 2},
   "aquarium": {"tx": 24, "ty": 7},
   "printer": {"tx": 30, "ty": 9},
   "plant_0": {"tx": 5, "ty": 0.5},

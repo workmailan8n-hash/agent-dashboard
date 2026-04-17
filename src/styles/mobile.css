@@ -24,10 +24,6 @@
     display: block;
   }
 
-  #task-view {
-    max-width: 100%;
-  }
-
   #settings-panel,
   #leaderboard-panel {
     width: 280px;
@@ -111,31 +107,6 @@
   /* ── Grid / mood ── */
   #grid {
     grid-template-columns: 1fr !important;
-    width: 100%;
-  }
-
-  /* ── Task view ── */
-  #task-view {
-    max-width: 100%;
-  }
-
-  .task-add-form {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 8px;
-  }
-
-  .task-input {
-    width: 100%;
-  }
-
-  .task-select {
-    width: 100%;
-    min-height: 36px;
-  }
-
-  .task-add-btn {
-    min-height: 36px;
     width: 100%;
   }
 

@@ -5,7 +5,7 @@
 //  Used by admin editor (live drag feedback) and boot validator.
 // ════════════════════════════════════════════════════════════════
 
-import { BUILTIN_POSITIONS } from "./adminPos.js";
+import { BUILTIN_POSITIONS } from './adminPos.js';
 
 // Tolerance: objects may touch edges without counting as overlap.
 const EPS = 0.05;
@@ -24,7 +24,6 @@ export const OBJECT_SIZES = {
   darts: { w: 2, h: 1 },
   aquarium: { w: 2.5, h: 2 },
   printer: { w: 2, h: 1 },
-  kanban: { w: 4.5, h: 4 },
   plant: { w: 1, h: 1.5 },
   // Kitchen
   kitchen_counter: { w: 9, h: 1 },
@@ -91,21 +90,11 @@ export function getAABB(name, pos) {
 }
 
 export function intersects(a, b) {
-  return (
-    a.x1 < b.x2 - EPS &&
-    a.x2 > b.x1 + EPS &&
-    a.y1 < b.y2 - EPS &&
-    a.y2 > b.y1 + EPS
-  );
+  return a.x1 < b.x2 - EPS && a.x2 > b.x1 + EPS && a.y1 < b.y2 - EPS && a.y2 > b.y1 + EPS;
 }
 
 export function isInsideBounds(aabb, COLS, ROWS) {
-  return (
-    aabb.x1 >= -EPS &&
-    aabb.y1 >= -EPS &&
-    aabb.x2 <= COLS + EPS &&
-    aabb.y2 <= ROWS + EPS
-  );
+  return aabb.x1 >= -EPS && aabb.y1 >= -EPS && aabb.x2 <= COLS + EPS && aabb.y2 <= ROWS + EPS;
 }
 
 // Walls: array of thin AABBs (1-tile thick segments).
@@ -119,48 +108,45 @@ export function intersectsAnyWall(aabb, walls) {
 
 // ── Canonical layout walls (matches BUILTIN_POSITIONS layout) ────
 // COLS=35, ROWS=70 (runtime minimum per generateLayout), kitchen col 23, lounge row 21.
-// Wall-mounted decorations (clock, kanban, darts, etc.) sit at ty:0 and are intentionally
+// Wall-mounted decorations (clock, darts, etc.) sit at ty:0 and are intentionally
 // flush with the top boundary — top wall is placed at y:-1..0 so they do not false-fire.
 export const CANONICAL_COLS = 35;
 export const CANONICAL_ROWS = 70;
 
-export function buildCanonicalWalls(
-  COLS = CANONICAL_COLS,
-  ROWS = CANONICAL_ROWS,
-) {
+export function buildCanonicalWalls(COLS = CANONICAL_COLS, ROWS = CANONICAL_ROWS) {
   const walls = [];
   // Top wall — placed above y:0 so wall-mounted objects (ty:0) don't trigger false positives
-  walls.push({ x1: 0, y1: -1, x2: COLS, y2: 0, label: "top wall" });
+  walls.push({ x1: 0, y1: -1, x2: COLS, y2: 0, label: 'top wall' });
   // Bottom wall
-  walls.push({ x1: 0, y1: ROWS - 1, x2: COLS, y2: ROWS, label: "bottom wall" });
+  walls.push({ x1: 0, y1: ROWS - 1, x2: COLS, y2: ROWS, label: 'bottom wall' });
   // Left wall
-  walls.push({ x1: 0, y1: 0, x2: 1, y2: ROWS, label: "left wall" });
+  walls.push({ x1: 0, y1: 0, x2: 1, y2: ROWS, label: 'left wall' });
   // Right wall: entrance door gap rows 5..7
   walls.push({
     x1: COLS - 1,
     y1: 0,
     x2: COLS,
     y2: 5,
-    label: "right wall (top)",
+    label: 'right wall (top)',
   });
   walls.push({
     x1: COLS - 1,
     y1: 8,
     x2: COLS,
     y2: ROWS,
-    label: "right wall (bot)",
+    label: 'right wall (bot)',
   });
   // Kitchen partition col 23, rows 10..19, door rows 12..15
-  walls.push({ x1: 23, y1: 10, x2: 24, y2: 12, label: "kitchen wall (top)" });
-  walls.push({ x1: 23, y1: 16, x2: 24, y2: 20, label: "kitchen wall (bot)" });
+  walls.push({ x1: 23, y1: 10, x2: 24, y2: 12, label: 'kitchen wall (top)' });
+  walls.push({ x1: 23, y1: 16, x2: 24, y2: 20, label: 'kitchen wall (bot)' });
   // Lounge wall row 21, cols 1..COLS-1, door cols 10..17 (30%..50% of 35)
-  walls.push({ x1: 1, y1: 21, x2: 10, y2: 22, label: "lounge wall (left)" });
+  walls.push({ x1: 1, y1: 21, x2: 10, y2: 22, label: 'lounge wall (left)' });
   walls.push({
     x1: 18,
     y1: 21,
     x2: COLS - 1,
     y2: 22,
-    label: "lounge wall (right)",
+    label: 'lounge wall (right)',
   });
   return walls;
 }
@@ -176,11 +162,11 @@ export function findConflicts(positions, walls, COLS, ROWS) {
 
   for (const { name, aabb } of aabbs) {
     if (!isInsideBounds(aabb, COLS, ROWS)) {
-      out.push({ name, kind: "oob", aabb });
+      out.push({ name, kind: 'oob', aabb });
     }
     const wallHit = intersectsAnyWall(aabb, walls);
     if (wallHit) {
-      out.push({ name, kind: "wall", other: wallHit.label, aabb });
+      out.push({ name, kind: 'wall', other: wallHit.label, aabb });
     }
   }
   // Pairwise overlap
@@ -189,7 +175,7 @@ export function findConflicts(positions, walls, COLS, ROWS) {
       if (intersects(aabbs[i].aabb, aabbs[j].aabb)) {
         out.push({
           name: aabbs[i].name,
-          kind: "overlap",
+          kind: 'overlap',
           other: aabbs[j].name,
           aabb: aabbs[i].aabb,
         });
@@ -206,11 +192,8 @@ export function validateCanonicalLayout() {
   // so the dev-mode assertion catches real runtime overlaps, not just the
   // canonical defaults in BUILTIN_POSITIONS.
   const live =
-    typeof window !== "undefined" && window._adminPos
-      ? window._adminPos
-      : BUILTIN_POSITIONS;
-  const source =
-    live === BUILTIN_POSITIONS ? "BUILTIN_POSITIONS" : "_adminPos (live)";
+    typeof window !== 'undefined' && window._adminPos ? window._adminPos : BUILTIN_POSITIONS;
+  const source = live === BUILTIN_POSITIONS ? 'BUILTIN_POSITIONS' : '_adminPos (live)';
   const conflicts = findConflicts(live, walls, CANONICAL_COLS, CANONICAL_ROWS);
   if (conflicts.length) {
     console.warn(`[collision] ${conflicts.length} conflict(s) in ${source}:`);
@@ -218,7 +201,7 @@ export function validateCanonicalLayout() {
       const a = c.aabb;
       console.warn(
         `  • ${c.name} [${c.kind}] (${a.x1},${a.y1})..(${a.x2},${a.y2})` +
-          (c.other ? ` ↔ ${c.other}` : ""),
+          (c.other ? ` ↔ ${c.other}` : '')
       );
     }
   } else {
@@ -228,7 +211,7 @@ export function validateCanonicalLayout() {
 }
 
 // Expose for Playwright + admin live-feedback
-if (typeof window !== "undefined") {
+if (typeof window !== 'undefined') {
   window.findConflicts = findConflicts;
   window.OBJECT_SIZES = OBJECT_SIZES;
   window.getAABB = getAABB;

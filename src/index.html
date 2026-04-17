@@ -45,12 +45,6 @@
   <div class="hz hz-logo">
     <span class="logo">▶ AGENT OFFICE <span class="blink">_</span></span>
   </div>
-  <div class="hz hz-views">
-    <div class="view-tabs">
-      <button class="tab-btn active" id="tab-office" onclick="switchTab('office')">🖥 OFFICE</button>
-      <button class="tab-btn" id="tab-tasks" onclick="switchTab('tasks')">📋 TASKS</button>
-    </div>
-  </div>
   <div class="hz hz-utils">
     <button id="btn-leaderboard">🏆 TOP</button>
     <button id="btn-settings">⚙ SET</button>
@@ -82,41 +76,6 @@
       <span id="mm-pct" class="mm-pct">0%</span>
     </div>
     <div id="mm-stats" class="mm-stats">— no agents —</div>
-  </div>
-</div>
-
-<div id="task-view">
-  <!-- Add task form -->
-  <div class="task-add-form" id="task-add-form">
-    <input type="text" id="task-input" class="task-input" placeholder="Новая задача..." maxlength="120" />
-    <select id="task-assignee" class="task-select">
-      <option value="me">Я</option>
-      <option value="team">Команда</option>
-      <option value="claude">Claude</option>
-    </select>
-    <select id="task-priority" class="task-select">
-      <option value="high">🔴 Высокий</option>
-      <option value="medium" selected>🟡 Средний</option>
-      <option value="low">🟢 Низкий</option>
-    </select>
-    <button class="task-add-btn" onclick="addTask()">+ ДОБАВИТЬ</button>
-  </div>
-
-  <!-- Stats bar -->
-  <div id="task-summary">
-    <div>Всего: <span id="ts-total">0</span></div>
-    <div>В работе: <span id="ts-active">0</span></div>
-    <div>Готово: <span id="ts-done">0</span></div>
-  </div>
-
-  <!-- Two sections: current + done -->
-  <div class="task-section">
-    <div class="task-section-title">⚡ ТЕКУЩИЕ</div>
-    <div id="tasks-current"></div>
-  </div>
-  <div class="task-section">
-    <div class="task-section-title done">✅ ВЫПОЛНЕННЫЕ</div>
-    <div id="tasks-done"></div>
   </div>
 </div>
 

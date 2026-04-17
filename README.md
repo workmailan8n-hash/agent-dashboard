@@ -33,11 +33,13 @@ The frontend is built as **23 ES modules** bundled by Vite, with **12 CSS files*
 ## Features
 
 ### Real-Time Agent Tracking
+
 - **WebSocket** push for instant updates when agents start/stop tools
 - **HTTP polling fallback** (2-second interval) for environments where WebSocket is unavailable (e.g., Railway)
 - Connection indicator in the bottom-right corner shows `online` or `polling` status
 
 ### Pixel Art Office
+
 - **28-column tile grid** with dynamic row count based on agent count
 - 18+ character appearances with diverse skin tones, hair colors, and fantasy variants (elf, alien, demon, robot, catfolk)
 - **9-direction walking animations**: N, NE, E, SE, S, SW, W, NW, and idle
@@ -46,6 +48,7 @@ The frontend is built as **23 ES modules** bundled by Vite, with **12 CSS files*
 - Burnout tracking (0-4 levels) that affects walking speed
 
 ### Office Zones & Interactive Objects
+
 - **Desks** — dynamically generated based on agent count, with typing and thinking animations
 - **Lounge** — couches with sleeping, phone, stretching, and drinking animations
 - **Kitchen** — enclosed room with coffee machine, microwave, toaster, knife block, cutting board, sink, fridge, and dining table with eating spots
@@ -57,7 +60,6 @@ The frontend is built as **23 ES modules** bundled by Vite, with **12 CSS files*
 - **Water Cooler** — paired chatting activity
 - **Vending Machine** — with product display
 - **Bookshelf** — reading spot in the social zone
-- **Kanban Board** — displays personal tasks on the office wall
 - **Wall Clock** — shows real time
 - **Trash Can** — with fill level indicator
 - **Windows** — window-gazing idle activity
@@ -67,6 +69,7 @@ The frontend is built as **23 ES modules** bundled by Vite, with **12 CSS files*
 - **Entrance Door** — agents spawn from the right wall and walk in through a visible door
 
 ### Entertainment Zone (10 New Objects)
+
 - **Massage Chair** — agents relax in a vibrating chair with animated cushions
 - **Arcade Machine** — retro cabinet with screen glow, agents play with gaming animation
 - **Espresso Bar** — barista-style station with steam effects, agents use coffee animation
@@ -81,21 +84,26 @@ The frontend is built as **23 ES modules** bundled by Vite, with **12 CSS files*
 All entertainment objects support **click animations** -- clicking on any object triggers a visual feedback effect.
 
 ### Zone Walls
+
 - **Kitchen walls** — partition separating the kitchen from the main office, with door opening
 - **Zone divider wall** — separates the lounge area from the activity/entertainment zone, with door gap for pathfinding
 
 ### Settings Panel
+
 - Adjustable sound volume, animation speed, and display preferences
 - Persisted to `localStorage`
 
 ### Loading Screen
+
 - Animated loading screen with progress indicator while assets initialize
 
 ### Mobile Adaptation
+
 - Responsive layout that adjusts canvas size, card grid, and UI panels for smaller screens
 - Touch-friendly controls
 
 ### Office Cat
+
 - Autonomous cat with its own state machine: `sitting`, `walking`, `sleeping`, `eating`, `pooping`, plus 10 new behaviors:
   - **Playing** — bats at a toy with spinning animation
   - **Grooming** — licks paw with detailed paw-to-face animation
@@ -112,19 +120,20 @@ All entertainment objects support **click animations** -- clicking on any object
 - Agents near a sitting or sleeping cat may start petting it
 
 ### Agent Card Grid
+
 Below the canvas, each agent gets an info card showing:
+
 - Name/slug and current status (working / thinking / idle)
 - Active tool with label (e.g., "Reads file", "Edits file")
 - Color-coded accent based on assigned palette
 - Animated status dot and scan bar
 
 ### Task Management
-- **Kanban board** rendered on the office wall
-- Add, complete, and delete personal tasks via the UI below the canvas
-- Tasks persist to `tasks.json` on disk
+
 - Agent `TodoWrite` tool calls are captured and displayed
 
 ### Cloud Sync
+
 - `sync-to-cloud.js` pushes local state to a remote server every 2 seconds
 - Serveo SSH tunnel for instant public URL (auto-configured on startup)
 
@@ -145,7 +154,7 @@ Below the canvas, each agent gets an info card showing:
 │  ├─ src/server/auth.js       — X-Admin-Token middleware         │
 │  └─ src/server/handlers/     — 6 route handler modules          │
 │     ├─ agents.js   — agent state queries                        │
-│     ├─ tasks.js    — personal + agent task CRUD                 │
+│     ├─ tasks.js    — agent task queries                         │
 │     ├─ layout.js   — shared admin layout sync                   │
 │     ├─ sync.js     — cloud sync push/pull                       │
 │     ├─ demo.js     — demo agent injection                       │
@@ -180,7 +189,6 @@ agent-dashboard/
 │   ├── clickAnims.js      # Click feedback animations
 │   ├── math.js            # Math utilities
 │   ├── audio.js           # Sound effects (Web Audio API)
-│   ├── tasks.js           # Task UI management
 │   ├── ui.js              # UI panels and overlays
 │   ├── websocket.js       # WebSocket client + polling fallback
 │   ├── admin.js           # Admin editor logic
@@ -191,8 +199,6 @@ agent-dashboard/
 │   │   ├── header.css     # Header bar
 │   │   ├── canvas.css     # Canvas container
 │   │   ├── cards.css      # Agent info cards
-│   │   ├── tabs.css       # Tab navigation
-│   │   ├── tasks.css      # Task panel
 │   │   ├── connection.css # Connection indicator
 │   │   ├── admin.css      # Admin editor overlay
 │   │   ├── settings.css   # Settings panel
@@ -214,7 +220,6 @@ agent-dashboard/
 ├── sync-to-cloud.js       # Cloud sync script
 ├── vite.config.js         # Vite configuration
 ├── .env.example           # Environment variable template
-├── tasks.json             # Persisted personal tasks (auto-created)
 └── package.json           # Dependencies: ws, chokidar, dotenv + Vite
 ```
 
@@ -246,6 +251,7 @@ In development mode, Vite serves the frontend with hot module replacement while 
 Open **http://localhost:3737** in your browser.
 
 The server will:
+
 1. Scan all existing `.jsonl` files in `~/.claude/projects/`
 2. Start watching for new file changes (polling every 500ms)
 3. Print your local network IP for access from other devices
@@ -256,6 +262,7 @@ If `~/.claude/projects/` does not exist, the server runs in **demo mode** with n
 ### Demo Mode
 
 Inject a fake agent:
+
 ```bash
 curl -X POST http://localhost:3737/api/demo \
   -H "Content-Type: application/json" \
@@ -264,6 +271,7 @@ curl -X POST http://localhost:3737/api/demo \
 ```
 
 Remove it:
+
 ```bash
 curl -X DELETE http://localhost:3737/api/demo/test-1 \
   -H "X-Admin-Token: YOUR_TOKEN"
@@ -313,6 +321,7 @@ node sync-to-cloud.js https://your-app.up.railway.app [SYNC_KEY]
 ```
 
 Environment variable alternatives:
+
 ```bash
 REMOTE_URL=https://your-app.up.railway.app \
 SYNC_KEY=your-secret \
@@ -322,6 +331,7 @@ node sync-to-cloud.js
 ```
 
 The sync script:
+
 1. Fetches `GET /api/state` from the local server
 2. Posts the full state to `POST /api/sync` on the remote server
 3. Repeats every 2 seconds (configurable via `SYNC_INTERVAL`)
@@ -329,6 +339,7 @@ The sync script:
 ### Serveo Tunnel
 
 On startup, the server attempts to open an SSH tunnel via [serveo.net](https://serveo.net):
+
 ```
 ssh -R 80:localhost:3737 serveo.net
 ```
@@ -389,7 +400,7 @@ Returns an array of all tracked agents.
     "currentToolLabel": "Edits file",
     "lastActivity": "2026-03-26T12:00:00.000Z",
     "messageCount": 42,
-    "toolHistory": [{"tool": "Edit", "time": "..."}],
+    "toolHistory": [{ "tool": "Edit", "time": "..." }],
     "startedAt": "2026-03-26T11:00:00.000Z",
     "isSubagent": false,
     "agentType": null
@@ -404,7 +415,7 @@ Returns agent todo lists extracted from `TodoWrite` tool calls.
 ```json
 {
   "agent-id": {
-    "todos": [{"id": "1", "content": "Fix bug", "status": "in_progress", "priority": "high"}],
+    "todos": [{ "id": "1", "content": "Fix bug", "status": "in_progress", "priority": "high" }],
     "updatedAt": "2026-03-26T12:00:00.000Z"
   }
 }
@@ -417,16 +428,16 @@ Full state snapshot used by HTTP polling and the sync script.
 ```json
 {
   "agents": [...],
-  "tasks": {...},
-  "myTasks": [...]
+  "tasks": {...}
 }
 ```
 
 ### `POST /api/sync`
 
-Receives a full state push from `sync-to-cloud.js`. Replaces all agent, task, and personal task state. Broadcasts updates to all WebSocket clients.
+Receives a full state push from `sync-to-cloud.js`. Replaces all agent and task state. Broadcasts updates to all WebSocket clients.
 
 **Headers:**
+
 - `X-Sync-Key` — must match the `SYNC_KEY` environment variable (if set on the server)
 
 **Body:** Same shape as the `GET /api/state` response.
@@ -448,50 +459,6 @@ Injects or updates a demo agent. Useful for testing without active Claude Code s
 ### `DELETE /api/demo/:id` (auth required)
 
 Removes a demo agent by ID.
-
-### `GET /api/mytasks`
-
-Returns all personal tasks.
-
-```json
-[
-  {
-    "id": "1711234567890",
-    "title": "Review PR",
-    "assignee": "me",
-    "priority": "high",
-    "status": "todo",
-    "createdAt": "2026-03-26T10:00:00.000Z",
-    "completedAt": null
-  }
-]
-```
-
-### `POST /api/mytasks` (auth required)
-
-Creates a new personal task. Returns the created task with a generated `id`.
-
-```json
-{
-  "title": "Deploy v2",
-  "assignee": "me",
-  "priority": "medium"
-}
-```
-
-### `PATCH /api/mytasks/:id` (auth required)
-
-Updates fields on a task. Setting `status` to `"done"` auto-sets `completedAt`. Setting it back to `"todo"` clears `completedAt`.
-
-```json
-{
-  "status": "done"
-}
-```
-
-### `DELETE /api/mytasks/:id` (auth required)
-
-Deletes a task by ID.
 
 ### `GET /api/layout`
 
@@ -523,7 +490,7 @@ The main `loop()` function runs via `requestAnimationFrame` and renders each fra
 
 1. **Clear canvas** and draw floor, walls, grid lines
 2. **Draw static objects** — desks, kitchen appliances (coffee machine, microwave, toaster, knife block, cutting board, sink), couches, gym equipment, aquarium, windows, plants, entertainment zone objects
-3. **Draw dynamic features** — Kanban board, wall clock, trash can, cat bowls, vending machine, dart animations, click animations, zone walls
+3. **Draw dynamic features** — wall clock, trash can, cat bowls, vending machine, dart animations, click animations, zone walls
 4. **Depth-sort all sprites** — agents and cat sorted by Y-position (`ty + tx * 0.001`) for correct overlap
 5. **Draw agents** — each `AgentState` renders its current animation frame using the appropriate draw function
 6. **Draw cat** — the `CatState` renders independently with its own sprite
@@ -532,42 +499,43 @@ The main `loop()` function runs via `requestAnimationFrame` and renders each fra
 
 **Key constants:**
 
-| Name | Value | Meaning |
-|------|-------|---------|
-| `CW` | 1200 | Canvas width (px) |
-| `T` | 32 | Tile size (px) |
-| `OX` | 140 | Side panel width (px) |
-| `COLS` | 28 | Office grid columns |
+| Name   | Value | Meaning               |
+| ------ | ----- | --------------------- |
+| `CW`   | 1200  | Canvas width (px)     |
+| `T`    | 32    | Tile size (px)        |
+| `OX`   | 140   | Side panel width (px) |
+| `COLS` | 28    | Office grid columns   |
 
-### A* Pathfinding
+### A\* Pathfinding
 
-Agents navigate around obstacles using A* search on the tile grid:
+Agents navigate around obstacles using A\* search on the tile grid:
 
 - **Obstacle grid** — a 2D `Uint8Array` marks walls, furniture, kitchen partition walls, and desk areas as blocked
 - **Bresenham pre-check** — before running A*, a line-of-sight check determines if direct movement is possible. If the path is unobstructed, A* is skipped entirely
 - **8-directional movement** — cardinal moves cost 1.0, diagonal moves cost 1.414
 - **Diagonal corner-cutting prevention** — diagonal moves are blocked if either adjacent cardinal cell is an obstacle
 - **Search limit** — 3000 node expansions maximum to prevent frame drops
-- **Fallback** — `nearestFree()` uses BFS to find the closest walkable tile when A* cannot reach the target
+- **Fallback** — `nearestFree()` uses BFS to find the closest walkable tile when A\* cannot reach the target
 - **Walk timeout** — agents abandon unreachable idle slots after 10 seconds and pick a new destination
 
 ### Agent State Machine
 
 Each agent is an instance of the `AgentState` class (defined in `src/agentState.js`):
 
-| Field | Purpose |
-|-------|---------|
-| `state` | Current animation: `walking`, `typing_normal`, `typing_furious`, `thinking`, `sleeping`, `gaming`, `yoga`, `celebrating`, `smoking_beer`, etc. (40+ animation states) |
-| `isWorking` | `true` when backend status is `working` or `thinking` |
-| `slotIdx` | Index into `DESK_SLOTS` (when working) or `IDLE_SPOTS` (when idle) |
-| `arrived` | `true` once the agent reaches its target tile |
-| `waypoints` | A* path for current movement |
-| `facing` | One of 9 directions; determines which walk sprite to draw |
-| `burnout` | 0-4 counter; increments each time agent stops working; slows walk speed at level 3+ |
-| `celebrating` | Plays confetti animation after finishing a task |
-| `isCleaning` | Assigned to clean up a cat mess; overrides normal slot logic |
+| Field         | Purpose                                                                                                                                                               |
+| ------------- | --------------------------------------------------------------------------------------------------------------------------------------------------------------------- |
+| `state`       | Current animation: `walking`, `typing_normal`, `typing_furious`, `thinking`, `sleeping`, `gaming`, `yoga`, `celebrating`, `smoking_beer`, etc. (40+ animation states) |
+| `isWorking`   | `true` when backend status is `working` or `thinking`                                                                                                                 |
+| `slotIdx`     | Index into `DESK_SLOTS` (when working) or `IDLE_SPOTS` (when idle)                                                                                                    |
+| `arrived`     | `true` once the agent reaches its target tile                                                                                                                         |
+| `waypoints`   | A\* path for current movement                                                                                                                                         |
+| `facing`      | One of 9 directions; determines which walk sprite to draw                                                                                                             |
+| `burnout`     | 0-4 counter; increments each time agent stops working; slows walk speed at level 3+                                                                                   |
+| `celebrating` | Plays confetti animation after finishing a task                                                                                                                       |
+| `isCleaning`  | Assigned to clean up a cat mess; overrides normal slot logic                                                                                                          |
 
 **Lifecycle:**
+
 1. Agent appears in the log files — spawns at the entrance door (right wall), spawn flash animation, particle burst
 2. Backend says `working` or `thinking` — agent walks to an available desk, sits down, types
 3. Backend goes `idle` — agent picks a weighted-random idle spot, walks there, performs activity for 10-30 seconds, then picks another
@@ -591,6 +559,7 @@ Human characters may also get hash-derived accessories: glasses, beard, hair bun
 ### Particle System
 
 A lightweight `ParticleSystem` class (in `src/particles.js`) handles visual effects:
+
 - **Confetti** — burst on task completion (celebration)
 - **Puff** — emitted when agents despawn
 - **Burst** — emitted when agents spawn
@@ -615,43 +584,42 @@ Minimal audio via Web Audio API (see `src/audio.js`). A `blip()` function genera
 
 The server maps Claude Code tool names to display labels:
 
-| Tool | Label |
-|------|-------|
-| `Bash` | Runs command |
-| `Read` | Reads file |
-| `Write` | Writes file |
-| `Edit` | Edits file |
-| `Grep` | Searches code |
-| `Glob` | Finds files |
-| `WebFetch` | Loads page |
-| `WebSearch` | Searches web |
-| `Agent` | Launches sub-agent |
-| `TodoWrite` | Updates tasks |
+| Tool        | Label              |
+| ----------- | ------------------ |
+| `Bash`      | Runs command       |
+| `Read`      | Reads file         |
+| `Write`     | Writes file        |
+| `Edit`      | Edits file         |
+| `Grep`      | Searches code      |
+| `Glob`      | Finds files        |
+| `WebFetch`  | Loads page         |
+| `WebSearch` | Searches web       |
+| `Agent`     | Launches sub-agent |
+| `TodoWrite` | Updates tasks      |
 
 ### Frontend Module Map
 
-| Module | Purpose |
-|--------|---------|
-| `main.js` | Entry point, imports all CSS |
-| `app.js` | Application init, main loop |
-| `constants.js` | Shared constants (tile size, grid dims) |
-| `state.js` | Global state (agents, tasks, cat) |
-| `renderer.js` | Canvas rendering pipeline |
-| `background.js` | Floor, walls, grid |
-| `layout.js` | Office layout builder, IDLE_SPOTS |
-| `agentState.js` | Agent state machine class |
-| `drawChars.js` | Character sprite drawing functions |
-| `palettes.js` | 18 character appearance palettes |
-| `animConfig.js` | Animation frame configs |
-| `creatures.js` | Cat state machine |
-| `particles.js` | Particle system |
-| `bubbles.js` | Speech/thought bubbles |
-| `effects.js` | Visual effects |
-| `clickAnims.js` | Object click animations |
-| `math.js` | A* pathfinding, geometry |
-| `audio.js` | Web Audio API sound |
-| `tasks.js` | Task UI |
-| `ui.js` | Panels, overlays |
-| `websocket.js` | WS client + polling |
-| `admin.js` | Admin editor |
-| `adminPos.js` | Admin position syncing |
+| Module          | Purpose                                 |
+| --------------- | --------------------------------------- |
+| `main.js`       | Entry point, imports all CSS            |
+| `app.js`        | Application init, main loop             |
+| `constants.js`  | Shared constants (tile size, grid dims) |
+| `state.js`      | Global state (agents, tasks, cat)       |
+| `renderer.js`   | Canvas rendering pipeline               |
+| `background.js` | Floor, walls, grid                      |
+| `layout.js`     | Office layout builder, IDLE_SPOTS       |
+| `agentState.js` | Agent state machine class               |
+| `drawChars.js`  | Character sprite drawing functions      |
+| `palettes.js`   | 18 character appearance palettes        |
+| `animConfig.js` | Animation frame configs                 |
+| `creatures.js`  | Cat state machine                       |
+| `particles.js`  | Particle system                         |
+| `bubbles.js`    | Speech/thought bubbles                  |
+| `effects.js`    | Visual effects                          |
+| `clickAnims.js` | Object click animations                 |
+| `math.js`       | A\* pathfinding, geometry               |
+| `audio.js`      | Web Audio API sound                     |
+| `ui.js`         | Panels, overlays                        |
+| `websocket.js`  | WS client + polling                     |
+| `admin.js`      | Admin editor                            |
+| `adminPos.js`   | Admin position syncing                  |
