@@ -688,22 +688,6 @@ function generateLayout(n) {
     _offsetY: 1,
   });
 
-  // ══ Zone 3: CAFE (ACT_ZONE+14, center-right) ═════════════════
-
-  // ── 14. Espresso Bar (cafe, cols 13-15) ───────────────────────
-  IDLE_SPOTS.push({
-    tx: 14,
-    ty: ACT_ZONE_Y + 15,
-    anim: 'drinking_espresso',
-    type: 'espresso',
-    w: 6,
-    _objId: 'espresso_bar',
-    _defObjTx: 13,
-    _defObjTy: ACT_ZONE_Y + 14,
-    _offsetX: 1,
-    _offsetY: 1,
-  });
-
   // ── Bookshelf spot (right wall, social zone — well below conference table) ──
   IDLE_SPOTS.push({
     tx: COLS - 4,
@@ -946,12 +930,6 @@ function buildObstacleGrid() {
     markRect(gmTx, gmTy, 5, 3);
   }
 
-  // ── Bookshelf ─────
-  if (ACT_ZONE_Y > 0) {
-    const [bsTx, bsTy] = getAdminPos('bookshelf', COLS - 5.5, ACT_ZONE_Y + 13.2);
-    markRect(bsTx, bsTy, 5, 4);
-  }
-
   // ── Conference table ─────
   if (ACT_ZONE_Y > 0) {
     const [cfTx, cfTy] = getAdminPos('conf_table', 4, ACT_ZONE_Y + 10);
@@ -992,12 +970,6 @@ function buildObstacleGrid() {
 
     const [telObsTx, telObsTy] = getAdminPos('telescope', 18, ACT_ZONE_Y + 14);
     markRect(telObsTx, telObsTy, 1, 2);
-  }
-
-  // ── Zone 3: CAFE obstacles (ACT_ZONE+14) ─────
-  if (ACT_ZONE_Y > 0) {
-    const [espObsTx, espObsTy] = getAdminPos('espresso_bar', 13, ACT_ZONE_Y + 14);
-    markRect(espObsTx, espObsTy, 3, 2);
   }
 
   // ── Printer ─────

@@ -126,16 +126,6 @@ function buildAdminObjects() {
       h: 3,
     });
   }
-  // Bookshelf
-  adminObjects.push({
-    id: 'bookshelf',
-    label: '📚 Bookshelf',
-    tx: COLS - 5.5,
-    ty: ACT_ZONE_Y + 13,
-    w: 4.5,
-    h: 3.5,
-  });
-
   // Desks
   DESK_DEFS.forEach((d, i) => {
     adminObjects.push({
@@ -309,15 +299,6 @@ function buildAdminObjects() {
       ty: ACT_ZONE_Y + 14,
       w: 1,
       h: 2,
-    });
-    // Zone 3: CAFE (ACT_ZONE+14)
-    adminObjects.push({
-      id: 'espresso_bar',
-      label: '☕ Espresso Bar',
-      tx: 13,
-      ty: ACT_ZONE_Y + 14,
-      w: 3,
-      h: 1.5,
     });
   }
 

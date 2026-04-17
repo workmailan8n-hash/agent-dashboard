@@ -16,7 +16,6 @@ const _cache = new Map();
 const SPRITE_CONFIGS = {
   jukebox: { w: 56, h: 100, padX: 4, padY: 6 },
   pinball: { w: 34, h: 62, padX: 4, padY: 6 },
-  rubber_duck: { w: 44, h: 62, padX: 4, padY: 4 },
   lava_lamp: { w: 34, h: 80, padX: 4, padY: 4 },
   crystal_ball: { w: 40, h: 68, padX: 4, padY: 4 },
   zen_garden: { w: 76, h: 72, padX: 4, padY: 4 },
@@ -24,7 +23,6 @@ const SPRITE_CONFIGS = {
   newtons_cradle: { w: 56, h: 56, padX: 4, padY: 4 },
   gumball: { w: 56, h: 68, padX: 4, padY: 4 },
   record_player: { w: 56, h: 60, padX: 4, padY: 4 },
-  popcorn_machine: { w: 40, h: 64, padX: 4, padY: 8 },
 };
 
 /**
@@ -62,13 +60,13 @@ export function drawObjectCached(ctx, name, x, y, tick, drawFn) {
       try {
         offscreen = new OffscreenCanvas(cfg.w, cfg.h);
       } catch {
-        offscreen = document.createElement("canvas");
+        offscreen = document.createElement('canvas');
         offscreen.width = cfg.w;
         offscreen.height = cfg.h;
       }
     }
 
-    const octx = offscreen.getContext("2d");
+    const octx = offscreen.getContext('2d');
     octx.imageSmoothingEnabled = false;
     octx.clearRect(0, 0, cfg.w, cfg.h);
     drawFn(octx, cfg.padX, cfg.padY, tick);

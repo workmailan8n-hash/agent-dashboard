@@ -36,8 +36,7 @@ export const BUILTIN_POSITIONS = {
   neon_sign: { tx: 28, ty: 44.5 },
   // Casino tables: placed in Lounge room (cols 1..17, rows ROOMS_MID_ROW+1..+10)
   // For N=20 baseline: ACT_ZONE_Y=43, ROOMS_MID_ROW=54 → rows 62-63
-  // Moved below conf_table (rows 59-61) and photo_booth/crystal_ball/trophy_cabinet (rows 55-57).
-  // Col shifts keep 1-tile walkable gap between poker↔roulette, roulette↔rubber_duck(10,62), rubber_duck↔blackjack.
+  // Col shifts keep 1-tile walkable gaps between poker↔roulette and roulette↔blackjack.
   poker_table: { tx: 3, ty: 62 },
   roulette: { tx: 7, ty: 62 },
   blackjack_table: { tx: 13, ty: 62 },
@@ -102,25 +101,34 @@ export const BUILTIN_POSITIONS = {
   rowing_machine: { tx: 26, ty: 45 },
   basketball: { tx: 29, ty: 48 },
 
+  // ═══ CONFERENCE TABLE (work zone, near kitchen wall) ═══
+  conf_table: { tx: 19, ty: 11 },
+
   // ═══ LOUNGE ROOM (bot-left: cols 1-17, rows 55-64) ═══
   photo_booth: { tx: 2, ty: 55 },
   crystal_ball: { tx: 5, ty: 55 },
   trophy_cabinet: { tx: 8, ty: 55 },
-  nap_pod: { tx: 10, ty: 55 },
   zen_garden: { tx: 14, ty: 55 },
-  conf_table: { tx: 3, ty: 59 },
   server_rack: { tx: 11, ty: 59 },
   printer_3d: { tx: 14, ty: 59 },
-  rubber_duck: { tx: 10, ty: 62 },
 
   // ═══ CAFE ROOM (bot-right: cols 19-33, rows 55-64) ═══
-  espresso_bar: { tx: 20, ty: 55 },
-  popcorn_machine: { tx: 24, ty: 55 },
   gumball_machine: { tx: 27, ty: 55 },
-  bookshelf: { tx: 29, ty: 55 },
   water_cooler: { tx: 20, ty: 59 },
   terrarium: { tx: 23, ty: 59 },
   newtons_cradle: { tx: 26, ty: 59 },
+  cafe_table: { tx: 22, ty: 62 },
+
+  // ═══ STAGE 2 MINIGAME OBJECTS ═══
+  // Gaming room (top-left): right wall stacked
+  tictactoe: { tx: 15.5, ty: 44 },
+  connect4: { tx: 15.5, ty: 46.5 },
+  tablet_2048: { tx: 15.5, ty: 49 },
+  // Lounge room (bot-left)
+  bulletin_board: { tx: 12.5, ty: 57 },
+  // Cafe room (bot-right)
+  typing_laptop: { tx: 22, ty: 62 },
+  reaction_clock: { tx: 25, ty: 55 },
 };
 
 // Get position for an object — returns saved admin position or default
@@ -131,7 +139,7 @@ export function getAdminPos(id, defTx, defTy) {
 
 // Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
 // saved admin overrides in localStorage are wiped automatically.
-export const POS_SCHEMA = '10';
+export const POS_SCHEMA = '12';
 
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {

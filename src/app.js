@@ -5,7 +5,6 @@
 
 import {
   drawZenGarden,
-  drawRubberDuck,
   drawNewtonsCradle,
   drawGumballMachine,
   drawTerrarium,
@@ -14,7 +13,6 @@ import {
   drawJukebox,
   drawCrystalBall,
   drawRecordPlayer,
-  drawPopcornMachine,
   drawPhotoBooth,
   drawRetroTelephone,
   drawTrophyCabinet,
@@ -35,6 +33,12 @@ import { launchFoosballGame } from './minigames/foosball.js';
 import { launchPokerGame } from './minigames/poker.js';
 import { launchRouletteGame } from './minigames/roulette.js';
 import { launchBlackjackGame } from './minigames/blackjack.js';
+import { launch_2048Game } from './minigames/_2048.js';
+import { launchMinesweeperGame } from './minigames/minesweeper.js';
+import { launchTypingTestGame } from './minigames/typing_test.js';
+import { launchReactionTestGame } from './minigames/reaction_test.js';
+import { launchConnect4Game } from './minigames/connect4.js';
+import { launchTicTacToeGame } from './minigames/tictactoe.js';
 import { startGifExport } from './gifExport.js';
 
 // ════════════════════════════════════════════════════════════════
@@ -4113,6 +4117,241 @@ function drawBlackjackTable(ctx, x, y, tick) {
   ctx.restore();
 }
 
+// ── Stage 2 minigame objects ──────────────────────────────────────
+function drawTicTacToeBoard(ctx, x, y, tick) {
+  const w = T * 1.5,
+    h = T * 2;
+  ctx.save();
+  // Chalkboard frame
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(x + 2, y + h - 2, w, 3);
+  ctx.fillStyle = '#5a3a1a';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#1a2a1a';
+  ctx.fillRect(x + 3, y + 3, w - 6, h - 10);
+  // Grid lines
+  ctx.strokeStyle = '#e0e0d0';
+  ctx.lineWidth = 1;
+  const gx = x + 6,
+    gy = y + 6,
+    gw = w - 12,
+    gh = h - 16;
+  for (let i = 1; i < 3; i++) {
+    ctx.beginPath();
+    ctx.moveTo(gx + (gw / 3) * i, gy);
+    ctx.lineTo(gx + (gw / 3) * i, gy + gh);
+    ctx.stroke();
+    ctx.beginPath();
+    ctx.moveTo(gx, gy + (gh / 3) * i);
+    ctx.lineTo(gx + gw, gy + (gh / 3) * i);
+    ctx.stroke();
+  }
+  // X and O chalk marks
+  ctx.strokeStyle = '#f7768e';
+  ctx.beginPath();
+  ctx.moveTo(gx + 3, gy + 3);
+  ctx.lineTo(gx + gw / 3 - 3, gy + gh / 3 - 3);
+  ctx.moveTo(gx + gw / 3 - 3, gy + 3);
+  ctx.lineTo(gx + 3, gy + gh / 3 - 3);
+  ctx.stroke();
+  ctx.strokeStyle = '#7dcfff';
+  ctx.beginPath();
+  ctx.arc(gx + gw / 2, gy + gh / 2, gw / 8, 0, Math.PI * 2);
+  ctx.stroke();
+  ctx.restore();
+}
+
+function drawConnect4Board(ctx, x, y, tick) {
+  const w = T * 1.5,
+    h = T * 2;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(x + 2, y + h - 2, w, 3);
+  // Wood frame
+  ctx.fillStyle = '#5a3a1a';
+  ctx.fillRect(x, y, w, h);
+  // Blue board
+  ctx.fillStyle = '#3060c0';
+  ctx.fillRect(x + 3, y + 3, w - 6, h - 10);
+  // Disc holes 7x6 simplified
+  const iw = w - 6,
+    ih = h - 16;
+  const cols = 7,
+    rows = 6;
+  const cs = Math.min(iw / cols, ih / rows);
+  const sx = x + 3 + (iw - cs * cols) / 2;
+  const sy = y + 3 + (ih - cs * rows) / 2;
+  for (let r = 0; r < rows; r++) {
+    for (let c = 0; c < cols; c++) {
+      // Static sample position pattern
+      const roll = (r * 7 + c + ((tick / 60) | 0)) % 11;
+      let col = '#14141e';
+      if (r >= 4 && roll === 0) col = '#d03030';
+      else if (r >= 4 && roll === 3) col = '#e0c030';
+      ctx.fillStyle = col;
+      ctx.beginPath();
+      ctx.arc(sx + c * cs + cs / 2, sy + r * cs + cs / 2, cs * 0.35, 0, Math.PI * 2);
+      ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+
+function drawTablet2048(ctx, x, y, tick) {
+  const w = T * 1.5,
+    h = T * 1.5;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(x + 2, y + h - 2, w, 3);
+  // Tablet body
+  ctx.fillStyle = '#2a2a38';
+  ctx.fillRect(x, y, w, h);
+  // Screen
+  ctx.fillStyle = '#bbada0';
+  ctx.fillRect(x + 3, y + 4, w - 6, h - 10);
+  // 4x4 tile hint
+  const iw = w - 6,
+    ih = h - 10;
+  const cs = Math.min(iw / 4, ih / 4);
+  const cols = ['#eee4da', '#f2b179', '#f59563', '#edcf72'];
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      const v = (r + c) % 5;
+      if (v === 0) continue;
+      ctx.fillStyle = cols[(v - 1) % 4];
+      ctx.fillRect(x + 4 + c * cs, y + 5 + r * cs, cs - 1, cs - 1);
+    }
+  }
+  // Home button
+  ctx.fillStyle = '#3a3a50';
+  ctx.fillRect(x + w / 2 - 3, y + h - 5, 6, 2);
+  ctx.restore();
+}
+
+function drawBulletinBoard(ctx, x, y, tick) {
+  const w = T * 1.5,
+    h = T * 1.5;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(x + 2, y + h - 2, w, 3);
+  // Cork background
+  ctx.fillStyle = '#5a3a1a';
+  ctx.fillRect(x, y, w, h);
+  ctx.fillStyle = '#8a6030';
+  ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
+  // Minesweeper hint: grid with a mine
+  const iw = w - 6,
+    ih = h - 6;
+  const cs = Math.min(iw / 4, ih / 4);
+  for (let r = 0; r < 4; r++) {
+    for (let c = 0; c < 4; c++) {
+      ctx.fillStyle = (r * 4 + c) % 3 ? '#a08060' : '#2a2a38';
+      ctx.fillRect(x + 4 + c * cs, y + 4 + r * cs, cs - 1, cs - 1);
+    }
+  }
+  // A red pin
+  ctx.fillStyle = '#f7768e';
+  ctx.beginPath();
+  ctx.arc(x + w - 8, y + 8, 2.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
+function drawCafeTable(ctx, x, y, tick) {
+  const w = T * 2,
+    h = T * 1;
+  ctx.save();
+  // Shadow
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.beginPath();
+  ctx.ellipse(x + w / 2, y + h + 2, w * 0.45, 3, 0, 0, Math.PI * 2);
+  ctx.fill();
+  // Tabletop
+  ctx.fillStyle = '#6a4828';
+  ctx.fillRect(x, y + 2, w, h - 4);
+  // Top highlight
+  ctx.fillStyle = '#8a5e38';
+  ctx.fillRect(x, y + 2, w, 2);
+  // Edge shadow
+  ctx.fillStyle = '#3a2410';
+  ctx.fillRect(x, y + h - 4, w, 2);
+  // Legs (two pairs)
+  ctx.fillStyle = '#4a2e18';
+  ctx.fillRect(x + 2, y + h - 2, 3, 4);
+  ctx.fillRect(x + w - 5, y + h - 2, 3, 4);
+  ctx.restore();
+}
+
+function drawTypingLaptop(ctx, x, y, tick) {
+  // Small pixel-art laptop (1 tile). Sits on a table, so draw compact.
+  const w = T * 1,
+    h = T * 1;
+  ctx.save();
+  // Shadow on table
+  ctx.fillStyle = 'rgba(0,0,0,0.25)';
+  ctx.fillRect(x + 3, y + h - 4, w - 6, 2);
+  // Base (keyboard half)
+  ctx.fillStyle = '#2a2a38';
+  ctx.fillRect(x + 3, y + h - 10, w - 6, 4);
+  // Screen back (tilted up)
+  ctx.fillStyle = '#3a3a50';
+  ctx.fillRect(x + 4, y + 4, w - 8, h - 14);
+  // Screen
+  ctx.fillStyle = '#14141e';
+  ctx.fillRect(x + 5, y + 5, w - 10, h - 16);
+  // Text lines (animated)
+  ctx.fillStyle = '#9ece6a';
+  for (let i = 0; i < 2; i++) {
+    const lw = (w - 12) * (0.3 + 0.5 * ((((i + tick / 30) | 0) % 3) / 2));
+    ctx.fillRect(x + 6, y + 7 + i * 3, lw, 1);
+  }
+  // Cursor blink
+  if ((tick / 30) % 2 > 1) {
+    ctx.fillStyle = '#e0af68';
+    ctx.fillRect(x + 7, y + 7 + 3, 2, 1);
+  }
+  ctx.restore();
+}
+
+function drawReactionClock(ctx, x, y, tick) {
+  const w = T * 1.5,
+    h = T * 1.5;
+  ctx.save();
+  ctx.fillStyle = 'rgba(0,0,0,0.22)';
+  ctx.fillRect(x + 2, y + h - 2, w, 3);
+  // Frame
+  ctx.fillStyle = '#5a3a1a';
+  ctx.beginPath();
+  ctx.arc(x + w / 2, y + h / 2, w * 0.48, 0, Math.PI * 2);
+  ctx.fill();
+  // Face — alternates red/green as hint
+  const isGreen = ((tick / 30) | 0) % 4 === 0;
+  ctx.fillStyle = isGreen ? '#30a060' : '#a03030';
+  ctx.beginPath();
+  ctx.arc(x + w / 2, y + h / 2, w * 0.4, 0, Math.PI * 2);
+  ctx.fill();
+  // Hands
+  const cx = x + w / 2,
+    cy = y + h / 2;
+  const a = tick * 0.06;
+  ctx.strokeStyle = '#ffffff';
+  ctx.lineWidth = 1;
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(a) * w * 0.3, cy + Math.sin(a) * w * 0.3);
+  ctx.stroke();
+  ctx.beginPath();
+  ctx.moveTo(cx, cy);
+  ctx.lineTo(cx + Math.cos(a * 12) * w * 0.22, cy + Math.sin(a * 12) * w * 0.22);
+  ctx.stroke();
+  // Center dot
+  ctx.fillStyle = '#ffffff';
+  ctx.beginPath();
+  ctx.arc(cx, cy, 1.5, 0, Math.PI * 2);
+  ctx.fill();
+  ctx.restore();
+}
+
 // ── Aquarium fish animation ───────────────────────────────────────
 const aquariumFish = [
   { x: 0.3, y: 0.4, speed: 0.012, color: '#ff6040', size: 4, phase: 0 },
@@ -5825,19 +6064,6 @@ function generateLayout(n) {
     _offsetY: 1,
   });
 
-  // ── 4b. Rubber Duck (right panel — agents visit for debugging inspiration) ──
-  IDLE_SPOTS.push({
-    tx: rX + 1.5,
-    ty: 11.5,
-    anim: 'window_gaze',
-    type: 'rubber_duck',
-    w: 5,
-    _objId: 'rubber_duck',
-    _defObjTx: rX + 0.3,
-    _defObjTy: 10.5,
-    _offsetX: 1.2,
-    _offsetY: 1,
-  });
   IDLE_SPOTS.push({
     tx: rX + 1.5,
     ty: 5,
@@ -6024,44 +6250,6 @@ function generateLayout(n) {
     _offsetY: 1,
   });
 
-  // ══ Zone 3: CAFE (ACT_ZONE+14, center-right) ═════════════════
-
-  // ── 14. Espresso Bar (cafe, cols 13-15) ───────────────────────
-  IDLE_SPOTS.push({
-    tx: 14,
-    ty: ACT_ZONE_Y + 15,
-    anim: 'drinking_espresso',
-    type: 'espresso',
-    w: 6,
-    _objId: 'espresso_bar',
-    _defObjTx: 13,
-    _defObjTy: ACT_ZONE_Y + 14,
-    _offsetX: 1,
-    _offsetY: 1,
-  });
-
-  // ── Nap Pod (makers lab, col 22) ─────────────────────────────
-  IDLE_SPOTS.push({
-    tx: 22.8,
-    ty: ACT_ZONE_Y + 14.8,
-    anim: 'sleeping',
-    type: 'nap_pod',
-    w: 4,
-    _objId: 'nap_pod',
-    _defObjTx: 22,
-    _defObjTy: ACT_ZONE_Y + 14,
-    _offsetX: 0.8,
-    _offsetY: 0.8,
-  });
-
-  // ── Bookshelf spot (right wall, social zone — well below conference table) ──
-  IDLE_SPOTS.push({
-    tx: COLS - 4,
-    ty: ACT_ZONE_Y + 14,
-    anim: 'reading',
-    type: 'shelf',
-    w: 5,
-  });
   // ── Vending machine spot (inside kitchen) ────────────────────────
   IDLE_SPOTS.push({
     tx: KITCHEN_WALL_COL + 1.5,
@@ -6071,73 +6259,74 @@ function generateLayout(n) {
     w: 3,
   });
 
-  // ── Conference table — 2 GROUP_PAIRS, in social zone below gym ───
-  const confY = ACT_ZONE_Y + 10; // below gym/gaming/pp zone
-  const confX = 4;
-  const _confDefTx = 4,
-    _confDefTy = ACT_ZONE_Y + 10;
+  // ── Conference table — meeting space in work zone near kitchen wall ───
+  // 4x2 oval table with chairs + small video-wall behind it.
+  const confX = 19,
+    confY = 11;
+  const _confDefTx = 19,
+    _confDefTy = 11;
   // Pair 11: north side facing each other
   const ci11A = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
     tx: confX + 0.5,
-    ty: confY + 0.5,
+    ty: confY + 0.3,
     anim: 'chatting_l',
     type: 'group',
     groupId: 11,
     role: 'L',
-    w: 7,
+    w: 4,
     _objId: 'conf_table',
     _defObjTx: _confDefTx,
     _defObjTy: _confDefTy,
     _offsetX: 0.5,
-    _offsetY: 0.5,
+    _offsetY: 0.3,
   });
   const ci11B = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
-    tx: confX + 4.5,
-    ty: confY + 0.5,
+    tx: confX + 2.5,
+    ty: confY + 0.3,
     anim: 'chatting_r',
     type: 'group',
     groupId: 11,
     role: 'R',
-    w: 7,
+    w: 4,
     _objId: 'conf_table',
     _defObjTx: _confDefTx,
     _defObjTy: _confDefTy,
-    _offsetX: 4.5,
-    _offsetY: 0.5,
+    _offsetX: 2.5,
+    _offsetY: 0.3,
   });
   GROUP_PAIRS[11] = [ci11A, ci11B];
   // Pair 12: south side
   const ci12A = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
-    tx: confX + 1.5,
-    ty: confY + 2,
+    tx: confX + 0.5,
+    ty: confY + 1.5,
     anim: 'arguing_l',
     type: 'group',
     groupId: 12,
     role: 'L',
-    w: 6,
+    w: 4,
     _objId: 'conf_table',
     _defObjTx: _confDefTx,
     _defObjTy: _confDefTy,
-    _offsetX: 1.5,
-    _offsetY: 2,
+    _offsetX: 0.5,
+    _offsetY: 1.5,
   });
   const ci12B = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
-    tx: confX + 3.5,
-    ty: confY + 2,
+    tx: confX + 2.5,
+    ty: confY + 1.5,
     anim: 'arguing_r',
     type: 'group',
     groupId: 12,
     role: 'R',
-    w: 6,
+    w: 4,
     _objId: 'conf_table',
     _defObjTx: _confDefTx,
     _defObjTy: _confDefTy,
-    _offsetX: 3.5,
-    _offsetY: 2,
+    _offsetX: 2.5,
+    _offsetY: 1.5,
   });
   GROUP_PAIRS[12] = [ci12A, ci12B];
 
@@ -6177,6 +6366,80 @@ function generateLayout(n) {
     _defObjTy: 62,
     _offsetX: 1.5,
     _offsetY: 1,
+  });
+
+  // ── Stage 2 minigame spots ──────────────────────────────
+  IDLE_SPOTS.push({
+    tx: 16.25,
+    ty: 46,
+    anim: 'sitting_couch',
+    type: 'tictactoe',
+    w: 1.5,
+    _objId: 'tictactoe',
+    _defObjTx: 15.5,
+    _defObjTy: 44,
+    _offsetX: 0.75,
+    _offsetY: 2,
+  });
+  IDLE_SPOTS.push({
+    tx: 16.25,
+    ty: 48.5,
+    anim: 'sitting_couch',
+    type: 'connect4',
+    w: 1.5,
+    _objId: 'connect4',
+    _defObjTx: 15.5,
+    _defObjTy: 46.5,
+    _offsetX: 0.75,
+    _offsetY: 2,
+  });
+  IDLE_SPOTS.push({
+    tx: 16.25,
+    ty: 50.5,
+    anim: 'sitting_couch',
+    type: 'tablet_2048',
+    w: 1.5,
+    _objId: 'tablet_2048',
+    _defObjTx: 15.5,
+    _defObjTy: 49,
+    _offsetX: 0.75,
+    _offsetY: 1.5,
+  });
+  IDLE_SPOTS.push({
+    tx: 13.25,
+    ty: 58.5,
+    anim: 'sitting_couch',
+    type: 'bulletin_board',
+    w: 1.5,
+    _objId: 'bulletin_board',
+    _defObjTx: 12.5,
+    _defObjTy: 57,
+    _offsetX: 0.75,
+    _offsetY: 1.5,
+  });
+  IDLE_SPOTS.push({
+    tx: 22.5,
+    ty: 63,
+    anim: 'sitting_couch',
+    type: 'typing_laptop',
+    w: 1,
+    _objId: 'typing_laptop',
+    _defObjTx: 22,
+    _defObjTy: 62,
+    _offsetX: 0.5,
+    _offsetY: 1,
+  });
+  IDLE_SPOTS.push({
+    tx: 25.75,
+    ty: 56.5,
+    anim: 'sitting_couch',
+    type: 'reaction_clock',
+    w: 1.5,
+    _objId: 'reaction_clock',
+    _defObjTx: 25,
+    _defObjTy: 55,
+    _offsetX: 0.75,
+    _offsetY: 1.5,
   });
 
   // Cat bowl positions (preserve state across layout changes)
@@ -6304,16 +6567,10 @@ function buildObstacleGrid() {
     markRect(_rmObTx, _rmObTy, 2, 1);
   }
 
-  // ── Bookshelf ─────
-  if (ACT_ZONE_Y > 0) {
-    const [bsTx, bsTy] = getAdminPos('bookshelf', COLS - 5.5, ACT_ZONE_Y + 13.2);
-    markRect(bsTx, bsTy, 5, 4);
-  }
-
   // ── Conference table ─────
-  if (ACT_ZONE_Y > 0) {
-    const [cfTx, cfTy] = getAdminPos('conf_table', 4, ACT_ZONE_Y + 10);
-    markRect(cfTx, cfTy, 6, 3);
+  {
+    const [cfTx, cfTy] = getAdminPos('conf_table', 19, 11);
+    markRect(cfTx, cfTy, 4, 2);
   }
 
   // ── Water cooler ─────
@@ -6329,9 +6586,6 @@ function buildObstacleGrid() {
   const [tcbObsTx, tcbObsTy] = getAdminPos('trophy_cabinet', rXobs + 0.3, 12);
   markRect(tcbObsTx, tcbObsTy, 2, 3);
 
-  // ── Rubber Duck ─────
-  const [rdObsTx, rdObsTy] = getAdminPos('rubber_duck', rXobs + 0.3, 10.5);
-  markRect(rdObsTx, rdObsTy, 2, 2);
   // ── Lava Lamp ─────
   const [llObsTx, llObsTy] = getAdminPos('lava_lamp', rXobs + 0.3, 4.5);
   markRect(llObsTx, llObsTy, 1.5, 2.5);
@@ -6386,12 +6640,21 @@ function buildObstacleGrid() {
     markRect(rObsTx, rObsTy, 2, 2);
     const [bjObsTx, bjObsTy] = getAdminPos('blackjack_table', 13, 62);
     markRect(bjObsTx, bjObsTy, 3, 2);
-  }
 
-  // ── Zone 3: CAFE obstacles (ACT_ZONE+14) ─────
-  if (ACT_ZONE_Y > 0) {
-    const [espObsTx, espObsTy] = getAdminPos('espresso_bar', 13, ACT_ZONE_Y + 14);
-    markRect(espObsTx, espObsTy, 3, 2);
+    // Stage 2 minigame objects
+    const [tttTx, tttTy] = getAdminPos('tictactoe', 15.5, 44);
+    markRect(tttTx, tttTy, 1.5, 2);
+    const [c4Tx, c4Ty] = getAdminPos('connect4', 15.5, 46.5);
+    markRect(c4Tx, c4Ty, 1.5, 2);
+    const [t2Tx, t2Ty] = getAdminPos('tablet_2048', 15.5, 49);
+    markRect(t2Tx, t2Ty, 1.5, 1.5);
+    const [bbTx, bbTy] = getAdminPos('bulletin_board', 12.5, 57);
+    markRect(bbTx, bbTy, 1.5, 1.5);
+    // cafe_table + typing_laptop sit at same tile (laptop is on table's left half)
+    const [ctTx, ctTy] = getAdminPos('cafe_table', 22, 62);
+    markRect(ctTx, ctTy, 2, 1);
+    const [rcTx, rcTy] = getAdminPos('reaction_clock', 25, 55);
+    markRect(rcTx, rcTy, 1.5, 1.5);
   }
 
   // ── Printer ─────
@@ -7857,115 +8120,65 @@ function buildBackground() {
   ctx.fillText('AGENT OFFICE', OX + (COLS / 2) * T, npY + 14);
   ctx.textAlign = 'left';
 
-  // ── Bookshelf (right wall, social zone — below conference table) ──
-  if (ACT_ZONE_Y > 0) {
-    const [_shTx, _shTy] = getAdminPos('bookshelf', COLS - 5.5, ACT_ZONE_Y + 13.2);
-    const [bsx, bsy] = ts(_shTx, _shTy);
-    const bW = T * 4.5,
-      bH = T * 3.5;
+  // ── Conference table (work zone, near kitchen wall) ──
+  {
+    const [_cfTx, _cfTy] = getAdminPos('conf_table', 19, 11);
+    const [cfx, cfy] = ts(_cfTx, _cfTy);
+    const cfW = T * 4,
+      cfH = T * 2;
     // Shadow
     ctx.save();
-    ctx.shadowColor = '#00000090';
-    ctx.shadowBlur = 12;
-    ctx.shadowOffsetY = 4;
-    fillR(ctx, bsx, bsy, bW, bH, '#3d2410');
+    ctx.shadowColor = '#00000070';
+    ctx.shadowBlur = 8;
+    ctx.shadowOffsetY = 3;
+    // Oval table
+    ctx.fillStyle = '#6a4828';
+    ctx.beginPath();
+    ctx.ellipse(cfx + cfW / 2, cfy + cfH / 2, cfW / 2 - 6, cfH / 2 - 4, 0, 0, Math.PI * 2);
+    ctx.fill();
     ctx.restore();
-    // Back panel
-    fillR(ctx, bsx + 6, bsy + 2, bW - 12, bH - 2, '#5a3818');
-    // Side panels (thick wood)
-    fillR(ctx, bsx, bsy, 7, bH, '#4a2c14');
-    fillR(ctx, bsx + bW - 7, bsy, 7, bH, '#4a2c14');
-    // Wood grain highlights on sides
-    ctx.fillStyle = '#6a4020';
-    ctx.fillRect(bsx + 2, bsy + 8, 2, bH - 16);
-    ctx.fillStyle = '#3a2010';
-    ctx.fillRect(bsx + 4, bsy + 12, 1, bH - 24);
-    ctx.fillStyle = '#6a4020';
-    ctx.fillRect(bsx + bW - 5, bsy + 8, 2, bH - 16);
-    // Top board
-    fillR(ctx, bsx, bsy, bW, 6, '#5a3818');
-    fillR(ctx, bsx, bsy, bW, 2, '#7a5030'); // top highlight
-    // Bottom board
-    fillR(ctx, bsx, bsy + bH - 5, bW, 5, '#3d2010');
-    // Three shelves
-    const shH = 4;
-    const sh = [bsy + T * 1.0, bsy + T * 2.0, bsy + T * 3.0];
-    for (const sy of sh) {
-      fillR(ctx, bsx + 6, sy, bW - 12, shH, '#3a2010');
-      fillR(ctx, bsx + 6, sy - 1, bW - 12, 2, '#7a5030'); // shelf highlight
+    // Highlight
+    ctx.fillStyle = '#8a6238';
+    ctx.beginPath();
+    ctx.ellipse(cfx + cfW / 2, cfy + cfH / 2 - 3, cfW / 2 - 10, cfH / 2 - 8, 0, 0, Math.PI * 2);
+    ctx.fill();
+    // Dark rim
+    ctx.strokeStyle = '#3a2410';
+    ctx.lineWidth = 1.2;
+    ctx.beginPath();
+    ctx.ellipse(cfx + cfW / 2, cfy + cfH / 2, cfW / 2 - 6, cfH / 2 - 4, 0, 0, Math.PI * 2);
+    ctx.stroke();
+    // Chairs around perimeter (4 chairs: 2 top, 2 bottom)
+    const chairCol = '#3a3a50';
+    const chairHi = '#4a4a68';
+    const chairs = [
+      [cfx + cfW * 0.25, cfy - 4],
+      [cfx + cfW * 0.75, cfy - 4],
+      [cfx + cfW * 0.25, cfy + cfH - 2],
+      [cfx + cfW * 0.75, cfy + cfH - 2],
+    ];
+    for (const [chx, chy] of chairs) {
+      fillR(ctx, chx - 5, chy, 10, 8, chairCol);
+      fillR(ctx, chx - 5, chy, 10, 2, chairHi);
+      fillR(ctx, chx - 4, chy + 8, 2, 3, chairCol);
+      fillR(ctx, chx + 2, chy + 8, 2, 3, chairCol);
     }
-    // Books helper
-    const drawBookRow = (cols, bottomY, count) => {
-      let bkx = bsx + 9;
-      for (let i = 0; i < count; i++) {
-        const bkw = 5 + ((i * 3) % 5);
-        const bkh = 10 + ((i * 7) % 12);
-        const bc = cols[i % cols.length];
-        fillR(ctx, bkx, bottomY - bkh, bkw, bkh, bc);
-        fillR(ctx, bkx, bottomY - bkh, 1, bkh, bc + '55'); // spine shadow
-        fillR(ctx, bkx + 1, bottomY - bkh, bkw - 2, 2, '#ffffff20'); // top edge
-        bkx += bkw + 2;
-        if (bkx > bsx + bW - 12) break;
-      }
-    };
-    const bc1 = [
-      '#f7768e',
-      '#7aa2f7',
-      '#9ece6a',
-      '#e0af68',
-      '#bb9af7',
-      '#2ac3de',
-      '#ff9e64',
-      '#f7768e',
-    ];
-    const bc2 = [
-      '#2ac3de',
-      '#e0af68',
-      '#bb9af7',
-      '#f7768e',
-      '#9ece6a',
-      '#7aa2f7',
-      '#ff9e64',
-      '#2ac3de',
-    ];
-    const bc3 = [
-      '#9ece6a',
-      '#ff9e64',
-      '#7aa2f7',
-      '#f7768e',
-      '#e0af68',
-      '#bb9af7',
-      '#2ac3de',
-      '#9ece6a',
-    ];
-    drawBookRow(bc1, sh[0] - 1, 10);
-    drawBookRow(bc2, sh[1] - 1, 10);
-    drawBookRow(bc3, sh[2] - 1, 10);
-    // Decorative items on top shelf
-    // Small plant pot
-    ctx.fillStyle = '#904020';
-    ctx.fillRect(bsx + bW - 22, bsy + 3, 12, 8);
-    ctx.fillStyle = '#b05030';
-    ctx.fillRect(bsx + bW - 23, bsy + 2, 14, 3);
-    ctx.fillStyle = '#2a6020';
+    // Small video-wall screen on closest wall behind it (kitchen wall col 23).
+    // Draw small black rectangle with white "VIDEO" label.
+    const vwX = cfx + cfW + 2;
+    const vwY = cfy + cfH / 2 - 10;
+    fillR(ctx, vwX, vwY, 16, 20, '#1a1a24');
+    fillR(ctx, vwX + 1, vwY + 1, 14, 18, '#0a0a14');
+    ctx.fillStyle = '#ffffff';
+    ctx.font = "3px 'Press Start 2P',monospace";
+    ctx.textAlign = 'center';
+    ctx.fillText('VIDEO', vwX + 8, vwY + 12);
+    ctx.textAlign = 'left';
+    // Power LED
+    ctx.fillStyle = '#9ece6a';
     ctx.beginPath();
-    ctx.arc(bsx + bW - 16, bsy - 2, 6, 0, Math.PI * 2);
+    ctx.arc(vwX + 13, vwY + 17, 1, 0, Math.PI * 2);
     ctx.fill();
-    ctx.fillStyle = '#3a8030';
-    ctx.beginPath();
-    ctx.arc(bsx + bW - 20, bsy - 4, 4, 0, Math.PI * 2);
-    ctx.fill();
-    // Trophy / award
-    ctx.fillStyle = '#c8a020';
-    ctx.fillRect(bsx + 14, bsy + 4, 8, 6);
-    ctx.fillStyle = '#e0c040';
-    ctx.beginPath();
-    ctx.arc(bsx + 18, bsy + 2, 5, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.fillStyle = '#c8a020';
-    ctx.fillRect(bsx + 16, bsy + 8, 4, 3);
-    ctx.fillStyle = '#a08010';
-    ctx.fillRect(bsx + 12, bsy + 10, 12, 2);
   }
 
   // ── Printer (right side, before kitchen wall) ─────────────────────
@@ -8239,41 +8452,6 @@ function buildBackground() {
     ctx.fill();
     fillR(ctx, arcx + arcW / 2 - 3, arcy + arcH - 10, 6, 3, '#404058');
 
-    // ── Espresso Bar (cafe, col 13) ─────────────────────────────
-    const [_espTx, _espTy] = getAdminPos('espresso_bar', 13, ACT_ZONE_Y + 14);
-    const [espx, espy] = ts(_espTx, _espTy);
-    const espW = T * 3,
-      espH = T * 1.5;
-    ctx.save();
-    ctx.shadowColor = '#00000060';
-    ctx.shadowBlur = 6;
-    fillR(ctx, espx, espy, espW, espH, '#5a3c20');
-    ctx.restore();
-    fillR(ctx, espx + 2, espy + 2, espW - 4, espH - 4, '#6a4828');
-    fillR(ctx, espx, espy, espW, 4, '#7a5830');
-    fillR(ctx, espx + espW / 2 - 8, espy - 12, 16, 14, '#404050');
-    fillR(ctx, espx + espW / 2 - 6, espy - 10, 12, 8, '#505060');
-    fillR(ctx, espx + espW / 2 - 2, espy - 4, 4, 6, '#606070');
-    fillR(ctx, espx + espW / 2 + 4, espy - 8, 2, 4, '#808090');
-    ctx.fillStyle = '#e0d8c8';
-    [espx + 6, espx + 16, espx + espW - 18].forEach((cx2) => {
-      ctx.fillRect(cx2, espy - 4, 6, 5);
-      ctx.fillStyle = '#c0b8a8';
-      ctx.fillRect(cx2 + 1, espy - 3, 4, 3);
-      ctx.fillStyle = '#e0d8c8';
-    });
-    const bottleCols = ['#802020', '#208020', '#a06020', '#202080'];
-    bottleCols.forEach((bc, i) => {
-      fillR(ctx, espx + 4 + i * 12, espy - 22, 6, 10, bc);
-      fillR(ctx, espx + 5 + i * 12, espy - 26, 4, 5, bc);
-    });
-    for (let si = 0; si < 3; si++) {
-      const stx = espx + 8 + (si * (espW - 16)) / 2;
-      fillR(ctx, stx, espy + espH + 2, 10, 4, '#404050');
-      fillR(ctx, stx + 4, espy + espH + 6, 3, 8, '#505060');
-      fillR(ctx, stx + 1, espy + espH + 14, 8, 2, '#404050');
-    }
-
     // ── Server Rack (makers lab, col 2) ─────────────────────────
     const [_srvTx, _srvTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y + 14);
     const [srvx, srvy] = ts(_srvTx, _srvTy);
@@ -8494,81 +8672,6 @@ function buildBackground() {
     ctx.beginPath();
     ctx.arc(telx + T * 0.5 - 12, tely + T * 0.5 + 10, 3, 0, Math.PI * 2);
     ctx.fill();
-
-    // ── Nap Pod (makers lab, col 22) — hi-tech sleep capsule ─────
-    const [_napTx, _napTy] = getAdminPos('nap_pod', 22, ACT_ZONE_Y + 14);
-    const [napx, napy] = ts(_napTx, _napTy);
-    const napW = T * 2.5,
-      napH = T * 1.2;
-    // Pod shell (oval/capsule shape)
-    ctx.save();
-    ctx.shadowColor = '#2060c060';
-    ctx.shadowBlur = 10;
-    ctx.fillStyle = '#1a2840';
-    ctx.beginPath();
-    ctx.ellipse(
-      napx + napW / 2,
-      napy + napH / 2 + 4,
-      napW / 2 + 2,
-      napH / 2 + 4,
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = '#243858';
-    ctx.beginPath();
-    ctx.ellipse(napx + napW / 2, napy + napH / 2 + 2, napW / 2, napH / 2 + 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Pod top highlight (gloss)
-    ctx.fillStyle = '#2e4870';
-    ctx.beginPath();
-    ctx.ellipse(
-      napx + napW / 2,
-      napy + napH / 2,
-      napW / 2 - 2,
-      napH / 2 - 2,
-      0,
-      -Math.PI * 0.8,
-      -Math.PI * 0.1
-    );
-    ctx.fill();
-    // Visor window (blue-tinted oval)
-    ctx.fillStyle = '#0a1828';
-    ctx.beginPath();
-    ctx.ellipse(
-      napx + napW / 2,
-      napy + napH / 2 + 2,
-      napW / 2 - 6,
-      napH / 2 - 3,
-      0,
-      0,
-      Math.PI * 2
-    );
-    ctx.fill();
-    ctx.fillStyle = '#0d2040';
-    ctx.beginPath();
-    ctx.ellipse(napx + napW / 2, napy + napH / 2, napW / 2 - 8, napH / 2 - 5, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Interior glow (pulsing blue)
-    ctx.fillStyle = '#1040a0';
-    ctx.beginPath();
-    ctx.ellipse(napx + napW / 2, napy + napH / 2, napW / 2 - 10, napH / 2 - 7, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Status strip (right side of pod)
-    fillR(ctx, napx + napW - 6, napy + 6, 4, napH, '#182030');
-    fillR(ctx, napx + napW - 5, napy + 8, 2, 4, '#40a0ff');
-    fillR(ctx, napx + napW - 5, napy + 14, 2, 4, '#4060ff');
-    // Base/stand
-    fillR(ctx, napx + 4, napy + napH + 6, napW - 8, 5, '#182030');
-    fillR(ctx, napx + napW / 2 - 8, napy + napH + 4, 16, 8, '#101828');
-    // Label
-    ctx.fillStyle = '#2ac3de';
-    ctx.font = '5px monospace';
-    ctx.textAlign = 'center';
-    ctx.fillText('NAP', napx + napW / 2, napy + napH + 18);
-    ctx.textAlign = 'left';
   }
 
   // ════ Activity zone ═══════════════════════════════════════════
@@ -9209,26 +9312,6 @@ function drawDynamicEffects(ctx, tick) {
     ctx.restore();
   }
 
-  // ── Espresso bar steam (makers lab) ──────────────────────────
-  if (ACT_ZONE_Y > 0) {
-    const [_espStTx, _espStTy] = getAdminPos('espresso_bar', 13, ACT_ZONE_Y + 14);
-    const [espStX, espStY] = ts(_espStTx, _espStTy);
-    ctx.save();
-    for (let si = 0; si < 3; si++) {
-      const phase = tick * 0.05 + si * 2.1;
-      const sRise = (tick * 0.25 + si * 9) % 20;
-      const sx3 = espStX + T * 1.5 - 5 + Math.sin(phase) * 2;
-      const sy3 = espStY - 14 - sRise;
-      const sa3 = 0.3 - sRise / 65;
-      if (sa3 > 0) {
-        ctx.globalAlpha = sa3;
-        ctx.fillStyle = '#c8d0e0';
-        ctx.fillRect(sx3 | 0, sy3 | 0, 2, 2);
-      }
-    }
-    ctx.restore();
-  }
-
   // ── Corkboard (main office, top wall) ────────────────────────
   {
     const [_cbTx, _cbTy] = getAdminPos('corkboard', 10.5, 0);
@@ -9436,28 +9519,6 @@ function drawDynamicEffects(ctx, tick) {
     ctx.textAlign = 'center';
     ctx.fillText('VIBE', nsx + nsW / 2, nsy + nsH / 2 + 4);
     ctx.textAlign = 'left';
-    ctx.restore();
-  }
-
-  // ── Nap pod ambient glow (makers lab) ────────────────────────
-  if (ACT_ZONE_Y > 0) {
-    const [_napGlTx, _napGlTy] = getAdminPos('nap_pod', 22, ACT_ZONE_Y + 14);
-    const [npGx, npGy] = ts(_napGlTx, _napGlTy);
-    const napPulse = 0.06 + Math.sin(tick * 0.04) * 0.03;
-    ctx.save();
-    ctx.globalAlpha = napPulse;
-    const napG = ctx.createRadialGradient(
-      npGx + T,
-      npGy + T * 0.6,
-      0,
-      npGx + T,
-      npGy + T * 0.6,
-      T * 1.2
-    );
-    napG.addColorStop(0, '#40a0ff');
-    napG.addColorStop(1, 'transparent');
-    ctx.fillStyle = napG;
-    ctx.fillRect(npGx - T * 0.2, npGy - T * 0.2, T * 2.4, T * 1.6);
     ctx.restore();
   }
 }
@@ -13197,12 +13258,6 @@ function loop(now) {
   drawRightPanel(ctx, globalTick);
   drawDynamicEffects(ctx, globalTick);
   drawAquariumFish(ctx, globalTick); // before agents so fish stay behind
-  // Rubber duck (animated — bobbing in tray)
-  {
-    const [_rdTx, _rdTy] = getAdminPos('rubber_duck', PER_ROW * STEP_X + 2 + 0.3, 10.5);
-    const [rdx, rdy] = ts(_rdTx, _rdTy);
-    drawObjectCached(ctx, 'rubber_duck', rdx - T / 2, rdy, globalTick, drawRubberDuck);
-  }
   // Lava lamp (animated blobs in right zone)
   {
     const [_llTx, _llTy] = getAdminPos('lava_lamp', PER_ROW * STEP_X + 2 + 0.3, 4.5);
@@ -13284,12 +13339,6 @@ function loop(now) {
   }
   // (removed duplicate "vending_machine" draw — the real vending is drawn
   //  via the "vending" id at BUILTIN_POSITIONS.vending on the right wall)
-  // Popcorn Machine (activity zone snack corner)
-  if (ACT_ZONE_Y > 0) {
-    const [_pmTx, _pmTy] = getAdminPos('popcorn_machine', 17, ACT_ZONE_Y + 17);
-    const [pmx, pmy] = ts(_pmTx, _pmTy);
-    drawObjectCached(ctx, 'popcorn_machine', pmx - T / 2, pmy - 8, globalTick, drawPopcornMachine);
-  }
   // Photo Booth (recreation zone, col 16 row ACT+9)
   if (ACT_ZONE_Y > 0) {
     const [_pboTx, _pboTy] = getAdminPos('photo_booth', 16, ACT_ZONE_Y + 9);
@@ -13314,6 +13363,46 @@ function loop(now) {
       const [_bjTx, _bjTy] = getAdminPos('blackjack_table', 13, 62);
       const [bjx, bjy] = ts(_bjTx, _bjTy);
       drawBlackjackTable(ctx, bjx - T / 2, bjy - 4, globalTick);
+    }
+  }
+
+  // Stage 2 minigame objects
+  if (ACT_ZONE_Y > 0) {
+    {
+      const [_x, _y] = getAdminPos('tictactoe', 15.5, 44);
+      const [xx, yy] = ts(_x, _y);
+      drawTicTacToeBoard(ctx, xx - T / 2, yy - 4, globalTick);
+    }
+    {
+      const [_x, _y] = getAdminPos('connect4', 15.5, 46.5);
+      const [xx, yy] = ts(_x, _y);
+      drawConnect4Board(ctx, xx - T / 2, yy - 4, globalTick);
+    }
+    {
+      const [_x, _y] = getAdminPos('tablet_2048', 15.5, 49);
+      const [xx, yy] = ts(_x, _y);
+      drawTablet2048(ctx, xx - T / 2, yy - 4, globalTick);
+    }
+    {
+      const [_x, _y] = getAdminPos('bulletin_board', 12.5, 57);
+      const [xx, yy] = ts(_x, _y);
+      drawBulletinBoard(ctx, xx - T / 2, yy - 4, globalTick);
+    }
+    // Cafe table + laptop on its left half
+    {
+      const [_ctTx, _ctTy] = getAdminPos('cafe_table', 22, 62);
+      const [ctxp, ctyp] = ts(_ctTx, _ctTy);
+      drawCafeTable(ctx, ctxp - T / 2, ctyp - 4, globalTick);
+    }
+    {
+      const [_x, _y] = getAdminPos('typing_laptop', 22, 62);
+      const [xx, yy] = ts(_x, _y);
+      drawTypingLaptop(ctx, xx - T / 2, yy - 4, globalTick);
+    }
+    {
+      const [_x, _y] = getAdminPos('reaction_clock', 25, 55);
+      const [xx, yy] = ts(_x, _y);
+      drawReactionClock(ctx, xx - T / 2, yy - 4, globalTick);
     }
   }
 
@@ -13773,7 +13862,6 @@ function loop(now) {
         gym: 'Gym',
         gaming: 'TV/Gaming',
         arcade: 'Arcade',
-        nap_pod: 'Nap Pod',
         dj: 'DJ Booth',
         group: 'Social',
         window: 'Window',
@@ -13783,7 +13871,6 @@ function loop(now) {
         darts: 'Darts',
         aquarium: 'Aquarium',
         trophy_cabinet: 'Trophies',
-        rubber_duck: 'Duck',
         lava_lamp: 'Lava Lamp',
         crystal_ball: 'Crystal Ball',
         whiteboard: 'Whiteboard',
@@ -13793,8 +13880,6 @@ function loop(now) {
         server: 'Server',
         printer3d: '3D Printer',
         telescope: 'Telescope',
-        espresso: 'Espresso',
-        shelf: 'Bookshelf',
         photo_booth: 'Photo Booth',
       };
       const label = spotLabels[hs.type] || hs.type;
@@ -14702,14 +14787,6 @@ function buildAdminObjects() {
     h: 2,
   });
   adminObjects.push({
-    id: 'rubber_duck',
-    label: '🦆 Rubber Duck',
-    tx: rX + 0.3,
-    ty: 10.5,
-    w: 2,
-    h: 2.5,
-  });
-  adminObjects.push({
     id: 'lava_lamp',
     label: '🫧 Lava Lamp',
     tx: rX + 0.3,
@@ -14746,25 +14823,23 @@ function buildAdminObjects() {
     });
   });
 
-  // Conference table
-  if (ACT_ZONE_Y > 0) {
-    adminObjects.push({
-      id: 'conf_table',
-      label: '🤝 Conference',
-      tx: 4,
-      ty: ACT_ZONE_Y + 10,
-      w: 6,
-      h: 3,
-    });
-  }
-  // Bookshelf
+  // Conference table (work zone, near kitchen wall)
   adminObjects.push({
-    id: 'bookshelf',
-    label: '📚 Bookshelf',
-    tx: COLS - 5.5,
-    ty: ACT_ZONE_Y + 13,
-    w: 4.5,
-    h: 3.5,
+    id: 'conf_table',
+    label: '🤝 Conference',
+    tx: 19,
+    ty: 11,
+    w: 4,
+    h: 2,
+  });
+  // Cafe table (for laptop)
+  adminObjects.push({
+    id: 'cafe_table',
+    label: '🍽 Cafe Table',
+    tx: 22,
+    ty: 62,
+    w: 2,
+    h: 1,
   });
 
   // Desks
@@ -14965,23 +15040,6 @@ function buildAdminObjects() {
       w: 1,
       h: 2,
     });
-    adminObjects.push({
-      id: 'nap_pod',
-      label: '😴 Nap Pod',
-      tx: 22,
-      ty: ACT_ZONE_Y + 14,
-      w: 2.5,
-      h: 1.5,
-    });
-    // Zone 3: CAFE (ACT_ZONE+14)
-    adminObjects.push({
-      id: 'espresso_bar',
-      label: '☕ Espresso Bar',
-      tx: 13,
-      ty: ACT_ZONE_Y + 14,
-      w: 3,
-      h: 1.5,
-    });
   }
 
   // Corkboard (sprint board on top wall)
@@ -15090,6 +15148,54 @@ function buildAdminObjects() {
     ty: 62,
     w: 3,
     h: 2,
+  });
+  adminObjects.push({
+    id: 'tictactoe',
+    label: '⊘ Tic-Tac-Toe',
+    tx: 15.5,
+    ty: 44,
+    w: 1.5,
+    h: 2,
+  });
+  adminObjects.push({
+    id: 'connect4',
+    label: '🔴 Connect 4',
+    tx: 15.5,
+    ty: 46.5,
+    w: 1.5,
+    h: 2,
+  });
+  adminObjects.push({
+    id: 'tablet_2048',
+    label: '🔢 2048 Tablet',
+    tx: 15.5,
+    ty: 49,
+    w: 1.5,
+    h: 1.5,
+  });
+  adminObjects.push({
+    id: 'bulletin_board',
+    label: '💣 Minesweeper Board',
+    tx: 12.5,
+    ty: 57,
+    w: 1.5,
+    h: 1.5,
+  });
+  adminObjects.push({
+    id: 'typing_laptop',
+    label: '⌨ Typing Laptop',
+    tx: 22,
+    ty: 62,
+    w: 1,
+    h: 1,
+  });
+  adminObjects.push({
+    id: 'reaction_clock',
+    label: '⚡ Reaction Clock',
+    tx: 25,
+    ty: 55,
+    w: 1.5,
+    h: 1.5,
   });
 
   // Snapshot default positions (before applying saved overrides)
@@ -15823,7 +15929,6 @@ const CLICK_OBJ_MAP = {
   tv: 'tv',
   pingpong: 'pingpong',
   clock: 'clock',
-  espresso_bar: 'espresso',
   arcade: 'arcade',
   dj_console: 'dj',
   server_rack: 'server',
@@ -15831,7 +15936,6 @@ const CLICK_OBJ_MAP = {
   foosball: 'foosball',
   basketball: 'basketball',
   telescope: 'telescope',
-  nap_pod: 'nap_pod',
   corkboard: 'corkboard',
   trophy_cabinet: 'trophy_cabinet',
   lava_lamp: 'lava_lamp',
@@ -15843,8 +15947,8 @@ const CLICK_OBJ_MAP = {
   plant_0: 'plant',
   plant_1: 'plant',
   kitchen_table: 'kitchen_table',
-  bookshelf: 'bookshelf',
   conf_table: 'conf_table',
+  cafe_table: 'cafe_table',
   gaming_sofa: 'gaming_sofa',
   gym: 'gym',
   rowing_machine: 'rowing_machine',
@@ -15859,6 +15963,12 @@ const CLICK_OBJ_MAP = {
   poker_table: 'poker_table',
   roulette: 'roulette',
   blackjack_table: 'blackjack_table',
+  tictactoe: 'tictactoe',
+  connect4: 'connect4',
+  tablet_2048: 'tablet_2048',
+  bulletin_board: 'bulletin_board',
+  typing_laptop: 'typing_laptop',
+  reaction_clock: 'reaction_clock',
 };
 
 // Dynamic: desks and couches
@@ -15878,7 +15988,6 @@ function findClickableAt(tx, ty) {
     { id: 'tv', w: 4, h: 3 },
     { id: 'pingpong', w: 6, h: 3 },
     { id: 'clock', w: 1.5, h: 1.5 },
-    { id: 'espresso_bar', w: 3, h: 1.5 },
     { id: 'arcade', w: 2, h: 2 },
     { id: 'dj_console', w: 2.5, h: 1.2 },
     { id: 'server_rack', w: 2, h: 2.2 },
@@ -15886,7 +15995,6 @@ function findClickableAt(tx, ty) {
     { id: 'foosball', w: 3, h: 1.5 },
     { id: 'basketball', w: 2, h: 2 },
     { id: 'telescope', w: 1, h: 2 },
-    { id: 'nap_pod', w: 2.5, h: 1.5 },
     { id: 'corkboard', w: 2.5, h: 1.6 },
     { id: 'neon_sign', w: 3, h: 1 },
     { id: 'whiteboard', w: 3, h: 1.6 },
@@ -15897,8 +16005,8 @@ function findClickableAt(tx, ty) {
     { id: 'jukebox', w: 2, h: 2.5 },
     { id: 'crystal_ball', w: 2, h: 2.5 },
     { id: 'kitchen_table', w: 4, h: 3 },
-    { id: 'bookshelf', w: 4.5, h: 3.5 },
-    { id: 'conf_table', w: 6, h: 3 },
+    { id: 'conf_table', w: 4, h: 2 },
+    { id: 'cafe_table', w: 2, h: 1 },
     { id: 'gaming_sofa', w: 4, h: 1.5 },
     { id: 'gym', w: 5, h: 4 },
     { id: 'rowing_machine', w: 2.5, h: 1.5 },
@@ -15913,6 +16021,12 @@ function findClickableAt(tx, ty) {
     { id: 'poker_table', w: 3, h: 2 },
     { id: 'roulette', w: 2, h: 2 },
     { id: 'blackjack_table', w: 3, h: 2 },
+    { id: 'tictactoe', w: 1.5, h: 2 },
+    { id: 'connect4', w: 1.5, h: 2 },
+    { id: 'tablet_2048', w: 1.5, h: 1.5 },
+    { id: 'bulletin_board', w: 1.5, h: 1.5 },
+    { id: 'typing_laptop', w: 1, h: 1 },
+    { id: 'reaction_clock', w: 1.5, h: 1.5 },
   ];
   // Add desks and couches dynamically
   for (let i = 0; i < DESK_DEFS.length; i++) checks.push({ id: 'desk_' + i, w: 3.5, h: 3 });
@@ -16169,6 +16283,36 @@ canvas.addEventListener('click', (e) => {
     blip(770, 0.08, 'square', 0.04);
     return;
   }
+  if (hit.type === 'tictactoe') {
+    launchTicTacToeGame();
+    blip(640, 0.08, 'square', 0.04);
+    return;
+  }
+  if (hit.type === 'connect4') {
+    launchConnect4Game();
+    blip(520, 0.08, 'square', 0.04);
+    return;
+  }
+  if (hit.type === 'tablet_2048') {
+    launch_2048Game();
+    blip(700, 0.08, 'square', 0.04);
+    return;
+  }
+  if (hit.type === 'bulletin_board') {
+    launchMinesweeperGame();
+    blip(480, 0.08, 'square', 0.04);
+    return;
+  }
+  if (hit.type === 'typing_laptop') {
+    launchTypingTestGame();
+    blip(820, 0.08, 'square', 0.04);
+    return;
+  }
+  if (hit.type === 'reaction_clock') {
+    launchReactionTestGame();
+    blip(900, 0.08, 'square', 0.04);
+    return;
+  }
   if (clickAnims.some((a) => a.id === hit.id)) return;
   clickAnims.push({
     id: hit.id,
@@ -16297,16 +16441,6 @@ function initClickParticles(type, cx, cy) {
       break;
     case 'kitchen_table':
       break;
-    case 'bookshelf':
-      p.push({
-        x: cx + (Math.random() - 0.5) * 10,
-        y: cy - 10,
-        vx: 0.3,
-        vy: 0.5,
-        size: 0,
-        col: ['#c04040', '#4040c0', '#40a040', '#c0a040'][Math.floor(Math.random() * 4)],
-      });
-      break;
     case 'conf_table':
       for (let i = 0; i < 5; i++)
         p.push({
@@ -16420,20 +16554,6 @@ function initClickParticles(type, cx, cy) {
           vy: -1.2 - Math.random() * 1.5,
           size: 3 + Math.random() * 4,
           col: ['#ff6030', '#ff8040', '#ffaa60'][i % 3],
-        });
-      break;
-    case 'rubber_duck':
-      // Lightbulb idea sparks
-      for (let i = 0; i < 8; i++)
-        p.push({
-          x: cx + (Math.random() - 0.5) * 24,
-          y: cy + (Math.random() - 0.5) * 16,
-          vx: (Math.random() - 0.5) * 2.5,
-          vy: -1.5 - Math.random() * 2.5,
-          size: 2 + Math.random() * 3,
-          col: ['#f7e468', '#ffe080', '#fff4a0', '#ffcc20', '#f7d060', '#ffffff', '#ffd700'][
-            Math.floor(Math.random() * 7)
-          ],
         });
       break;
     case 'terrarium':
@@ -17066,27 +17186,6 @@ function drawClickAnims(ctx, tick) {
         }
         break;
       }
-      case 'bookshelf': {
-        // Book falls out
-        ctx.globalAlpha = alpha;
-        const bp2 = a.particles[0];
-        if (bp2) {
-          if (t < 0.5) {
-            bp2.y += bp2.vy * 2;
-            bp2.vy += 0.05;
-            bp2.x += bp2.vx;
-          }
-          ctx.fillStyle = bp2.col;
-          ctx.save();
-          ctx.translate(Math.round(bp2.x), Math.round(bp2.y));
-          ctx.rotate(t * 3);
-          ctx.fillRect(-4, -6, 8, 12);
-          ctx.fillStyle = '#ffffff40';
-          ctx.fillRect(-2, -4, 4, 8);
-          ctx.restore();
-        }
-        break;
-      }
       case 'conf_table': {
         // Papers scatter
         ctx.globalAlpha = alpha;
@@ -17360,32 +17459,6 @@ function drawClickAnims(ctx, tick) {
           ctx.textAlign = 'center';
           ctx.fillText('25¢', a.x, a.y - 22 - t * 12);
           ctx.textAlign = 'left';
-        }
-        break;
-      }
-      case 'rubber_duck': {
-        // Lightbulb / idea sparks
-        for (const p of a.particles) {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy -= 0.03;
-          p.vx *= 0.96;
-          ctx.globalAlpha = alpha * (1 - t * 0.7);
-          ctx.fillStyle = p.col;
-          ctx.beginPath();
-          ctx.arc(Math.round(p.x), Math.round(p.y), p.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        if (t < 0.5) {
-          ctx.globalAlpha = alpha * (1 - t * 1.5);
-          ctx.fillStyle = '#f7e468';
-          ctx.font = "bold 9px 'Press Start 2P',monospace";
-          ctx.textAlign = 'center';
-          const pulse = 1 + Math.sin(t * 15) * 0.08;
-          ctx.save();
-          ctx.scale(pulse, pulse);
-          ctx.fillText('💡 AHA!', a.x / pulse, (a.y - 30 - t * 15) / pulse);
-          ctx.restore();
         }
         break;
       }

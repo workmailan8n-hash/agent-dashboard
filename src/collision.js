@@ -50,20 +50,15 @@ export const OBJECT_SIZES = {
   photo_booth: { w: 2, h: 2.5 },
   trophy_cabinet: { w: 2, h: 2.5 },
   crystal_ball: { w: 2, h: 2.5 },
-  conf_table: { w: 6, h: 3 },
-  espresso_bar: { w: 3, h: 1.5 },
-  bookshelf: { w: 4.5, h: 3.5 },
+  conf_table: { w: 4, h: 2 },
+  cafe_table: { w: 2, h: 1 },
   server_rack: { w: 2, h: 2.2 },
   printer_3d: { w: 2, h: 1.8 },
   telescope: { w: 1, h: 2 },
-  // Right panel extras
-  rubber_duck: { w: 2, h: 2 },
   // Bottom zone
-  nap_pod: { w: 2.5, h: 1.5 },
   zen_garden: { w: 2, h: 1.5 },
   terrarium: { w: 1.8, h: 1.4 },
   newtons_cradle: { w: 1.5, h: 1.5 },
-  popcorn_machine: { w: 1.5, h: 2 },
   gumball_machine: { w: 1.5, h: 2 },
   slot_machine: { w: 1.5, h: 2 },
   water_cooler: { w: 1.2, h: 2 },
@@ -73,6 +68,13 @@ export const OBJECT_SIZES = {
   poker_table: { w: 3, h: 2 },
   roulette: { w: 2, h: 2 },
   blackjack_table: { w: 3, h: 2 },
+  // Stage 2 minigame objects
+  tictactoe: { w: 1.5, h: 2 },
+  connect4: { w: 1.5, h: 2 },
+  tablet_2048: { w: 1.5, h: 1.5 },
+  bulletin_board: { w: 1.5, h: 1.5 },
+  typing_laptop: { w: 1, h: 1 },
+  reaction_clock: { w: 1.5, h: 1.5 },
 };
 
 // Strip trailing _N index to get base type.
