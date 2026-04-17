@@ -4324,25 +4324,28 @@ function drawReactionClock(ctx, x, y, tick) {
   ctx.beginPath();
   ctx.arc(x + w / 2, y + h / 2, w * 0.48, 0, Math.PI * 2);
   ctx.fill();
-  // Face — alternates red/green as hint
-  const isGreen = ((tick / 30) | 0) % 4 === 0;
+  // Face — rare green pulse as hint (most of the time red)
+  const cycle = tick % 360;
+  const isGreen = cycle < 30; // ~8% of the time
   ctx.fillStyle = isGreen ? '#30a060' : '#a03030';
   ctx.beginPath();
   ctx.arc(x + w / 2, y + h / 2, w * 0.4, 0, Math.PI * 2);
   ctx.fill();
-  // Hands
+  // Hands — smooth slow sweep
   const cx = x + w / 2,
     cy = y + h / 2;
-  const a = tick * 0.06;
+  const minAng = tick * 0.015 - Math.PI / 2;
+  const secAng = tick * 0.05 - Math.PI / 2;
   ctx.strokeStyle = '#ffffff';
   ctx.lineWidth = 1;
   ctx.beginPath();
   ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(a) * w * 0.3, cy + Math.sin(a) * w * 0.3);
+  ctx.lineTo(cx + Math.cos(minAng) * w * 0.3, cy + Math.sin(minAng) * w * 0.3);
   ctx.stroke();
+  ctx.strokeStyle = '#ffcc40';
   ctx.beginPath();
   ctx.moveTo(cx, cy);
-  ctx.lineTo(cx + Math.cos(a * 12) * w * 0.22, cy + Math.sin(a * 12) * w * 0.22);
+  ctx.lineTo(cx + Math.cos(secAng) * w * 0.25, cy + Math.sin(secAng) * w * 0.25);
   ctx.stroke();
   // Center dot
   ctx.fillStyle = '#ffffff';

@@ -142,8 +142,9 @@ export function launch_2048Game() {
 
   const instr = document.createElement('div');
   instr.style.cssText = 'color:#a9b1d630;font-size:5px;margin-top:8px;letter-spacing:1px;';
-  instr.textContent = 'ARROWS / WASD — ESC: exit';
+  instr.textContent = 'SWIPE WITH MOUSE / ARROWS / WASD — ESC: exit';
   overlay.appendChild(instr);
+  gc.style.cursor = 'grab';
 
   document.body.appendChild(overlay);
 
@@ -237,6 +238,31 @@ export function launch_2048Game() {
     close();
   });
   document.addEventListener('keydown', onKey);
+
+  // Mouse swipe: track drag on canvas; on release pick dominant axis
+  let dragStart = null;
+  gc.addEventListener('mousedown', (e) => {
+    const r = gc.getBoundingClientRect();
+    dragStart = { x: e.clientX - r.left, y: e.clientY - r.top };
+    gc.style.cursor = 'grabbing';
+  });
+  gc.addEventListener('mouseup', (e) => {
+    if (!dragStart) return;
+    const r = gc.getBoundingClientRect();
+    const dx = e.clientX - r.left - dragStart.x;
+    const dy = e.clientY - r.top - dragStart.y;
+    dragStart = null;
+    gc.style.cursor = 'grab';
+    if (Math.abs(dx) < 12 && Math.abs(dy) < 12) return;
+    let dir;
+    if (Math.abs(dx) > Math.abs(dy)) dir = dx > 0 ? 2 : 0;
+    else dir = dy > 0 ? 3 : 1;
+    move(dir);
+  });
+  gc.addEventListener('mouseleave', () => {
+    dragStart = null;
+    gc.style.cursor = 'grab';
+  });
 
   render();
 }
