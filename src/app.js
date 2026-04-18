@@ -7382,51 +7382,73 @@ function buildBackground() {
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.13)'); // grout H
         fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.13)'); // grout V
       } else if (inGamingRoom) {
-        // ── GAMING — Neon arcade floor ──
-        // Base: alternating deep purple-black checker
-        const gbase = (row + col) % 2 === 0 ? '#0d0a1e' : '#141028';
-        fillR(ctx, x, y, T, T, gbase);
-        // Grid lines on tile edges
-        fillR(ctx, x, y, T, 1, '#5a4c9a'); // top
-        fillR(ctx, x, y, 1, T, '#5a4c9a'); // left
-        // Glow dot 2×2 at intersections every 4 tiles
-        if (row % 4 === 0 && col % 4 === 0) {
-          fillR(ctx, x, y, 2, 2, '#a090ff');
+        // ── GAMING — 80s arcade carpet ──
+        fillR(ctx, x, y, T, T, '#0a0614');
+        const h = (row * 31 + col * 17 + ((row + col) & 3) * 7) % 100;
+        const cx = x + (T >> 1) - 3;
+        const cy = y + (T >> 1) - 3;
+        if (h < 20) {
+          // magenta triangle (top-left half of 6×6)
+          for (let i = 0; i < 6; i++) {
+            fillR(ctx, cx, cy + i, 6 - i, 1, '#ff0080');
+          }
+        } else if (h < 40) {
+          // cyan diamond (4×4 rotated square)
+          const dcx = x + (T >> 1);
+          const dcy = y + (T >> 1);
+          for (let i = 0; i < 4; i++) {
+            const w = (i < 2 ? i + 1 : 4 - i) * 2 - 1;
+            fillR(ctx, dcx - ((w - 1) >> 1) - (w % 2 === 0 ? 0 : 0), dcy - 2 + i, w, 1, '#00e0ff');
+          }
+        } else if (h < 60) {
+          // yellow chevron (2 stacked bars)
+          fillR(ctx, cx + 1, cy + 1, 4, 1, '#ffcc00');
+          fillR(ctx, cx + 1, cy + 3, 4, 1, '#ffcc00');
+        } else if (h < 80) {
+          // purple dot cluster (3 small dots)
+          fillR(ctx, cx, cy, 1, 1, '#8020ff');
+          fillR(ctx, cx + 3, cy + 1, 1, 1, '#8020ff');
+          fillR(ctx, cx + 1, cy + 4, 1, 1, '#8020ff');
         }
+        // Subtle base highlight: top edge
+        fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.04)');
       } else if (inGymRoom) {
-        // ── GYM — Dark wood parquet ──
-        const pi = (row + col) % 3;
-        const plankC = ['#4a3020', '#5a3a26', '#50321e'][pi];
-        fillR(ctx, x, y, T, T, plankC);
-        // Bottom grain line
-        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.2)');
+        // ── GYM — Rubber gym tatami ──
+        const checker = (row + col) % 2;
+        fillR(ctx, x, y, T, T, checker ? '#1a1c22' : '#14161a');
+        // Dot pattern every 3px, skipping edges
+        for (let dy = 2; dy < T - 1; dy += 3) {
+          for (let dx = 2; dx < T - 1; dx += 3) {
+            fillR(ctx, x + dx, y + dy, 1, 1, '#2a2d36');
+          }
+        }
+        // Bottom + right groove
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.4)');
+        fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.4)');
       } else if (inLoungeRoom) {
-        // ── LOUNGE — Green felt ──
-        fillR(ctx, x, y, T, T, '#0e3a24');
-        // Diagonal cross-hatch every 3px
-        for (let d = 0; d < T; d += 3) {
-          // '\' direction
-          if (d < T) fillR(ctx, x + d, y + d, 1, 1, '#0a2e1c');
-          // '/' direction
-          if (d < T) fillR(ctx, x + d, y + (T - 1 - d), 1, 1, '#0a2e1c');
-        }
-        // Pseudorandom flecks
-        const fh = (row * 13 + col * 17) % 23;
-        if (fh < 5) {
-          fillR(ctx, x + ((col * 7) % (T - 1)), y + ((row * 11) % (T - 1)), 1, 1, '#154a2c');
-        }
-        if (fh > 18) {
-          fillR(ctx, x + ((col * 19) % (T - 1)), y + ((row * 23) % (T - 1)), 1, 1, '#154a2c');
-        }
-      } else if (inCafeRoom) {
-        // ── CAFE — Light tile ──
+        // ── LOUNGE — Burgundy casino carpet ──
         const ck = (row + col) % 2;
-        fillR(ctx, x, y, T, T, ck ? '#eae4d4' : '#e0dac8');
-        // Grout lines bottom + right
-        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.15)');
-        fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.15)');
-        // Center speckle highlight
-        fillR(ctx, x + (T >> 1), y + (T >> 1), 1, 1, 'rgba(255,255,255,0.08)');
+        fillR(ctx, x, y, T, T, ck ? '#4a1020' : '#3a0a18');
+        // Gold scroll speckle
+        const sh = (row * 13 + col * 19) % 29;
+        if (sh < 4) {
+          fillR(ctx, x + ((col * 7) % (T - 1)), y + ((row * 11) % (T - 1)), 1, 1, '#c08848');
+        } else if (sh < 7) {
+          fillR(ctx, x + ((col * 17) % (T - 2)), y + ((row * 23) % (T - 1)), 2, 1, '#e0b060');
+        }
+        // Top edge shadow
+        fillR(ctx, x, y, T, 1, 'rgba(0,0,0,0.3)');
+      } else if (inCafeRoom) {
+        // ── CAFE — Scandinavian light wood ──
+        const pi = (((col / 4) | 0) + row) % 4;
+        const plankC = ['#e8d8b8', '#e2d0a8', '#ddcba0', '#d8c59a'][pi];
+        fillR(ctx, x, y, T, T, plankC);
+        // Bottom groove
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.08)');
+        // Grain lines
+        if ((col * 11 + row * 7) % 19 === 0) {
+          fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
+        }
       } else {
         // Wood floor planks — rows of alternating shades with grain
         const pi = (row + ((col / 5) | 0)) % 3;
