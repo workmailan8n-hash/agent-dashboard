@@ -81,7 +81,7 @@ function findClickableAt(tx, ty) {
     { id: 'basketball', w: 2, h: 2 },
     { id: 'telescope', w: 1, h: 2 },
     { id: 'kitchen_table', w: 4, h: 3 },
-    { id: 'conf_table', w: 6, h: 3 },
+    { id: 'conf_table', w: 4, h: 2 },
     { id: 'gaming_sofa', w: 4, h: 1.5 },
     { id: 'gym', w: 5, h: 4 },
   ];

@@ -706,11 +706,11 @@ function generateLayout(n) {
     w: 3,
   });
 
-  // ── Conference table — 2 GROUP_PAIRS, in social zone below gym ───
-  const confY = ACT_ZONE_Y + 10; // below gym/gaming/pp zone
-  const confX = 4;
-  const _confDefTx = 4,
-    _confDefTy = ACT_ZONE_Y + 10;
+  // ── Conference table — 2 GROUP_PAIRS, work zone below couches ────
+  const confY = 30;
+  const confX = 5;
+  const _confDefTx = 5,
+    _confDefTy = 30;
   // Pair 11: north side facing each other
   const ci11A = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
@@ -932,8 +932,8 @@ function buildObstacleGrid() {
 
   // ── Conference table ─────
   if (ACT_ZONE_Y > 0) {
-    const [cfTx, cfTy] = getAdminPos('conf_table', 4, ACT_ZONE_Y + 10);
-    markRect(cfTx, cfTy, 6, 3);
+    const [cfTx, cfTy] = getAdminPos('conf_table', 5, 30);
+    markRect(cfTx, cfTy, 4, 2);
   }
 
   // ── Water cooler ─────

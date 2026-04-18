@@ -101,8 +101,8 @@ export const BUILTIN_POSITIONS = {
   rowing_machine: { tx: 26, ty: 45 },
   basketball: { tx: 29, ty: 48 },
 
-  // ═══ CONFERENCE TABLE (work zone, near kitchen wall) ═══
-  conf_table: { tx: 19, ty: 11 },
+  // ═══ CONFERENCE TABLE (work zone, below couches, above bottom rooms) ═══
+  conf_table: { tx: 5, ty: 30 },
 
   // ═══ LOUNGE ROOM (bot-left: cols 1-17, rows 55-64) ═══
   photo_booth: { tx: 2, ty: 55 },
@@ -139,7 +139,7 @@ export function getAdminPos(id, defTx, defTy) {
 
 // Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
 // saved admin overrides in localStorage are wiped automatically.
-export const POS_SCHEMA = '12';
+export const POS_SCHEMA = '13';
 
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {

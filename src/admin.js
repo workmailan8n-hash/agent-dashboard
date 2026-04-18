@@ -115,17 +115,15 @@ function buildAdminObjects() {
     });
   });
 
-  // Conference table
-  if (ACT_ZONE_Y > 0) {
-    adminObjects.push({
-      id: 'conf_table',
-      label: '🤝 Conference',
-      tx: 4,
-      ty: ACT_ZONE_Y + 10,
-      w: 6,
-      h: 3,
-    });
-  }
+  // Conference table (work zone, below couches)
+  adminObjects.push({
+    id: 'conf_table',
+    label: '🤝 Conference',
+    tx: 5,
+    ty: 30,
+    w: 4,
+    h: 2,
+  });
   // Desks
   DESK_DEFS.forEach((d, i) => {
     adminObjects.push({

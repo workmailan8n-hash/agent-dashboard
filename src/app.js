@@ -6262,12 +6262,12 @@ function generateLayout(n) {
     w: 3,
   });
 
-  // ── Conference table — meeting space in work zone near kitchen wall ───
+  // ── Conference table — meeting space in work zone, below couches ─────
   // 4x2 oval table with chairs + small video-wall behind it.
-  const confX = 19,
-    confY = 11;
-  const _confDefTx = 19,
-    _confDefTy = 11;
+  const confX = 5,
+    confY = 30;
+  const _confDefTx = 5,
+    _confDefTy = 30;
   // Pair 11: north side facing each other
   const ci11A = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
@@ -6572,7 +6572,7 @@ function buildObstacleGrid() {
 
   // ── Conference table ─────
   {
-    const [cfTx, cfTy] = getAdminPos('conf_table', 19, 11);
+    const [cfTx, cfTy] = getAdminPos('conf_table', 5, 30);
     markRect(cfTx, cfTy, 4, 2);
   }
 
@@ -7383,7 +7383,7 @@ function buildBackground() {
         fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.13)'); // grout V
       } else if (inGamingRoom) {
         // ── GAMING — 80s arcade carpet ──
-        fillR(ctx, x, y, T, T, '#0a0614');
+        fillR(ctx, x, y, T, T, '#1e1830');
         const h = (row * 31 + col * 17 + ((row + col) & 3) * 7) % 100;
         const cx = x + (T >> 1) - 3;
         const cy = y + (T >> 1) - 3;
@@ -7411,20 +7411,20 @@ function buildBackground() {
           fillR(ctx, cx + 1, cy + 4, 1, 1, '#8020ff');
         }
         // Subtle base highlight: top edge
-        fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.04)');
+        fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.08)');
       } else if (inGymRoom) {
         // ── GYM — Rubber gym tatami ──
         const checker = (row + col) % 2;
-        fillR(ctx, x, y, T, T, checker ? '#1a1c22' : '#14161a');
+        fillR(ctx, x, y, T, T, checker ? '#32353e' : '#2a2d36');
         // Dot pattern every 3px, skipping edges
         for (let dy = 2; dy < T - 1; dy += 3) {
           for (let dx = 2; dx < T - 1; dx += 3) {
-            fillR(ctx, x + dx, y + dy, 1, 1, '#2a2d36');
+            fillR(ctx, x + dx, y + dy, 1, 1, '#404450');
           }
         }
         // Bottom + right groove
-        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.4)');
-        fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.4)');
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.25)');
+        fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.25)');
       } else if (inLoungeRoom) {
         // ── LOUNGE — Burgundy casino carpet ──
         const ck = (row + col) % 2;
@@ -7452,7 +7452,7 @@ function buildBackground() {
       } else {
         // Wood floor planks — rows of alternating shades with grain
         const pi = (row + ((col / 5) | 0)) % 3;
-        const plankC = ['#e2ddd2', '#ddd8cd', '#d8d3c8'][pi];
+        const plankC = ['#c4b89c', '#beb296', '#b8ac90'][pi];
         fillR(ctx, x, y, T, T, plankC);
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.09)'); // groove
         if ((col * 7 + row * 13) % 17 === 0)
@@ -8108,9 +8108,9 @@ function buildBackground() {
   ctx.fillText('AGENT OFFICE', OX + (COLS / 2) * T, npY + 14);
   ctx.textAlign = 'left';
 
-  // ── Conference table (work zone, near kitchen wall) ──
+  // ── Conference table (work zone, below couches) ──
   {
-    const [_cfTx, _cfTy] = getAdminPos('conf_table', 19, 11);
+    const [_cfTx, _cfTy] = getAdminPos('conf_table', 5, 30);
     const [cfx, cfy] = ts(_cfTx, _cfTy);
     const cfW = T * 4,
       cfH = T * 2;
@@ -8215,54 +8215,7 @@ function buildBackground() {
     fillR(ctx, vmx + 4, vmy + T * 2.2 - 8, T * 1.5 - 8, 6, '#1a1830');
   }
 
-  // ── Conference Table (social zone below gym) ─────────────────────
-  if (ACT_ZONE_Y > 0) {
-    const [_cfTx, _cfTy] = getAdminPos('conf_table', 4, ACT_ZONE_Y + 10);
-    const [cfx, cfy] = ts(_cfTx, _cfTy);
-    const ctW = T * 6,
-      ctH = T * 2;
-    ctx.save();
-    ctx.shadowColor = '#00000070';
-    ctx.shadowBlur = 10;
-    ctx.shadowOffsetY = 4;
-    // Oval table
-    ctx.fillStyle = '#5a3c18';
-    ctx.beginPath();
-    ctx.ellipse(cfx + ctW / 2, cfy + ctH / 2, ctW / 2, ctH / 2, 0, 0, Math.PI * 2);
-    ctx.fill();
-    ctx.restore();
-    ctx.fillStyle = '#6a4820';
-    ctx.beginPath();
-    ctx.ellipse(cfx + ctW / 2, cfy + ctH / 2, ctW / 2 - 3, ctH / 2 - 3, 0, 0, Math.PI * 2);
-    ctx.fill();
-    // Wood grain
-    ctx.strokeStyle = '#5a3c1840';
-    ctx.lineWidth = 1;
-    for (let g = 0; g < 4; g++) {
-      ctx.beginPath();
-      ctx.ellipse(
-        cfx + ctW / 2,
-        cfy + ctH / 2,
-        ctW / 2 - 6 - g * 6,
-        ctH / 2 - 4 - g * 4,
-        0,
-        0,
-        Math.PI * 2
-      );
-      ctx.stroke();
-    }
-    // Chairs around table (north and south)
-    const chairCol = CHAIR_C;
-    for (let i = 0; i < 4; i++) {
-      const chx = cfx + T * 0.7 + i * T * 1.3;
-      // North chairs
-      fillR(ctx, chx, cfy - T * 0.5, T * 0.8, T * 0.5, chairCol);
-      fillR(ctx, chx + 2, cfy - T * 0.5 + 2, T * 0.8 - 4, T * 0.5 - 4, CHAIR_SEAT);
-      // South chairs
-      fillR(ctx, chx, cfy + ctH + 4, T * 0.8, T * 0.5, chairCol);
-      fillR(ctx, chx + 2, cfy + ctH + 6, T * 0.8 - 4, T * 0.5 - 4, CHAIR_SEAT);
-    }
-  }
+  // ── Legacy conference table duplicate removed — drawn above in work zone ──
 
   // ── Trash Can removed ─────────────────────────────────────────────
 
@@ -14811,12 +14764,12 @@ function buildAdminObjects() {
     });
   });
 
-  // Conference table (work zone, near kitchen wall)
+  // Conference table (work zone, below couches)
   adminObjects.push({
     id: 'conf_table',
     label: '🤝 Conference',
-    tx: 19,
-    ty: 11,
+    tx: 5,
+    ty: 30,
     w: 4,
     h: 2,
   });
