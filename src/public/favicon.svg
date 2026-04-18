@@ -1,39 +1,47 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32" shape-rendering="crispEdges">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
+  <!-- Background -->
   <rect width="32" height="32" fill="#1e1830"/>
-  <!-- Ears outer -->
-  <rect x="5" y="4" width="5" height="6" fill="#e8902a"/>
-  <rect x="22" y="4" width="5" height="6" fill="#e8902a"/>
-  <!-- Ears inner -->
-  <rect x="6" y="6" width="2" height="3" fill="#ff79c6"/>
-  <rect x="24" y="6" width="2" height="3" fill="#ff79c6"/>
-  <!-- Head body -->
-  <rect x="5" y="9" width="22" height="15" fill="#e8902a"/>
-  <rect x="4" y="11" width="1" height="11" fill="#e8902a"/>
-  <rect x="27" y="11" width="1" height="11" fill="#e8902a"/>
-  <!-- Shading on chin -->
-  <rect x="5" y="23" width="22" height="1" fill="#d07820"/>
-  <!-- Stripes -->
-  <rect x="9" y="10" width="2" height="1" fill="#c07018"/>
-  <rect x="14" y="10" width="2" height="1" fill="#c07018"/>
-  <rect x="19" y="10" width="2" height="1" fill="#c07018"/>
-  <rect x="6" y="11" width="1" height="1" fill="#c07018"/>
-  <rect x="25" y="11" width="1" height="1" fill="#c07018"/>
+
+  <!-- Tail (curved) -->
+  <path d="M 10 22 Q 2 20 4 12" stroke="#e8902a" stroke-width="3" fill="none" stroke-linecap="round"/>
+  <path d="M 10 22 Q 2 20 4 12" stroke="#d07820" stroke-width="1.5" fill="none" stroke-linecap="round"/>
+
+  <!-- Body -->
+  <ellipse cx="16" cy="22" rx="8" ry="6" fill="#e8902a"/>
+  <ellipse cx="16" cy="23" rx="4" ry="3" fill="#f5c870"/>
+  <!-- Body stripes -->
+  <path d="M 11 20 Q 12 19 13 20" stroke="#c07018" stroke-width="1" fill="none"/>
+  <path d="M 19 20 Q 20 19 21 20" stroke="#c07018" stroke-width="1" fill="none"/>
+
+  <!-- Front legs -->
+  <rect x="12" y="26" width="3" height="3" rx="1.5" fill="#d07820"/>
+  <rect x="17" y="26" width="3" height="3" rx="1.5" fill="#d07820"/>
+
+  <!-- Head -->
+  <ellipse cx="20" cy="13" rx="7" ry="6" fill="#e8902a"/>
+
+  <!-- Ears (triangles) -->
+  <polygon points="14,10 15,4 18,9" fill="#e8902a"/>
+  <polygon points="15,8 16,5 17,8" fill="#ff79c6"/>
+  <polygon points="22,9 25,4 26,10" fill="#e8902a"/>
+  <polygon points="23,8 24,5 25,8" fill="#ff79c6"/>
+
   <!-- Eyes -->
-  <rect x="9" y="13" width="4" height="4" fill="#1a1b26"/>
-  <rect x="19" y="13" width="4" height="4" fill="#1a1b26"/>
-  <rect x="10" y="14" width="2" height="2" fill="#ffcc20"/>
-  <rect x="20" y="14" width="2" height="2" fill="#ffcc20"/>
-  <rect x="11" y="14" width="1" height="1" fill="#ffffff"/>
-  <rect x="21" y="14" width="1" height="1" fill="#ffffff"/>
+  <ellipse cx="17" cy="12" rx="1.6" ry="2" fill="#1a1020"/>
+  <ellipse cx="23" cy="12" rx="1.6" ry="2" fill="#1a1020"/>
+  <!-- Eye highlights -->
+  <circle cx="17.3" cy="11.3" r="0.6" fill="#ffcc20"/>
+  <circle cx="23.3" cy="11.3" r="0.6" fill="#ffcc20"/>
+
   <!-- Nose -->
-  <rect x="15" y="18" width="2" height="2" fill="#ff79c6"/>
+  <polygon points="19,15 21,15 20,16.5" fill="#ff79c6"/>
   <!-- Mouth -->
-  <rect x="14" y="20" width="1" height="1" fill="#2a1808"/>
-  <rect x="17" y="20" width="1" height="1" fill="#2a1808"/>
-  <rect x="15" y="21" width="2" height="1" fill="#2a1808"/>
+  <path d="M 20 16.5 Q 19 18 17.5 17.5" stroke="#2a1808" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+  <path d="M 20 16.5 Q 21 18 22.5 17.5" stroke="#2a1808" stroke-width="0.8" fill="none" stroke-linecap="round"/>
+
   <!-- Whiskers -->
-  <rect x="1" y="17" width="4" height="1" fill="#ffffff"/>
-  <rect x="1" y="19" width="4" height="1" fill="#ffffff"/>
-  <rect x="27" y="17" width="4" height="1" fill="#ffffff"/>
-  <rect x="27" y="19" width="4" height="1" fill="#ffffff"/>
+  <line x1="12" y1="14" x2="16" y2="14.5" stroke="#ffffff" stroke-width="0.5"/>
+  <line x1="12" y1="16" x2="16" y2="15.5" stroke="#ffffff" stroke-width="0.5"/>
+  <line x1="24" y1="14.5" x2="28" y2="14" stroke="#ffffff" stroke-width="0.5"/>
+  <line x1="24" y1="15.5" x2="28" y2="16" stroke="#ffffff" stroke-width="0.5"/>
 </svg>
