@@ -754,16 +754,16 @@ function generateLayout(n) {
     _offsetY: 1,
   });
 
-  // ── Photo Booth (lounge top wall — agents take selfies) ─────────
+  // ── Photo Booth (Cafe bottom-right corner) ─────────
   IDLE_SPOTS.push({
-    tx: 9,
-    ty: 57,
+    tx: 32,
+    ty: 63.5,
     anim: 'phone',
     type: 'photo_booth',
     w: 5,
     _objId: 'photo_booth',
-    _defObjTx: 8,
-    _defObjTy: 55,
+    _defObjTx: 31,
+    _defObjTy: 61.5,
     _offsetX: 1,
     _offsetY: 2,
   });

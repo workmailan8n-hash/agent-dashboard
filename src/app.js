@@ -13079,7 +13079,7 @@ function loop(now) {
   //  via the "vending" id at BUILTIN_POSITIONS.vending on the right wall)
   // Photo Booth (recreation zone, col 16 row ACT+9)
   if (ACT_ZONE_Y > 0) {
-    const [_pboTx, _pboTy] = getAdminPos('photo_booth', 8, 55);
+    const [_pboTx, _pboTy] = getAdminPos('photo_booth', 31, 61.5);
     const [pbox, pboy] = ts(_pboTx, _pboTy);
     drawObjectCached(ctx, 'photo_booth', pbox - T / 2, pboy - 16, globalTick, drawPhotoBooth);
   }
@@ -14782,8 +14782,8 @@ function buildAdminObjects() {
     adminObjects.push({
       id: 'photo_booth',
       label: '📸 Photo Booth',
-      tx: 8,
-      ty: 55,
+      tx: 31,
+      ty: 61.5,
       w: 2,
       h: 2.5,
     });
