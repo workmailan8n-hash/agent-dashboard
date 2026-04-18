@@ -7302,18 +7302,17 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Work-zone — polished concrete with stains (loft)
+        // Work-zone — warm ash terrazzo (open tech-office)
         const ck = (row + col) % 2;
-        fillR(ctx, x, y, T, T, ck ? '#626670' : '#6a6e78');
+        fillR(ctx, x, y, T, T, ck ? '#c4bcb0' : '#b8b0a4');
+        // Rare darker fleck
         const h = (row * 13 + col * 23) % 37;
         if (h < 3)
-          fillR(ctx, x + ((col * 5) % (T - 2)), y + ((row * 7) % (T - 2)), 2, 2, '#58606b');
+          fillR(ctx, x + ((col * 5) % (T - 1)), y + ((row * 7) % (T - 1)), 1, 1, '#a8a09a');
         else if (h < 6)
-          fillR(ctx, x + ((col * 11) % (T - 1)), y + ((row * 17) % (T - 1)), 1, 1, '#7a7e88');
-        else if (h < 9)
-          fillR(ctx, x + ((col * 7) % (T - 1)), y + ((row * 3) % (T - 1)), 1, 1, '#4e545c');
-        // Subtle polish highlight
-        fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.03)');
+          fillR(ctx, x + ((col * 11) % (T - 1)), y + ((row * 17) % (T - 1)), 1, 1, '#d0c8bc');
+        // Subtle polish highlight top edge
+        fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.04)');
       }
     }
   }
