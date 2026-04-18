@@ -7364,7 +7364,7 @@ function buildBackground() {
       } else {
         // Work-zone — dark wenge plank floor (loft office)
         const pi = (row + ((col / 5) | 0)) % 3;
-        const plankC = ['#6a4a30', '#5e4028', '#523a22'][pi];
+        const plankC = ['#8a6848', '#7e5a3c', '#724e30'][pi];
         fillR(ctx, x, y, T, T, plankC);
         // Plank groove
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.32)');
