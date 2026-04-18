@@ -7312,27 +7312,22 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Work-zone — Studio Hex tile floor (designer pick)
-        fillR(ctx, x, y, T, T, '#d6cfc4');
-        // Hexagon outline inscribed in tile (flat-top)
-        const hcx = x + T / 2;
-        const hcy = y + T / 2;
-        const hr = T / 2 - 1;
-        ctx.save();
-        ctx.strokeStyle = '#b0a898';
-        ctx.lineWidth = 1;
-        ctx.beginPath();
-        for (let i = 0; i < 6; i++) {
-          const a = ((i * 60 - 30) * Math.PI) / 180;
-          const px = Math.round(hcx + hr * Math.cos(a)) + 0.5;
-          const py = Math.round(hcy + hr * Math.sin(a)) + 0.5;
-          if (i === 0) ctx.moveTo(px, py);
-          else ctx.lineTo(px, py);
+        // Work-zone — Woven rug carpet (navy, fibre weave)
+        fillR(ctx, x, y, T, T, '#4a4e6a');
+        // Weft (horizontal) + warp (vertical) pseudo-weave pattern, 2px checker
+        for (let dy = 0; dy < T; dy += 2) {
+          for (let dx = 0; dx < T; dx += 2) {
+            const weave = ((x + dx) / 2 + (y + dy) / 2) & 1;
+            if (weave) fillR(ctx, x + dx, y + dy, 2, 2, '#5c6080');
+            else fillR(ctx, x + dx, y + dy, 2, 2, '#3d4058');
+          }
         }
-        ctx.closePath();
-        ctx.stroke();
-        ctx.restore();
-        fillR(ctx, x + 3, y + 3, 1, 1, '#e8e4df');
+        // Subtle fibre specks
+        const sh = (row * 11 + col * 17) % 19;
+        if (sh < 2)
+          fillR(ctx, x + ((col * 5) % (T - 1)), y + ((row * 7) % (T - 1)), 1, 1, '#6a6e90');
+        // Rug edge seam (faint)
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.15)');
       }
     }
   }
