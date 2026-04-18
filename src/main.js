@@ -428,16 +428,47 @@ if (typeof window !== 'undefined') {
   const btnOpen = document.getElementById('btn-leaderboard');
   const btnClose = document.getElementById('lb-close');
   const body = document.getElementById('lb-body');
-  const tabs = panel.querySelectorAll('.lb-tab');
-  if (!panel || !body) return;
-
-  let activeGame = 'snake';
+  const tabsContainer = document.getElementById('lb-tabs');
+  if (!panel || !body || !tabsContainer) return;
 
   const GAME_LABELS = {
-    snake: { unit: 'pts', icon: '🐍' },
-    darts: { unit: 'pts', icon: '🎯' },
-    pingpong: { unit: 'wins', icon: '🏓' },
+    snake: { icon: '🐍', label: 'SNAKE', unit: 'pts' },
+    darts: { icon: '🎯', label: 'DARTS', unit: 'pts' },
+    pingpong: { icon: '🏓', label: 'PING PONG', unit: 'wins' },
+    coffee: { icon: '☕', label: 'COFFEE', unit: 'pts' },
+    slots: { icon: '🎰', label: 'SLOTS', unit: 'chips' },
+    foosball: { icon: '⚽', label: 'FOOSBALL', unit: 'pts' },
+    jukebox: { icon: '🎵', label: 'JUKEBOX', unit: 'pts' },
+    plant: { icon: '🌱', label: 'PLANT', unit: 'pts' },
+    whiteboard: { icon: '📝', label: 'WHITEBOARD', unit: 'pts' },
+    poker: { icon: '🃏', label: 'POKER', unit: 'chips' },
+    roulette: { icon: '🎡', label: 'ROULETTE', unit: 'chips' },
+    blackjack: { icon: '♠', label: 'BLACKJACK', unit: 'chips' },
+    _2048: { icon: '🔢', label: '2048', unit: 'max' },
+    minesweeper: { icon: '💣', label: 'MINES', unit: 'pts' },
+    typing_test: { icon: '⌨', label: 'TYPING', unit: 'wpm' },
+    reaction_test: { icon: '⚡', label: 'REACT', unit: 'pts' },
+    connect4: { icon: '🔴', label: 'CONNECT 4', unit: 'wins' },
+    tictactoe: { icon: '⭕', label: 'TIC-TAC-TOE', unit: 'streak' },
   };
+
+  const gameKeys = Object.keys(GAME_LABELS);
+  let activeGame = gameKeys[0];
+
+  gameKeys.forEach((gameKey, idx) => {
+    const { icon, label } = GAME_LABELS[gameKey];
+    const btn = document.createElement('button');
+    btn.className = 'lb-tab' + (idx === 0 ? ' active' : '');
+    btn.dataset.game = gameKey;
+    btn.innerHTML =
+      '<span class="lb-tab-icon">' +
+      icon +
+      '</span><span class="lb-tab-label">' +
+      label +
+      '</span>';
+    tabsContainer.appendChild(btn);
+  });
+  const tabs = tabsContainer.querySelectorAll('.lb-tab');
 
   function loadScores(game) {
     try {

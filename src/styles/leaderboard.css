@@ -2,7 +2,8 @@
   position: fixed;
   top: 58px;
   right: 14px;
-  width: 300px;
+  width: 420px;
+  max-height: 70vh;
   background: var(--color-surface);
   border: 2px solid var(--color-border);
   border-top: 2px solid #e0af68;
@@ -10,6 +11,7 @@
   z-index: var(--z-panel, 500);
   display: none;
   font-family: var(--font-main);
+  overflow-y: auto;
 }
 #leaderboard-panel.open {
   display: block;
@@ -23,7 +25,7 @@
   border-bottom: 1px solid var(--color-border);
 }
 .lb-header span {
-  font-size: 8px;
+  font-size: 11px;
   color: #e0af68;
 }
 .lb-close {
@@ -39,23 +41,29 @@
 }
 
 .lb-tabs {
-  display: flex;
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 2px;
   border-bottom: 1px solid var(--color-border);
 }
 .lb-tab {
-  flex: 1;
   background: none;
   border: none;
   border-bottom: 2px solid transparent;
   color: var(--color-text-dim);
   font-family: var(--font-main);
-  font-size: 5px;
-  padding: 8px 4px;
+  font-size: 9px;
+  padding: 10px 8px;
   cursor: pointer;
   letter-spacing: 0.5px;
   transition:
     color 0.15s,
     border-color 0.15s;
+}
+.lb-tab .lb-tab-icon {
+  font-size: 14px;
+  display: block;
+  margin-bottom: 2px;
 }
 .lb-tab:hover {
   color: var(--color-text);
@@ -66,7 +74,7 @@
 }
 
 .lb-body {
-  padding: 10px 14px;
+  padding: 14px 18px;
   min-height: 160px;
   max-height: 320px;
   overflow-y: auto;
@@ -75,8 +83,8 @@
 .lb-empty {
   text-align: center;
   color: var(--color-text-dim);
-  font-size: 6px;
-  padding: 30px 0;
+  font-size: 9px;
+  padding: 40px 0;
   line-height: 2;
 }
 
@@ -84,18 +92,18 @@
   display: flex;
   align-items: center;
   gap: 8px;
-  padding: 6px 0;
+  padding: 8px 0;
   border-bottom: 1px solid var(--color-border);
-  font-size: 6px;
+  font-size: 10px;
 }
 .lb-row:last-child {
   border-bottom: none;
 }
 
 .lb-rank {
-  width: 18px;
+  width: 26px;
   text-align: center;
-  font-size: 7px;
+  font-size: 12px;
   flex-shrink: 0;
 }
 .lb-rank.gold {
@@ -112,15 +120,15 @@
 }
 
 .lb-score {
-  font-size: 9px;
+  font-size: 12px;
   color: #9ece6a;
   flex-shrink: 0;
-  min-width: 40px;
+  min-width: 60px;
 }
 
 .lb-meta {
   color: var(--color-text-dim);
-  font-size: 5px;
+  font-size: 8px;
   line-height: 1.6;
   flex: 1;
   text-align: right;
