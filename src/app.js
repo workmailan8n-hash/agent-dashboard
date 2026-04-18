@@ -7287,9 +7287,9 @@ function buildBackground() {
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.13)'); // grout H
         fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.13)'); // grout V
       } else if (inGamingRoom) {
-        // ── GAMING — 80s arcade carpet (black/red) ──
+        // ── GAMING — 80s arcade carpet (black/red), lighter ──
         const gck = (row + col) % 2;
-        fillR(ctx, x, y, T, T, gck ? '#2a1014' : '#1a0a10');
+        fillR(ctx, x, y, T, T, gck ? '#4a1e24' : '#3a161a');
         const h = (row * 31 + col * 17 + ((row + col) & 3) * 7) % 100;
         const cx = x + (T >> 1) - 3;
         const cy = y + (T >> 1) - 3;
