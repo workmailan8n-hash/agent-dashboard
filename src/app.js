@@ -7362,17 +7362,15 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Work-zone carpet — office grey with fibre texture
-        const cck = (row + col) % 2;
-        fillR(ctx, x, y, T, T, cck ? '#4a4e58' : '#40444c');
-        // Fibre speckle
-        const fh = (row * 11 + col * 7) % 13;
-        if (fh < 3)
-          fillR(ctx, x + ((col * 5) % (T - 1)), y + ((row * 3) % (T - 1)), 1, 1, '#565a65');
-        else if (fh < 6)
-          fillR(ctx, x + ((col * 13) % (T - 1)), y + ((row * 7) % (T - 1)), 1, 1, '#353840');
-        // Bottom groove
-        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.18)');
+        // Work-zone — dark wenge plank floor (loft office)
+        const pi = (row + ((col / 5) | 0)) % 3;
+        const plankC = ['#6a4a30', '#5e4028', '#523a22'][pi];
+        fillR(ctx, x, y, T, T, plankC);
+        // Plank groove
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.32)');
+        // Faint grain line
+        if ((col * 7 + row * 13) % 17 === 0)
+          fillR(ctx, x + ((col * 5) % 24), y, 1, T, 'rgba(255,220,180,0.05)');
       }
     }
   }
