@@ -7312,19 +7312,27 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Work-zone — warm ash terrazzo (scatter flecks, no grid)
-        fillR(ctx, x, y, T, T, '#bdb5a9');
-        // Scatter terrazzo flecks — 4-5 per tile at pseudorandom positions
-        const flecks = [
-          [(col * 7 + row * 5) % T, (col * 11 + row * 3) % T, '#a8a09a', 2],
-          [(col * 13 + row * 17) % T, (col * 3 + row * 19) % T, '#d0c8bc', 1],
-          [(col * 19 + row * 11) % T, (col * 23 + row * 7) % T, '#9a928c', 1],
-          [(col * 5 + row * 23) % T, (col * 29 + row * 2) % T, '#cec6ba', 2],
-          [(col * 17 + row * 13) % T, (col * 7 + row * 29) % T, '#8e8680', 1],
-        ];
-        for (const [fx, fy, c, s] of flecks) {
-          fillR(ctx, x + (fx % (T - s)), y + (fy % (T - s)), s, s, c);
+        // Work-zone — Studio Hex tile floor (designer pick)
+        fillR(ctx, x, y, T, T, '#d6cfc4');
+        // Hexagon outline inscribed in tile (flat-top)
+        const hcx = x + T / 2;
+        const hcy = y + T / 2;
+        const hr = T / 2 - 1;
+        ctx.save();
+        ctx.strokeStyle = '#b0a898';
+        ctx.lineWidth = 1;
+        ctx.beginPath();
+        for (let i = 0; i < 6; i++) {
+          const a = ((i * 60 - 30) * Math.PI) / 180;
+          const px = Math.round(hcx + hr * Math.cos(a)) + 0.5;
+          const py = Math.round(hcy + hr * Math.sin(a)) + 0.5;
+          if (i === 0) ctx.moveTo(px, py);
+          else ctx.lineTo(px, py);
         }
+        ctx.closePath();
+        ctx.stroke();
+        ctx.restore();
+        fillR(ctx, x + 3, y + 3, 1, 1, '#e8e4df');
       }
     }
   }
