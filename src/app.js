@@ -7312,20 +7312,20 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Work-zone — Woven rug carpet (navy, fibre weave)
-        fillR(ctx, x, y, T, T, '#4a4e6a');
-        // Weft (horizontal) + warp (vertical) pseudo-weave pattern, 2px checker
+        // Work-zone — Woven rug carpet (warm beige sisal/jute)
+        fillR(ctx, x, y, T, T, '#8a8070');
+        // Weft + warp weave, 2px checker
         for (let dy = 0; dy < T; dy += 2) {
           for (let dx = 0; dx < T; dx += 2) {
             const weave = ((x + dx) / 2 + (y + dy) / 2) & 1;
-            if (weave) fillR(ctx, x + dx, y + dy, 2, 2, '#5c6080');
-            else fillR(ctx, x + dx, y + dy, 2, 2, '#3d4058');
+            if (weave) fillR(ctx, x + dx, y + dy, 2, 2, '#968c7c');
+            else fillR(ctx, x + dx, y + dy, 2, 2, '#7a7060');
           }
         }
         // Subtle fibre specks
         const sh = (row * 11 + col * 17) % 19;
         if (sh < 2)
-          fillR(ctx, x + ((col * 5) % (T - 1)), y + ((row * 7) % (T - 1)), 1, 1, '#6a6e90');
+          fillR(ctx, x + ((col * 5) % (T - 1)), y + ((row * 7) % (T - 1)), 1, 1, '#a89e88');
         // Rug edge seam (faint)
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.15)');
       }
