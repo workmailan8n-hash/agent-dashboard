@@ -7302,17 +7302,19 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Work-zone — warm ash terrazzo (open tech-office)
-        const ck = (row + col) % 2;
-        fillR(ctx, x, y, T, T, ck ? '#c4bcb0' : '#b8b0a4');
-        // Rare darker fleck
-        const h = (row * 13 + col * 23) % 37;
-        if (h < 3)
-          fillR(ctx, x + ((col * 5) % (T - 1)), y + ((row * 7) % (T - 1)), 1, 1, '#a8a09a');
-        else if (h < 6)
-          fillR(ctx, x + ((col * 11) % (T - 1)), y + ((row * 17) % (T - 1)), 1, 1, '#d0c8bc');
-        // Subtle polish highlight top edge
-        fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.04)');
+        // Work-zone — warm ash terrazzo (scatter flecks, no grid)
+        fillR(ctx, x, y, T, T, '#bdb5a9');
+        // Scatter terrazzo flecks — 4-5 per tile at pseudorandom positions
+        const flecks = [
+          [(col * 7 + row * 5) % T, (col * 11 + row * 3) % T, '#a8a09a', 2],
+          [(col * 13 + row * 17) % T, (col * 3 + row * 19) % T, '#d0c8bc', 1],
+          [(col * 19 + row * 11) % T, (col * 23 + row * 7) % T, '#9a928c', 1],
+          [(col * 5 + row * 23) % T, (col * 29 + row * 2) % T, '#cec6ba', 2],
+          [(col * 17 + row * 13) % T, (col * 7 + row * 29) % T, '#8e8680', 1],
+        ];
+        for (const [fx, fy, c, s] of flecks) {
+          fillR(ctx, x + (fx % (T - s)), y + (fy % (T - s)), s, s, c);
+        }
       }
     }
   }
