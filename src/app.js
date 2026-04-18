@@ -7332,9 +7332,9 @@ function buildBackground() {
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.25)');
         fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.25)');
       } else if (inLoungeRoom) {
-        // ── LOUNGE — Burgundy casino carpet ──
+        // ── LOUNGE — Dark green casino felt ──
         const ck = (row + col) % 2;
-        fillR(ctx, x, y, T, T, ck ? '#4a1020' : '#3a0a18');
+        fillR(ctx, x, y, T, T, ck ? '#0e4028' : '#0c3a22');
         // Gold scroll speckle
         const sh = (row * 13 + col * 19) % 29;
         if (sh < 4) {
