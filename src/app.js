@@ -6358,6 +6358,16 @@ function buildObstacleGrid() {
   // Room walls as obstacles
   // (lounge wall at row 21 removed — open plan between desks and couches)
 
+  // ── Activity zone wall at ACT_ZONE_Y (door in Gym, cols 25-27) ──
+  if (ACT_ZONE_Y > 0) {
+    const gymDoorL = 27;
+    const gymDoorR = 29;
+    for (let c = 1; c < COLS - 1; c++) {
+      if (c >= gymDoorL && c <= gymDoorR) continue;
+      mark(c, ACT_ZONE_Y);
+    }
+  }
+
   // ── 4-ROOM PARTITION BELOW ACT_ZONE_Y ─────────────────────────────
   // Four themed rooms in 2x2 grid: Gaming|Gym (top) / Lounge|Cafe (bottom)
   if (ACT_ZONE_Y > 0) {
@@ -7915,6 +7925,11 @@ function buildBackground() {
         fillR(ctx, wx + T - 4, wy, 4, T, '#3a3860'); // right highlight
       }
     }
+  }
+
+  // ── Activity zone wall at ACT_ZONE_Y (door in Gym, cols 25-27) ──
+  if (ACT_ZONE_Y > 0) {
+    drawHWall(ACT_ZONE_Y, 1, COLS - 2, 27, 29);
   }
 
   // ── 4-ROOM PARTITION (below ACT_ZONE_Y) ──

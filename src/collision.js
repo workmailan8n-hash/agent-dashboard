@@ -141,6 +141,9 @@ export function buildCanonicalWalls(COLS = CANONICAL_COLS, ROWS = CANONICAL_ROWS
   walls.push({ x1: 23, y1: 10, x2: 24, y2: 12, label: 'kitchen wall (top)' });
   walls.push({ x1: 23, y1: 16, x2: 24, y2: 20, label: 'kitchen wall (bot)' });
   // Lounge wall at row 21 removed (open plan between desks and couches)
+  // Activity zone wall at row 43, door in Gym cols 27..29
+  walls.push({ x1: 1, y1: 43, x2: 27, y2: 44, label: 'act wall left' });
+  walls.push({ x1: 30, y1: 43, x2: COLS - 1, y2: 44, label: 'act wall right' });
   return walls;
 }
 

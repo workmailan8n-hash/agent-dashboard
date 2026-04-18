@@ -814,6 +814,16 @@ function buildObstacleGrid() {
     mark(23, r);
   }
 
+  // ── Activity zone wall at ACT_ZONE_Y (door in Gym, cols 25-27) ──
+  if (ACT_ZONE_Y > 0) {
+    const gymDoorL = 27;
+    const gymDoorR = 29;
+    for (let c = 1; c < COLS - 1; c++) {
+      if (c >= gymDoorL && c <= gymDoorR) continue;
+      mark(c, ACT_ZONE_Y);
+    }
+  }
+
   // Room walls as obstacles
   // (lounge wall at row 21 removed — open plan)
   // Activity wall (row 35)
