@@ -72,14 +72,6 @@ function buildAdminObjects() {
     h: 1.5,
   });
   adminObjects.push({
-    id: 'cooler',
-    label: '💧 Cooler',
-    tx: rX + 2.5,
-    ty: 2,
-    w: 1.5,
-    h: 1.5,
-  });
-  adminObjects.push({
     id: 'darts',
     label: '🎯 Darts',
     tx: rX + 1.5,

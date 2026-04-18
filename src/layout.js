@@ -503,42 +503,6 @@ function generateLayout(n) {
   // ══════════════════════════════════════════════════════════════════
   const rX = PER_ROW * STEP_X + 2; // right zone start col (~23)
 
-  // ── 1. Water Cooler (pair chat) ────────────────────────────────
-  const wcY = 2;
-  const _coolerDefTx = rX + 2.5,
-    _coolerDefTy = 2;
-  const wc1 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({
-    tx: rX + 1.5,
-    ty: wcY + 1,
-    anim: 'chatting_l',
-    type: 'group',
-    groupId: 20,
-    role: 'L',
-    w: 8,
-    _objId: 'cooler',
-    _defObjTx: _coolerDefTx,
-    _defObjTy: _coolerDefTy,
-    _offsetX: -1,
-    _offsetY: 1,
-  });
-  const wc2 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({
-    tx: rX + 3.5,
-    ty: wcY + 1,
-    anim: 'chatting_r',
-    type: 'group',
-    groupId: 20,
-    role: 'R',
-    w: 8,
-    _objId: 'cooler',
-    _defObjTx: _coolerDefTx,
-    _defObjTy: _coolerDefTy,
-    _offsetX: 1,
-    _offsetY: 1,
-  });
-  GROUP_PAIRS[20] = [wc1, wc2];
-
   // ── 2. Dartboard (solo — agent throws darts) ───────────────────
   IDLE_SPOTS.push({
     tx: rX + 1.5,
@@ -790,18 +754,18 @@ function generateLayout(n) {
     _offsetY: 1,
   });
 
-  // ── Photo Booth (recreation zone — agents take selfies) ─────────
+  // ── Photo Booth (lounge top wall — agents take selfies) ─────────
   IDLE_SPOTS.push({
-    tx: 17,
-    ty: ACT_ZONE_Y + 10.5,
+    tx: 9,
+    ty: 57,
     anim: 'phone',
     type: 'photo_booth',
     w: 5,
     _objId: 'photo_booth',
-    _defObjTx: 16,
-    _defObjTy: ACT_ZONE_Y + 9,
+    _defObjTx: 8,
+    _defObjTy: 55,
     _offsetX: 1,
-    _offsetY: 1.5,
+    _offsetY: 2,
   });
 
   // Cat bowl positions (preserve state across layout changes)
@@ -917,9 +881,9 @@ function buildObstacleGrid() {
   }
 
   // ── Water cooler ─────
-  const [wcTx, wcTy] = getAdminPos('cooler', rXobs + 2.5, 2);
+  const [wcTx, wcTy] = getAdminPos('water_cooler', 32, 17);
   mark(Math.floor(wcTx), Math.floor(wcTy));
-  mark(Math.floor(wcTx) + 1, Math.floor(wcTy));
+  mark(Math.floor(wcTx), Math.floor(wcTy) + 1);
 
   // ── Aquarium ─────
   const [aqTx, aqTy] = getAdminPos('aquarium', rXobs + 0.3, 8);

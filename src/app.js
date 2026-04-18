@@ -5927,42 +5927,6 @@ function generateLayout(n) {
   // ══════════════════════════════════════════════════════════════════
   const rX = PER_ROW * STEP_X + 2; // right zone start col (~23)
 
-  // ── 1. Water Cooler (pair chat) ────────────────────────────────
-  const wcY = 2;
-  const _coolerDefTx = rX + 2.5,
-    _coolerDefTy = 2;
-  const wc1 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({
-    tx: rX + 1.5,
-    ty: wcY + 1,
-    anim: 'chatting_l',
-    type: 'group',
-    groupId: 20,
-    role: 'L',
-    w: 8,
-    _objId: 'cooler',
-    _defObjTx: _coolerDefTx,
-    _defObjTy: _coolerDefTy,
-    _offsetX: -1,
-    _offsetY: 1,
-  });
-  const wc2 = IDLE_SPOTS.length;
-  IDLE_SPOTS.push({
-    tx: rX + 3.5,
-    ty: wcY + 1,
-    anim: 'chatting_r',
-    type: 'group',
-    groupId: 20,
-    role: 'R',
-    w: 8,
-    _objId: 'cooler',
-    _defObjTx: _coolerDefTx,
-    _defObjTy: _coolerDefTy,
-    _offsetX: 1,
-    _offsetY: 1,
-  });
-  GROUP_PAIRS[20] = [wc1, wc2];
-
   // ── 2. Dartboard (solo — agent throws darts) ───────────────────
   IDLE_SPOTS.push({
     tx: rX + 1.5,
@@ -5993,16 +5957,16 @@ function generateLayout(n) {
 
   // ── 4. Trophy Cabinet (solo — agent admires trophies) ──────────
   IDLE_SPOTS.push({
-    tx: rX + 1.5,
-    ty: 13,
+    tx: 3,
+    ty: 57,
     anim: 'window_gaze',
     type: 'trophy_cabinet',
     w: 6,
     _objId: 'trophy_cabinet',
-    _defObjTx: rX + 0.3,
-    _defObjTy: 12,
-    _offsetX: 1.2,
-    _offsetY: 1,
+    _defObjTx: 2,
+    _defObjTy: 55,
+    _offsetX: 1,
+    _offsetY: 2,
   });
 
   IDLE_SPOTS.push({
@@ -6309,14 +6273,14 @@ function generateLayout(n) {
     _offsetY: 2,
   });
   IDLE_SPOTS.push({
-    tx: 28.75,
-    ty: 57,
+    tx: 32.25,
+    ty: 59,
     anim: 'sitting_couch',
     type: 'connect4',
     w: 1.5,
     _objId: 'connect4',
-    _defObjTx: 28,
-    _defObjTy: 55,
+    _defObjTx: 31.5,
+    _defObjTy: 57,
     _offsetX: 0.75,
     _offsetY: 2,
   });
@@ -6471,16 +6435,16 @@ function buildObstacleGrid() {
   }
 
   // ── Water cooler ─────
-  const [wcTx, wcTy] = getAdminPos('cooler', rXobs + 2.5, 2);
+  const [wcTx, wcTy] = getAdminPos('water_cooler', 32, 17);
   mark(Math.floor(wcTx), Math.floor(wcTy));
-  mark(Math.floor(wcTx) + 1, Math.floor(wcTy));
+  mark(Math.floor(wcTx), Math.floor(wcTy) + 1);
 
   // ── Aquarium ─────
   const [aqTx, aqTy] = getAdminPos('aquarium', rXobs + 0.3, 8);
   markRect(aqTx, aqTy, 3, 2);
 
   // ── Trophy Cabinet ─────
-  const [tcbObsTx, tcbObsTy] = getAdminPos('trophy_cabinet', rXobs + 0.3, 12);
+  const [tcbObsTx, tcbObsTy] = getAdminPos('trophy_cabinet', 2, 55);
   markRect(tcbObsTx, tcbObsTy, 2, 3);
 
   // ── Lava Lamp ─────
@@ -6538,7 +6502,7 @@ function buildObstacleGrid() {
     // Stage 2 minigame objects
     const [tttTx, tttTy] = getAdminPos('tictactoe', 25.5, 55);
     markRect(tttTx, tttTy, 1.5, 2);
-    const [c4Tx, c4Ty] = getAdminPos('connect4', 28, 55);
+    const [c4Tx, c4Ty] = getAdminPos('connect4', 31.5, 57);
     markRect(c4Tx, c4Ty, 1.5, 2);
     // cafe_table + typing_laptop sit at same tile (laptop is on table's left half)
     const [ctTx, ctTy] = getAdminPos('cafe_table', 22, 62);
@@ -7338,15 +7302,18 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Work-zone — dark wenge plank floor (loft office)
-        const pi = (row + ((col / 5) | 0)) % 3;
-        const plankC = ['#9a5a3a', '#8e4e30', '#82422a'][pi];
-        fillR(ctx, x, y, T, T, plankC);
-        // Plank groove
-        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.32)');
-        // Faint grain line
-        if ((col * 7 + row * 13) % 17 === 0)
-          fillR(ctx, x + ((col * 5) % 24), y, 1, T, 'rgba(255,220,180,0.05)');
+        // Work-zone — polished concrete with stains (loft)
+        const ck = (row + col) % 2;
+        fillR(ctx, x, y, T, T, ck ? '#626670' : '#6a6e78');
+        const h = (row * 13 + col * 23) % 37;
+        if (h < 3)
+          fillR(ctx, x + ((col * 5) % (T - 2)), y + ((row * 7) % (T - 2)), 2, 2, '#58606b');
+        else if (h < 6)
+          fillR(ctx, x + ((col * 11) % (T - 1)), y + ((row * 17) % (T - 1)), 1, 1, '#7a7e88');
+        else if (h < 9)
+          fillR(ctx, x + ((col * 7) % (T - 1)), y + ((row * 3) % (T - 1)), 1, 1, '#4e545c');
+        // Subtle polish highlight
+        fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.03)');
       }
     }
   }
@@ -8109,35 +8076,6 @@ function buildBackground() {
   // ════ RIGHT ENTERTAINMENT ZONE ══════════════════════════════════
   {
     const rX = PER_ROW * STEP_X + 2;
-
-    // ── 1. Water Cooler ─────────────────────────────────────────
-    const [_coolerTx, _coolerTy] = getAdminPos('cooler', rX + 2.5, 2);
-    const [wcx, wcy] = ts(_coolerTx, _coolerTy);
-    // Cooler body
-    ctx.save();
-    ctx.shadowColor = '#00000070';
-    ctx.shadowBlur = 8;
-    fillR(ctx, wcx, wcy, T * 1.5, T * 2, '#d0d8e0');
-    ctx.restore();
-    fillR(ctx, wcx + 3, wcy + 3, T * 1.5 - 6, T * 0.7, '#80c0e8'); // water tank
-    fillR(ctx, wcx + 3, wcy + T * 0.7 + 3, T * 1.5 - 6, T * 1.3 - 6, '#e8ecf0'); // body
-    fillR(ctx, wcx + T * 0.75 - 4, wcy + T * 0.8, 8, 5, '#707880'); // tap
-    ctx.fillStyle = '#4488dd';
-    ctx.fillRect(wcx + 6, wcy + T * 0.9 + 4, 7, 4);
-    ctx.fillStyle = '#dd4444';
-    ctx.fillRect(wcx + T * 1.5 - 13, wcy + T * 0.9 + 4, 7, 4);
-    // Water jug
-    ctx.fillStyle = '#70b8e880';
-    ctx.beginPath();
-    ctx.ellipse(wcx + T * 0.75, wcy - 2, 12, 14, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.strokeStyle = '#5090b8';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(wcx + T * 0.75, wcy - 2, 12, 14, 0, Math.PI, 0);
-    ctx.stroke();
-    // Drip tray
-    fillR(ctx, wcx + 4, wcy + T * 2 - 5, T * 1.5 - 8, 4, '#a0a8b0');
 
     // ── 3. Aquarium (right zone, row 8) ─────────────────────────
     const [_aqTx, _aqTy] = getAdminPos('aquarium', rX + 0.3, 8);
@@ -13099,7 +13037,7 @@ function loop(now) {
   }
   // Water Cooler (break room hydration)
   {
-    const [_wcTx, _wcTy] = getAdminPos('water_cooler', 19, 60);
+    const [_wcTx, _wcTy] = getAdminPos('water_cooler', 32, 17);
     const [wcx, wcy] = ts(_wcTx, _wcTy);
     drawObjectCached(ctx, 'water_cooler', wcx - T / 2, wcy - 4, globalTick, drawWaterCooler);
   }
@@ -13141,7 +13079,7 @@ function loop(now) {
   //  via the "vending" id at BUILTIN_POSITIONS.vending on the right wall)
   // Photo Booth (recreation zone, col 16 row ACT+9)
   if (ACT_ZONE_Y > 0) {
-    const [_pboTx, _pboTy] = getAdminPos('photo_booth', 16, ACT_ZONE_Y + 9);
+    const [_pboTx, _pboTy] = getAdminPos('photo_booth', 8, 55);
     const [pbox, pboy] = ts(_pboTx, _pboTy);
     drawObjectCached(ctx, 'photo_booth', pbox - T / 2, pboy - 16, globalTick, drawPhotoBooth);
   }
@@ -13174,7 +13112,7 @@ function loop(now) {
       drawTicTacToeBoard(ctx, xx - T / 2, yy - 4, globalTick);
     }
     {
-      const [_x, _y] = getAdminPos('connect4', 28, 55);
+      const [_x, _y] = getAdminPos('connect4', 31.5, 57);
       const [xx, yy] = ts(_x, _y);
       drawConnect4Board(ctx, xx - T / 2, yy - 4, globalTick);
     }
@@ -13198,7 +13136,7 @@ function loop(now) {
 
   // Trophy Cabinet (near main office wall)
   {
-    const [_tcTx, _tcTy] = getAdminPos('trophy_cabinet', 5, 2);
+    const [_tcTx, _tcTy] = getAdminPos('trophy_cabinet', 2, 55);
     const [tcx, tcy] = ts(_tcTx, _tcTy);
     drawObjectCached(ctx, 'trophy_cabinet', tcx - T / 2, tcy - 8, globalTick, drawTrophyCabinet);
   }
@@ -14552,14 +14490,6 @@ function buildAdminObjects() {
     h: 1.5,
   });
   adminObjects.push({
-    id: 'cooler',
-    label: '💧 Cooler',
-    tx: rX + 2.5,
-    ty: 2,
-    w: 1.5,
-    h: 1.5,
-  });
-  adminObjects.push({
     id: 'darts',
     label: '🎯 Darts',
     tx: rX + 1.5,
@@ -14852,8 +14782,8 @@ function buildAdminObjects() {
     adminObjects.push({
       id: 'photo_booth',
       label: '📸 Photo Booth',
-      tx: 16,
-      ty: ACT_ZONE_Y + 9,
+      tx: 8,
+      ty: 55,
       w: 2,
       h: 2.5,
     });
@@ -14877,8 +14807,8 @@ function buildAdminObjects() {
   adminObjects.push({
     id: 'trophy_cabinet',
     label: '🏆 Trophy Cabinet',
-    tx: 5,
-    ty: 2,
+    tx: 2,
+    ty: 55,
     w: 1.8,
     h: 2,
   });
@@ -14933,8 +14863,8 @@ function buildAdminObjects() {
   adminObjects.push({
     id: 'connect4',
     label: '🔴 Connect 4',
-    tx: 28,
-    ty: 55,
+    tx: 31.5,
+    ty: 57,
     w: 1.5,
     h: 2,
   });

@@ -20,7 +20,6 @@ export const OBJECT_SIZES = {
   couch: { w: 3, h: 2 },
   // Right panel
   clock: { w: 1.5, h: 1.5 },
-  cooler: { w: 1.5, h: 1.5 },
   darts: { w: 2, h: 1 },
   aquarium: { w: 2.5, h: 2 },
   printer: { w: 2, h: 1 },

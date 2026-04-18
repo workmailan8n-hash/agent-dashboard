@@ -48,7 +48,6 @@ export const BUILTIN_POSITIONS = {
 
   // ═══ RIGHT PANEL ═══
   aquarium: { tx: 30.5, ty: 5.5 },
-  cooler: { tx: 32, ty: 17.5 },
   printer: { tx: 29.5, ty: 22.5 },
   lava_lamp: { tx: 30, ty: 18 },
   plant_0: { tx: 5, ty: 19.5 },
@@ -106,16 +105,16 @@ export const BUILTIN_POSITIONS = {
 
   // ═══ LOUNGE ROOM (bot-left: cols 1-17, rows 55-64) ═══
   // All wall-hugging on top wall (row 55); casino tables on bottom wall (row 62).
-  photo_booth: { tx: 2, ty: 55 },
+  trophy_cabinet: { tx: 2, ty: 55 },
   crystal_ball: { tx: 5, ty: 55 },
-  trophy_cabinet: { tx: 8, ty: 55 },
+  photo_booth: { tx: 8, ty: 55 },
   server_rack: { tx: 11, ty: 55 },
   zen_garden: { tx: 14, ty: 55 },
 
   // ═══ CAFE ROOM (bot-right: cols 19-33, rows 55-64) ═══
-  // Top wall (row 55): reaction_clock, gumball, tictactoe, connect4, terrarium.
-  // Left wall (col 19): water_cooler. Bottom wall (row 62): cafe_table + typing_laptop.
-  water_cooler: { tx: 19, ty: 60 },
+  // Top wall (row 55): reaction_clock, gumball, tictactoe, terrarium.
+  // Right wall: connect4 at (31.5, 57). Bottom wall (row 62): cafe_table + typing_laptop.
+  water_cooler: { tx: 32, ty: 17 },
   cafe_table: { tx: 22, ty: 62 },
 
   // ═══ STAGE 2 MINIGAME OBJECTS ═══
@@ -123,7 +122,7 @@ export const BUILTIN_POSITIONS = {
   reaction_clock: { tx: 20, ty: 55 },
   gumball_machine: { tx: 22.5, ty: 55 },
   tictactoe: { tx: 25.5, ty: 55 },
-  connect4: { tx: 28, ty: 55 },
+  connect4: { tx: 31.5, ty: 57 },
   terrarium: { tx: 30.5, ty: 55 },
   typing_laptop: { tx: 22, ty: 62 },
 };
@@ -136,7 +135,7 @@ export function getAdminPos(id, defTx, defTy) {
 
 // Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
 // saved admin overrides in localStorage are wiped automatically.
-export const POS_SCHEMA = '15';
+export const POS_SCHEMA = '16';
 
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {

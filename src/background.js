@@ -996,35 +996,6 @@ function buildBackground() {
   {
     const rX = PER_ROW * STEP_X + 2;
 
-    // ── 1. Water Cooler ─────────────────────────────────────────
-    const [_coolerTx, _coolerTy] = getAdminPos('cooler', rX + 2.5, 2);
-    const [wcx, wcy] = ts(_coolerTx, _coolerTy);
-    // Cooler body
-    ctx.save();
-    ctx.shadowColor = '#00000070';
-    ctx.shadowBlur = 8;
-    fillR(ctx, wcx, wcy, T * 1.5, T * 2, '#d0d8e0');
-    ctx.restore();
-    fillR(ctx, wcx + 3, wcy + 3, T * 1.5 - 6, T * 0.7, '#80c0e8'); // water tank
-    fillR(ctx, wcx + 3, wcy + T * 0.7 + 3, T * 1.5 - 6, T * 1.3 - 6, '#e8ecf0'); // body
-    fillR(ctx, wcx + T * 0.75 - 4, wcy + T * 0.8, 8, 5, '#707880'); // tap
-    ctx.fillStyle = '#4488dd';
-    ctx.fillRect(wcx + 6, wcy + T * 0.9 + 4, 7, 4);
-    ctx.fillStyle = '#dd4444';
-    ctx.fillRect(wcx + T * 1.5 - 13, wcy + T * 0.9 + 4, 7, 4);
-    // Water jug
-    ctx.fillStyle = '#70b8e880';
-    ctx.beginPath();
-    ctx.ellipse(wcx + T * 0.75, wcy - 2, 12, 14, 0, Math.PI, 0);
-    ctx.fill();
-    ctx.strokeStyle = '#5090b8';
-    ctx.lineWidth = 1.5;
-    ctx.beginPath();
-    ctx.ellipse(wcx + T * 0.75, wcy - 2, 12, 14, 0, Math.PI, 0);
-    ctx.stroke();
-    // Drip tray
-    fillR(ctx, wcx + 4, wcy + T * 2 - 5, T * 1.5 - 8, 4, '#a0a8b0');
-
     // ── 3. Aquarium (right zone, row 8) ─────────────────────────
     const [_aqTx, _aqTy] = getAdminPos('aquarium', rX + 0.3, 8);
     const [aqx, aqy] = ts(_aqTx, _aqTy);
