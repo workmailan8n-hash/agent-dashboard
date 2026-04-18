@@ -144,20 +144,4 @@
   display: block;
 }
 
-#btn-leaderboard {
-  font-family: var(--font-main);
-  font-size: 6px;
-  background: transparent;
-  color: #e0af68;
-  border: 1px solid #e0af6860;
-  padding: 5px 10px;
-  cursor: pointer;
-  letter-spacing: 1px;
-  transition:
-    background 0.15s,
-    border-color 0.15s;
-}
-#btn-leaderboard:hover {
-  background: #e0af6818;
-  border-color: #e0af68;
-}
+/* TOP button base style defined in header.css (shared with SET) */

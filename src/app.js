@@ -7293,8 +7293,9 @@ function buildBackground() {
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.13)'); // grout H
         fillR(ctx, x + T - 1, y, 1, T, 'rgba(0,0,0,0.13)'); // grout V
       } else if (inGamingRoom) {
-        // ── GAMING — 80s arcade carpet ──
-        fillR(ctx, x, y, T, T, '#1e1830');
+        // ── GAMING — 80s arcade carpet (black/red) ──
+        const gck = (row + col) % 2;
+        fillR(ctx, x, y, T, T, gck ? '#2a1014' : '#1a0a10');
         const h = (row * 31 + col * 17 + ((row + col) & 3) * 7) % 100;
         const cx = x + (T >> 1) - 3;
         const cy = y + (T >> 1) - 3;
@@ -7361,13 +7362,17 @@ function buildBackground() {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
         }
       } else {
-        // Wood floor planks — rows of alternating shades with grain
-        const pi = (row + ((col / 5) | 0)) % 3;
-        const plankC = ['#c4b89c', '#beb296', '#b8ac90'][pi];
-        fillR(ctx, x, y, T, T, plankC);
-        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.09)'); // groove
-        if ((col * 7 + row * 13) % 17 === 0)
-          fillR(ctx, x + ((col * 5) % 24), y, 1, T, 'rgba(0,0,0,0.04)'); // grain
+        // Work-zone carpet — office grey with fibre texture
+        const cck = (row + col) % 2;
+        fillR(ctx, x, y, T, T, cck ? '#4a4e58' : '#40444c');
+        // Fibre speckle
+        const fh = (row * 11 + col * 7) % 13;
+        if (fh < 3)
+          fillR(ctx, x + ((col * 5) % (T - 1)), y + ((row * 3) % (T - 1)), 1, 1, '#565a65');
+        else if (fh < 6)
+          fillR(ctx, x + ((col * 13) % (T - 1)), y + ((row * 7) % (T - 1)), 1, 1, '#353840');
+        // Bottom groove
+        fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.18)');
       }
     }
   }
