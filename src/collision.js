@@ -71,8 +71,6 @@ export const OBJECT_SIZES = {
   // Stage 2 minigame objects
   tictactoe: { w: 1.5, h: 2 },
   connect4: { w: 1.5, h: 2 },
-  tablet_2048: { w: 1.5, h: 1.5 },
-  bulletin_board: { w: 1.5, h: 1.5 },
   typing_laptop: { w: 1, h: 1 },
   reaction_clock: { w: 1.5, h: 1.5 },
 };

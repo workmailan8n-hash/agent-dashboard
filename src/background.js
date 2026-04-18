@@ -923,7 +923,7 @@ function buildBackground() {
 
   // ── Conference Table (social zone below gym) ─────────────────────
   if (ACT_ZONE_Y > 0) {
-    const [_cfTx, _cfTy] = getAdminPos('conf_table', 5, 30);
+    const [_cfTx, _cfTy] = getAdminPos('conf_table', 5, 35);
     const [cfx, cfy] = ts(_cfTx, _cfTy);
     const ctW = T * 6,
       ctH = T * 2;

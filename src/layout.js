@@ -707,10 +707,10 @@ function generateLayout(n) {
   });
 
   // ── Conference table — 2 GROUP_PAIRS, work zone below couches ────
-  const confY = 30;
+  const confY = 35;
   const confX = 5;
   const _confDefTx = 5,
-    _confDefTy = 30;
+    _confDefTy = 35;
   // Pair 11: north side facing each other
   const ci11A = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
@@ -932,7 +932,7 @@ function buildObstacleGrid() {
 
   // ── Conference table ─────
   if (ACT_ZONE_Y > 0) {
-    const [cfTx, cfTy] = getAdminPos('conf_table', 5, 30);
+    const [cfTx, cfTy] = getAdminPos('conf_table', 5, 35);
     markRect(cfTx, cfTy, 4, 2);
   }
 

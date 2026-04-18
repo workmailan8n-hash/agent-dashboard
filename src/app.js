@@ -33,7 +33,6 @@ import { launchFoosballGame } from './minigames/foosball.js';
 import { launchPokerGame } from './minigames/poker.js';
 import { launchRouletteGame } from './minigames/roulette.js';
 import { launchBlackjackGame } from './minigames/blackjack.js';
-import { launch_2048Game } from './minigames/_2048.js';
 import { launchMinesweeperGame } from './minigames/minesweeper.js';
 import { launchTypingTestGame } from './minigames/typing_test.js';
 import { launchReactionTestGame } from './minigames/reaction_test.js';
@@ -4197,66 +4196,6 @@ function drawConnect4Board(ctx, x, y, tick) {
   ctx.restore();
 }
 
-function drawTablet2048(ctx, x, y, tick) {
-  const w = T * 1.5,
-    h = T * 1.5;
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.fillRect(x + 2, y + h - 2, w, 3);
-  // Tablet body
-  ctx.fillStyle = '#2a2a38';
-  ctx.fillRect(x, y, w, h);
-  // Screen
-  ctx.fillStyle = '#bbada0';
-  ctx.fillRect(x + 3, y + 4, w - 6, h - 10);
-  // 4x4 tile hint
-  const iw = w - 6,
-    ih = h - 10;
-  const cs = Math.min(iw / 4, ih / 4);
-  const cols = ['#eee4da', '#f2b179', '#f59563', '#edcf72'];
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      const v = (r + c) % 5;
-      if (v === 0) continue;
-      ctx.fillStyle = cols[(v - 1) % 4];
-      ctx.fillRect(x + 4 + c * cs, y + 5 + r * cs, cs - 1, cs - 1);
-    }
-  }
-  // Home button
-  ctx.fillStyle = '#3a3a50';
-  ctx.fillRect(x + w / 2 - 3, y + h - 5, 6, 2);
-  ctx.restore();
-}
-
-function drawBulletinBoard(ctx, x, y, tick) {
-  const w = T * 1.5,
-    h = T * 1.5;
-  ctx.save();
-  ctx.fillStyle = 'rgba(0,0,0,0.25)';
-  ctx.fillRect(x + 2, y + h - 2, w, 3);
-  // Cork background
-  ctx.fillStyle = '#5a3a1a';
-  ctx.fillRect(x, y, w, h);
-  ctx.fillStyle = '#8a6030';
-  ctx.fillRect(x + 3, y + 3, w - 6, h - 6);
-  // Minesweeper hint: grid with a mine
-  const iw = w - 6,
-    ih = h - 6;
-  const cs = Math.min(iw / 4, ih / 4);
-  for (let r = 0; r < 4; r++) {
-    for (let c = 0; c < 4; c++) {
-      ctx.fillStyle = (r * 4 + c) % 3 ? '#a08060' : '#2a2a38';
-      ctx.fillRect(x + 4 + c * cs, y + 4 + r * cs, cs - 1, cs - 1);
-    }
-  }
-  // A red pin
-  ctx.fillStyle = '#f7768e';
-  ctx.beginPath();
-  ctx.arc(x + w - 8, y + 8, 2.5, 0, Math.PI * 2);
-  ctx.fill();
-  ctx.restore();
-}
-
 function drawCafeTable(ctx, x, y, tick) {
   const w = T * 2,
     h = T * 1;
@@ -6265,9 +6204,9 @@ function generateLayout(n) {
   // ── Conference table — meeting space in work zone, below couches ─────
   // 4x2 oval table with chairs + small video-wall behind it.
   const confX = 5,
-    confY = 30;
+    confY = 35;
   const _confDefTx = 5,
-    _confDefTy = 30;
+    _confDefTy = 35;
   // Pair 11: north side facing each other
   const ci11A = IDLE_SPOTS.length;
   IDLE_SPOTS.push({
@@ -6373,52 +6312,28 @@ function generateLayout(n) {
 
   // ── Stage 2 minigame spots ──────────────────────────────
   IDLE_SPOTS.push({
-    tx: 16.25,
-    ty: 46,
+    tx: 29.75,
+    ty: 59,
     anim: 'sitting_couch',
     type: 'tictactoe',
     w: 1.5,
     _objId: 'tictactoe',
-    _defObjTx: 15.5,
-    _defObjTy: 44,
+    _defObjTx: 29,
+    _defObjTy: 57,
     _offsetX: 0.75,
     _offsetY: 2,
   });
   IDLE_SPOTS.push({
-    tx: 16.25,
-    ty: 48.5,
+    tx: 31.75,
+    ty: 59,
     anim: 'sitting_couch',
     type: 'connect4',
     w: 1.5,
     _objId: 'connect4',
-    _defObjTx: 15.5,
-    _defObjTy: 46.5,
-    _offsetX: 0.75,
-    _offsetY: 2,
-  });
-  IDLE_SPOTS.push({
-    tx: 16.25,
-    ty: 50.5,
-    anim: 'sitting_couch',
-    type: 'tablet_2048',
-    w: 1.5,
-    _objId: 'tablet_2048',
-    _defObjTx: 15.5,
-    _defObjTy: 49,
-    _offsetX: 0.75,
-    _offsetY: 1.5,
-  });
-  IDLE_SPOTS.push({
-    tx: 13.25,
-    ty: 58.5,
-    anim: 'sitting_couch',
-    type: 'bulletin_board',
-    w: 1.5,
-    _objId: 'bulletin_board',
-    _defObjTx: 12.5,
+    _defObjTx: 31,
     _defObjTy: 57,
     _offsetX: 0.75,
-    _offsetY: 1.5,
+    _offsetY: 2,
   });
   IDLE_SPOTS.push({
     tx: 22.5,
@@ -6572,7 +6487,7 @@ function buildObstacleGrid() {
 
   // ── Conference table ─────
   {
-    const [cfTx, cfTy] = getAdminPos('conf_table', 5, 30);
+    const [cfTx, cfTy] = getAdminPos('conf_table', 5, 35);
     markRect(cfTx, cfTy, 4, 2);
   }
 
@@ -6645,14 +6560,10 @@ function buildObstacleGrid() {
     markRect(bjObsTx, bjObsTy, 3, 2);
 
     // Stage 2 minigame objects
-    const [tttTx, tttTy] = getAdminPos('tictactoe', 15.5, 44);
+    const [tttTx, tttTy] = getAdminPos('tictactoe', 29, 57);
     markRect(tttTx, tttTy, 1.5, 2);
-    const [c4Tx, c4Ty] = getAdminPos('connect4', 15.5, 46.5);
+    const [c4Tx, c4Ty] = getAdminPos('connect4', 31, 57);
     markRect(c4Tx, c4Ty, 1.5, 2);
-    const [t2Tx, t2Ty] = getAdminPos('tablet_2048', 15.5, 49);
-    markRect(t2Tx, t2Ty, 1.5, 1.5);
-    const [bbTx, bbTy] = getAdminPos('bulletin_board', 12.5, 57);
-    markRect(bbTx, bbTy, 1.5, 1.5);
     // cafe_table + typing_laptop sit at same tile (laptop is on table's left half)
     const [ctTx, ctTy] = getAdminPos('cafe_table', 22, 62);
     markRect(ctTx, ctTy, 2, 1);
@@ -8110,7 +8021,7 @@ function buildBackground() {
 
   // ── Conference table (work zone, below couches) ──
   {
-    const [_cfTx, _cfTy] = getAdminPos('conf_table', 5, 30);
+    const [_cfTx, _cfTy] = getAdminPos('conf_table', 5, 35);
     const [cfx, cfy] = ts(_cfTx, _cfTy);
     const cfW = T * 4,
       cfH = T * 2;
@@ -13310,24 +13221,14 @@ function loop(now) {
   // Stage 2 minigame objects
   if (ACT_ZONE_Y > 0) {
     {
-      const [_x, _y] = getAdminPos('tictactoe', 15.5, 44);
+      const [_x, _y] = getAdminPos('tictactoe', 29, 57);
       const [xx, yy] = ts(_x, _y);
       drawTicTacToeBoard(ctx, xx - T / 2, yy - 4, globalTick);
     }
     {
-      const [_x, _y] = getAdminPos('connect4', 15.5, 46.5);
+      const [_x, _y] = getAdminPos('connect4', 31, 57);
       const [xx, yy] = ts(_x, _y);
       drawConnect4Board(ctx, xx - T / 2, yy - 4, globalTick);
-    }
-    {
-      const [_x, _y] = getAdminPos('tablet_2048', 15.5, 49);
-      const [xx, yy] = ts(_x, _y);
-      drawTablet2048(ctx, xx - T / 2, yy - 4, globalTick);
-    }
-    {
-      const [_x, _y] = getAdminPos('bulletin_board', 12.5, 57);
-      const [xx, yy] = ts(_x, _y);
-      drawBulletinBoard(ctx, xx - T / 2, yy - 4, globalTick);
     }
     // Cafe table + laptop on its left half
     {
@@ -14769,7 +14670,7 @@ function buildAdminObjects() {
     id: 'conf_table',
     label: '🤝 Conference',
     tx: 5,
-    ty: 30,
+    ty: 35,
     w: 4,
     h: 2,
   });
@@ -15093,34 +14994,18 @@ function buildAdminObjects() {
   adminObjects.push({
     id: 'tictactoe',
     label: '⊘ Tic-Tac-Toe',
-    tx: 15.5,
-    ty: 44,
+    tx: 29,
+    ty: 57,
     w: 1.5,
     h: 2,
   });
   adminObjects.push({
     id: 'connect4',
     label: '🔴 Connect 4',
-    tx: 15.5,
-    ty: 46.5,
-    w: 1.5,
-    h: 2,
-  });
-  adminObjects.push({
-    id: 'tablet_2048',
-    label: '🔢 2048 Tablet',
-    tx: 15.5,
-    ty: 49,
-    w: 1.5,
-    h: 1.5,
-  });
-  adminObjects.push({
-    id: 'bulletin_board',
-    label: '💣 Minesweeper Board',
-    tx: 12.5,
+    tx: 31,
     ty: 57,
     w: 1.5,
-    h: 1.5,
+    h: 2,
   });
   adminObjects.push({
     id: 'typing_laptop',
@@ -15906,8 +15791,6 @@ const CLICK_OBJ_MAP = {
   blackjack_table: 'blackjack_table',
   tictactoe: 'tictactoe',
   connect4: 'connect4',
-  tablet_2048: 'tablet_2048',
-  bulletin_board: 'bulletin_board',
   typing_laptop: 'typing_laptop',
   reaction_clock: 'reaction_clock',
 };
@@ -15964,8 +15847,6 @@ function findClickableAt(tx, ty) {
     { id: 'blackjack_table', w: 3, h: 2 },
     { id: 'tictactoe', w: 1.5, h: 2 },
     { id: 'connect4', w: 1.5, h: 2 },
-    { id: 'tablet_2048', w: 1.5, h: 1.5 },
-    { id: 'bulletin_board', w: 1.5, h: 1.5 },
     { id: 'typing_laptop', w: 1, h: 1 },
     { id: 'reaction_clock', w: 1.5, h: 1.5 },
   ];
@@ -16234,12 +16115,7 @@ canvas.addEventListener('click', (e) => {
     blip(520, 0.08, 'square', 0.04);
     return;
   }
-  if (hit.type === 'tablet_2048') {
-    launch_2048Game();
-    blip(700, 0.08, 'square', 0.04);
-    return;
-  }
-  if (hit.type === 'bulletin_board') {
+  if (hit.type === 'server') {
     launchMinesweeperGame();
     blip(480, 0.08, 'square', 0.04);
     return;

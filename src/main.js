@@ -444,7 +444,6 @@ if (typeof window !== 'undefined') {
     poker: { icon: '🃏', label: 'POKER', unit: 'chips' },
     roulette: { icon: '🎡', label: 'ROULETTE', unit: 'chips' },
     blackjack: { icon: '♠', label: 'BLACKJACK', unit: 'chips' },
-    _2048: { icon: '🔢', label: '2048', unit: 'max' },
     minesweeper: { icon: '💣', label: 'MINES', unit: 'pts' },
     typing_test: { icon: '⌨', label: 'TYPING', unit: 'wpm' },
     reaction_test: { icon: '⚡', label: 'REACT', unit: 'pts' },

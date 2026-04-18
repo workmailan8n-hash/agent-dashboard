@@ -120,7 +120,7 @@ function buildAdminObjects() {
     id: 'conf_table',
     label: '🤝 Conference',
     tx: 5,
-    ty: 30,
+    ty: 35,
     w: 4,
     h: 2,
   });

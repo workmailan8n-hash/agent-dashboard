@@ -102,7 +102,7 @@ export const BUILTIN_POSITIONS = {
   basketball: { tx: 29, ty: 48 },
 
   // ═══ CONFERENCE TABLE (work zone, below couches, above bottom rooms) ═══
-  conf_table: { tx: 5, ty: 30 },
+  conf_table: { tx: 5, ty: 35 },
 
   // ═══ LOUNGE ROOM (bot-left: cols 1-17, rows 55-64) ═══
   photo_booth: { tx: 2, ty: 55 },
@@ -120,13 +120,9 @@ export const BUILTIN_POSITIONS = {
   cafe_table: { tx: 22, ty: 62 },
 
   // ═══ STAGE 2 MINIGAME OBJECTS ═══
-  // Gaming room (top-left): right wall stacked
-  tictactoe: { tx: 15.5, ty: 44 },
-  connect4: { tx: 15.5, ty: 46.5 },
-  tablet_2048: { tx: 15.5, ty: 49 },
-  // Lounge room (bot-left)
-  bulletin_board: { tx: 12.5, ty: 57 },
   // Cafe room (bot-right)
+  tictactoe: { tx: 29, ty: 57 },
+  connect4: { tx: 31, ty: 57 },
   typing_laptop: { tx: 22, ty: 62 },
   reaction_clock: { tx: 25, ty: 55 },
 };
@@ -139,7 +135,7 @@ export function getAdminPos(id, defTx, defTy) {
 
 // Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
 // saved admin overrides in localStorage are wiped automatically.
-export const POS_SCHEMA = '13';
+export const POS_SCHEMA = '14';
 
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {
