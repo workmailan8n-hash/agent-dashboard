@@ -834,9 +834,6 @@ function buildBackground() {
     }
   }
 
-  // ── Lounge wall (horizontal, row 21, door in center) ──
-  drawHWall(21, 1, COLS - 2, Math.floor(COLS * 0.3), Math.floor(COLS * 0.5));
-
   // ── Activity zone wall (horizontal, row 35, wide door) ──
   drawHWall(35, 1, COLS - 2, Math.floor(COLS * 0.35), Math.floor(COLS * 0.65));
 

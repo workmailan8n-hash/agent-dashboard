@@ -865,13 +865,7 @@ function buildObstacleGrid() {
   }
 
   // Room walls as obstacles
-  // Lounge wall (row 21)
-  const loungeDoorL = Math.floor(COLS * 0.3),
-    loungeDoorR = Math.floor(COLS * 0.5);
-  for (let c = 1; c < COLS - 1; c++) {
-    if (c >= loungeDoorL && c <= loungeDoorR) continue;
-    mark(c, 21);
-  }
+  // (lounge wall at row 21 removed — open plan)
   // Activity wall (row 35)
   const actDoorL = Math.floor(COLS * 0.35),
     actDoorR = Math.floor(COLS * 0.65);

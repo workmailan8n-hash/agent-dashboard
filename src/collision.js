@@ -143,15 +143,7 @@ export function buildCanonicalWalls(COLS = CANONICAL_COLS, ROWS = CANONICAL_ROWS
   // Kitchen partition col 23, rows 10..19, door rows 12..15
   walls.push({ x1: 23, y1: 10, x2: 24, y2: 12, label: 'kitchen wall (top)' });
   walls.push({ x1: 23, y1: 16, x2: 24, y2: 20, label: 'kitchen wall (bot)' });
-  // Lounge wall row 21, cols 1..COLS-1, door cols 10..17 (30%..50% of 35)
-  walls.push({ x1: 1, y1: 21, x2: 10, y2: 22, label: 'lounge wall (left)' });
-  walls.push({
-    x1: 18,
-    y1: 21,
-    x2: COLS - 1,
-    y2: 22,
-    label: 'lounge wall (right)',
-  });
+  // Lounge wall at row 21 removed (open plan between desks and couches)
   return walls;
 }
 
