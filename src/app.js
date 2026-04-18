@@ -15707,6 +15707,8 @@ function findClickableAt(tx, ty) {
     { id: 'crystal_ball', w: 2, h: 2.5 },
     { id: 'kitchen_table', w: 4, h: 3 },
     { id: 'conf_table', w: 4, h: 2 },
+    // typing_laptop must come BEFORE cafe_table — they share tile (22,62)
+    { id: 'typing_laptop', w: 1, h: 1 },
     { id: 'cafe_table', w: 2, h: 1 },
     { id: 'gaming_sofa', w: 4, h: 1.5 },
     { id: 'gym', w: 5, h: 4 },
@@ -15723,7 +15725,6 @@ function findClickableAt(tx, ty) {
     { id: 'blackjack_table', w: 3, h: 2 },
     { id: 'tictactoe', w: 1.5, h: 2 },
     { id: 'connect4', w: 1.5, h: 2 },
-    { id: 'typing_laptop', w: 1, h: 1 },
     { id: 'reaction_clock', w: 1.5, h: 1.5 },
   ];
   // Add desks and couches dynamically
