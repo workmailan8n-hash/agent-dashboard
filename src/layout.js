@@ -646,32 +646,18 @@ function generateLayout(n) {
 
   // ══ Zone 2: MAKERS LAB (ACT_ZONE+14, left side) ═══════════════
 
-  // ── 11. Server Rack (makers lab, cols 2-3) ────────────────────
+  // ── 11. Server Rack (lounge top wall, cols 11-12) ─────────────
   IDLE_SPOTS.push({
-    tx: 3,
-    ty: ACT_ZONE_Y + 15,
+    tx: 12,
+    ty: 57,
     anim: 'fixing_server',
     type: 'server',
     w: 4,
     _objId: 'server_rack',
-    _defObjTx: 2,
-    _defObjTy: ACT_ZONE_Y + 14,
+    _defObjTx: 11,
+    _defObjTy: 55,
     _offsetX: 1,
-    _offsetY: 1,
-  });
-
-  // ── 12. 3D Printer (makers lab, cols 7-8) ─────────────────────
-  IDLE_SPOTS.push({
-    tx: 8,
-    ty: ACT_ZONE_Y + 15,
-    anim: 'watching_3dprint',
-    type: 'printer3d',
-    w: 4,
-    _objId: 'printer_3d',
-    _defObjTx: 7,
-    _defObjTy: ACT_ZONE_Y + 14,
-    _offsetX: 1,
-    _offsetY: 1,
+    _offsetY: 2,
   });
 
   // ── 13. Telescope (makers lab, cols 23-24, right side) ────────
@@ -956,11 +942,8 @@ function buildObstacleGrid() {
 
   // ── Zone 2: MAKERS LAB obstacles (ACT_ZONE+14) ─────
   if (ACT_ZONE_Y > 0) {
-    const [srvObsTx, srvObsTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y + 14);
+    const [srvObsTx, srvObsTy] = getAdminPos('server_rack', 11, 55);
     markRect(srvObsTx, srvObsTy, 2, 2);
-
-    const [p3ObsTx, p3ObsTy] = getAdminPos('printer_3d', 7, ACT_ZONE_Y + 14);
-    markRect(p3ObsTx, p3ObsTy, 2, 2);
 
     const [telObsTx, telObsTy] = getAdminPos('telescope', 18, ACT_ZONE_Y + 14);
     markRect(telObsTx, telObsTy, 1, 2);

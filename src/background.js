@@ -1164,8 +1164,8 @@ function buildBackground() {
     ctx.fill();
     fillR(ctx, arcx + arcW / 2 - 3, arcy + arcH - 10, 6, 3, '#404058');
 
-    // ── Server Rack (makers lab, col 2) ─────────────────────────
-    const [_srvTx, _srvTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y + 14);
+    // ── Server Rack (lounge top wall, col 11) ───────────────────
+    const [_srvTx, _srvTy] = getAdminPos('server_rack', 11, 55);
     const [srvx, srvy] = ts(_srvTx, _srvTy);
     const srvW = T * 2,
       srvH = T * 2.2;
@@ -1201,29 +1201,6 @@ function buildBackground() {
       );
       ctx.stroke();
     }
-
-    // ── 3D Printer (makers lab, col 7) ──────────────────────────
-    const [_p3Tx, _p3Ty] = getAdminPos('printer_3d', 7, ACT_ZONE_Y + 14);
-    const [p3x, p3y] = ts(_p3Tx, _p3Ty);
-    const p3W = T * 2,
-      p3H = T * 1.8;
-    ctx.save();
-    ctx.shadowColor = '#00000060';
-    ctx.shadowBlur = 5;
-    fillR(ctx, p3x, p3y, p3W, p3H, '#303040');
-    ctx.restore();
-    fillR(ctx, p3x + 3, p3y + 3, p3W - 6, p3H - 6, '#40405060');
-    fillR(ctx, p3x, p3y, 4, p3H, '#303040');
-    fillR(ctx, p3x + p3W - 4, p3y, 4, p3H, '#303040');
-    fillR(ctx, p3x, p3y, p3W, 4, '#303040');
-    fillR(ctx, p3x, p3y + p3H - 4, p3W, 4, '#303040');
-    fillR(ctx, p3x + 6, p3y + p3H - 12, p3W - 12, 6, '#505060');
-    fillR(ctx, p3x + 8, p3y + p3H - 14, p3W - 16, 2, '#606070');
-    fillR(ctx, p3x + 6, p3y + 6, p3W - 12, 3, '#404050');
-    fillR(ctx, p3x + p3W / 2 - 3, p3y + 6, 6, 10, '#606070');
-    fillR(ctx, p3x + p3W / 2 - 1, p3y + 16, 2, 4, '#808090');
-    fillR(ctx, p3x + p3W / 2 - 4, p3y + p3H - 18, 8, 6, '#9ece6a');
-    fillR(ctx, p3x + p3W / 2 - 2, p3y + p3H - 22, 4, 4, '#7aa2f7');
 
     // ── Basketball Hoop (recreation, col 12) ───────────────────
     const [_bbTx, _bbTy] = getAdminPos('basketball', 12, ACT_ZONE_Y + 9);

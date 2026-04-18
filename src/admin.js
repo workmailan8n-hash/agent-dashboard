@@ -277,18 +277,10 @@ function buildAdminObjects() {
     adminObjects.push({
       id: 'server_rack',
       label: '🖥 Server Rack',
-      tx: 2,
-      ty: ACT_ZONE_Y + 14,
+      tx: 11,
+      ty: 55,
       w: 2,
       h: 2.2,
-    });
-    adminObjects.push({
-      id: 'printer_3d',
-      label: '🖨 3D Printer',
-      tx: 7,
-      ty: ACT_ZONE_Y + 14,
-      w: 2,
-      h: 1.8,
     });
     adminObjects.push({
       id: 'telescope',

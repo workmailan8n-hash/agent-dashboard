@@ -45,7 +45,6 @@ const CLICK_OBJ_MAP = {
   arcade: 'arcade',
   dj_console: 'dj',
   server_rack: 'server',
-  printer_3d: 'printer3d',
   foosball: 'foosball',
   basketball: 'basketball',
   telescope: 'telescope',
@@ -76,7 +75,6 @@ function findClickableAt(tx, ty) {
     { id: 'arcade', w: 2, h: 2.5 },
     { id: 'dj_console', w: 2.5, h: 1.2 },
     { id: 'server_rack', w: 2, h: 2.2 },
-    { id: 'printer_3d', w: 2, h: 1.8 },
     { id: 'foosball', w: 3, h: 1.5 },
     { id: 'basketball', w: 2, h: 2 },
     { id: 'telescope', w: 1, h: 2 },
@@ -331,8 +329,6 @@ function initClickAnims(canvasEl) {
       case 'dj':
         break;
       case 'server':
-        break;
-      case 'printer3d':
         break;
       case 'foosball':
         p.push({
@@ -780,21 +776,6 @@ function initClickAnims(canvasEl) {
             ctx.textAlign = 'center';
             ctx.fillText('REBOOT', a.x, a.y - 22);
             ctx.textAlign = 'left';
-          }
-          break;
-        }
-        case 'printer3d': {
-          // Nozzle moves
-          ctx.globalAlpha = alpha;
-          const nozzleX = a.x - 8 + Math.sin(tick * 0.5) * 16;
-          ctx.fillStyle = '#808090';
-          ctx.fillRect(nozzleX - 2, a.y - 10, 4, 6);
-          // Layer builds up
-          const layers = Math.min(Math.floor(t * 8), 6);
-          for (let li = 0; li < layers; li++) {
-            ctx.fillStyle = li % 2 === 0 ? '#9ece6a' : '#7aa2f7';
-            ctx.globalAlpha = alpha * 0.8;
-            ctx.fillRect(a.x - 6, a.y + 4 - li * 3, 12, 2);
           }
           break;
         }

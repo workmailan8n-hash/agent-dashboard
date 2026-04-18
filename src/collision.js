@@ -53,12 +53,10 @@ export const OBJECT_SIZES = {
   conf_table: { w: 4, h: 2 },
   cafe_table: { w: 2, h: 1 },
   server_rack: { w: 2, h: 2.2 },
-  printer_3d: { w: 2, h: 1.8 },
   telescope: { w: 1, h: 2 },
   // Bottom zone
   zen_garden: { w: 2, h: 1.5 },
   terrarium: { w: 1.8, h: 1.4 },
-  newtons_cradle: { w: 1.5, h: 1.5 },
   gumball_machine: { w: 1.5, h: 2 },
   slot_machine: { w: 1.5, h: 2 },
   water_cooler: { w: 1.2, h: 2 },

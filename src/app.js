@@ -5,7 +5,6 @@
 
 import {
   drawZenGarden,
-  drawNewtonsCradle,
   drawGumballMachine,
   drawTerrarium,
   drawLavaLamp,
@@ -6150,32 +6149,18 @@ function generateLayout(n) {
 
   // ══ Zone 2: MAKERS LAB (ACT_ZONE+14, left side) ═══════════════
 
-  // ── 11. Server Rack (makers lab, cols 2-3) ────────────────────
+  // ── 11. Server Rack (lounge top wall, cols 11-12) ─────────────
   IDLE_SPOTS.push({
-    tx: 3,
-    ty: ACT_ZONE_Y + 15,
+    tx: 12,
+    ty: 57,
     anim: 'fixing_server',
     type: 'server',
     w: 4,
     _objId: 'server_rack',
-    _defObjTx: 2,
-    _defObjTy: ACT_ZONE_Y + 14,
+    _defObjTx: 11,
+    _defObjTy: 55,
     _offsetX: 1,
-    _offsetY: 1,
-  });
-
-  // ── 12. 3D Printer (makers lab, cols 7-8) ─────────────────────
-  IDLE_SPOTS.push({
-    tx: 8,
-    ty: ACT_ZONE_Y + 15,
-    anim: 'watching_3dprint',
-    type: 'printer3d',
-    w: 4,
-    _objId: 'printer_3d',
-    _defObjTx: 7,
-    _defObjTy: ACT_ZONE_Y + 14,
-    _offsetX: 1,
-    _offsetY: 1,
+    _offsetY: 2,
   });
 
   // ── 13. Telescope (makers lab, cols 23-24, right side) ────────
@@ -6312,26 +6297,26 @@ function generateLayout(n) {
 
   // ── Stage 2 minigame spots ──────────────────────────────
   IDLE_SPOTS.push({
-    tx: 29.75,
-    ty: 59,
+    tx: 26.25,
+    ty: 57,
     anim: 'sitting_couch',
     type: 'tictactoe',
     w: 1.5,
     _objId: 'tictactoe',
-    _defObjTx: 29,
-    _defObjTy: 57,
+    _defObjTx: 25.5,
+    _defObjTy: 55,
     _offsetX: 0.75,
     _offsetY: 2,
   });
   IDLE_SPOTS.push({
-    tx: 31.75,
-    ty: 59,
+    tx: 28.75,
+    ty: 57,
     anim: 'sitting_couch',
     type: 'connect4',
     w: 1.5,
     _objId: 'connect4',
-    _defObjTx: 31,
-    _defObjTy: 57,
+    _defObjTx: 28,
+    _defObjTy: 55,
     _offsetX: 0.75,
     _offsetY: 2,
   });
@@ -6348,13 +6333,13 @@ function generateLayout(n) {
     _offsetY: 1,
   });
   IDLE_SPOTS.push({
-    tx: 25.75,
+    tx: 20.75,
     ty: 56.5,
     anim: 'sitting_couch',
     type: 'reaction_clock',
     w: 1.5,
     _objId: 'reaction_clock',
-    _defObjTx: 25,
+    _defObjTx: 20,
     _defObjTy: 55,
     _offsetX: 0.75,
     _offsetY: 1.5,
@@ -6533,11 +6518,8 @@ function buildObstacleGrid() {
 
   // ── Zone 2: MAKERS LAB obstacles (ACT_ZONE+14) ─────
   if (ACT_ZONE_Y > 0) {
-    const [srvObsTx, srvObsTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y + 14);
+    const [srvObsTx, srvObsTy] = getAdminPos('server_rack', 11, 55);
     markRect(srvObsTx, srvObsTy, 2, 2);
-
-    const [p3ObsTx, p3ObsTy] = getAdminPos('printer_3d', 7, ACT_ZONE_Y + 14);
-    markRect(p3ObsTx, p3ObsTy, 2, 2);
 
     const [telObsTx, telObsTy] = getAdminPos('telescope', 18, ACT_ZONE_Y + 14);
     markRect(telObsTx, telObsTy, 1, 2);
@@ -6554,14 +6536,14 @@ function buildObstacleGrid() {
     markRect(bjObsTx, bjObsTy, 3, 2);
 
     // Stage 2 minigame objects
-    const [tttTx, tttTy] = getAdminPos('tictactoe', 29, 57);
+    const [tttTx, tttTy] = getAdminPos('tictactoe', 25.5, 55);
     markRect(tttTx, tttTy, 1.5, 2);
-    const [c4Tx, c4Ty] = getAdminPos('connect4', 31, 57);
+    const [c4Tx, c4Ty] = getAdminPos('connect4', 28, 55);
     markRect(c4Tx, c4Ty, 1.5, 2);
     // cafe_table + typing_laptop sit at same tile (laptop is on table's left half)
     const [ctTx, ctTy] = getAdminPos('cafe_table', 22, 62);
     markRect(ctTx, ctTy, 2, 1);
-    const [rcTx, rcTy] = getAdminPos('reaction_clock', 25, 55);
+    const [rcTx, rcTy] = getAdminPos('reaction_clock', 20, 55);
     markRect(rcTx, rcTy, 1.5, 1.5);
   }
 
@@ -8298,8 +8280,8 @@ function buildBackground() {
     ctx.fill();
     fillR(ctx, arcx + arcW / 2 - 3, arcy + arcH - 10, 6, 3, '#404058');
 
-    // ── Server Rack (makers lab, col 2) ─────────────────────────
-    const [_srvTx, _srvTy] = getAdminPos('server_rack', 2, ACT_ZONE_Y + 14);
+    // ── Server Rack (lounge top wall, col 11) ───────────────────
+    const [_srvTx, _srvTy] = getAdminPos('server_rack', 11, 55);
     const [srvx, srvy] = ts(_srvTx, _srvTy);
     const srvW = T * 2,
       srvH = T * 2.2;
@@ -8335,29 +8317,6 @@ function buildBackground() {
       );
       ctx.stroke();
     }
-
-    // ── 3D Printer (makers lab, col 7) ──────────────────────────
-    const [_p3Tx, _p3Ty] = getAdminPos('printer_3d', 7, ACT_ZONE_Y + 14);
-    const [p3x, p3y] = ts(_p3Tx, _p3Ty);
-    const p3W = T * 2,
-      p3H = T * 1.8;
-    ctx.save();
-    ctx.shadowColor = '#00000060';
-    ctx.shadowBlur = 5;
-    fillR(ctx, p3x, p3y, p3W, p3H, '#303040');
-    ctx.restore();
-    fillR(ctx, p3x + 3, p3y + 3, p3W - 6, p3H - 6, '#40405060');
-    fillR(ctx, p3x, p3y, 4, p3H, '#303040');
-    fillR(ctx, p3x + p3W - 4, p3y, 4, p3H, '#303040');
-    fillR(ctx, p3x, p3y, p3W, 4, '#303040');
-    fillR(ctx, p3x, p3y + p3H - 4, p3W, 4, '#303040');
-    fillR(ctx, p3x + 6, p3y + p3H - 12, p3W - 12, 6, '#505060');
-    fillR(ctx, p3x + 8, p3y + p3H - 14, p3W - 16, 2, '#606070');
-    fillR(ctx, p3x + 6, p3y + 6, p3W - 12, 3, '#404050');
-    fillR(ctx, p3x + p3W / 2 - 3, p3y + 6, 6, 10, '#606070');
-    fillR(ctx, p3x + p3W / 2 - 1, p3y + 16, 2, 4, '#808090');
-    fillR(ctx, p3x + p3W / 2 - 4, p3y + p3H - 18, 8, 6, '#9ece6a');
-    fillR(ctx, p3x + p3W / 2 - 2, p3y + p3H - 22, 4, 4, '#7aa2f7');
 
     // ── Basketball Hoop (recreation, col 12) ───────────────────
     const [_bbTx, _bbTy] = getAdminPos('basketball', 12, ACT_ZONE_Y + 9);
@@ -13122,19 +13081,14 @@ function loop(now) {
     const [zgx, zgy] = ts(_zgTx, _zgTy);
     drawObjectCached(ctx, 'zen_garden', zgx - T / 2, zgy - 8, globalTick, drawZenGarden);
   }
-  // Terrarium (gecko vivarium, bottom corner)
+  // Terrarium (cafe top wall)
   {
-    const [_ttTx, _ttTy] = getAdminPos('terrarium', 30, 61);
+    const [_ttTx, _ttTy] = getAdminPos('terrarium', 30.5, 55);
     const [ttx, tty] = ts(_ttTx, _ttTy);
     drawObjectCached(ctx, 'terrarium', ttx - T / 2, tty - 4, globalTick, drawTerrarium);
   }
   {
-    const [_ncTx, _ncTy] = getAdminPos('newtons_cradle', 33, 61);
-    const [ncx, ncy] = ts(_ncTx, _ncTy);
-    drawObjectCached(ctx, 'newtons_cradle', ncx - T / 2, ncy - 4, globalTick, drawNewtonsCradle);
-  }
-  {
-    const [_gbTx, _gbTy] = getAdminPos('gumball_machine', 14, 57);
+    const [_gbTx, _gbTy] = getAdminPos('gumball_machine', 22.5, 55);
     const [gbx, gby] = ts(_gbTx, _gbTy);
     drawObjectCached(ctx, 'gumball', gbx - T / 2, gby - 4, globalTick, drawGumballMachine);
   }
@@ -13145,7 +13099,7 @@ function loop(now) {
   }
   // Water Cooler (break room hydration)
   {
-    const [_wcTx, _wcTy] = getAdminPos('water_cooler', 23, 8);
+    const [_wcTx, _wcTy] = getAdminPos('water_cooler', 19, 60);
     const [wcx, wcy] = ts(_wcTx, _wcTy);
     drawObjectCached(ctx, 'water_cooler', wcx - T / 2, wcy - 4, globalTick, drawWaterCooler);
   }
@@ -13215,12 +13169,12 @@ function loop(now) {
   // Stage 2 minigame objects
   if (ACT_ZONE_Y > 0) {
     {
-      const [_x, _y] = getAdminPos('tictactoe', 29, 57);
+      const [_x, _y] = getAdminPos('tictactoe', 25.5, 55);
       const [xx, yy] = ts(_x, _y);
       drawTicTacToeBoard(ctx, xx - T / 2, yy - 4, globalTick);
     }
     {
-      const [_x, _y] = getAdminPos('connect4', 31, 57);
+      const [_x, _y] = getAdminPos('connect4', 28, 55);
       const [xx, yy] = ts(_x, _y);
       drawConnect4Board(ctx, xx - T / 2, yy - 4, globalTick);
     }
@@ -13236,7 +13190,7 @@ function loop(now) {
       drawTypingLaptop(ctx, xx - T / 2, yy - 4, globalTick);
     }
     {
-      const [_x, _y] = getAdminPos('reaction_clock', 25, 55);
+      const [_x, _y] = getAdminPos('reaction_clock', 20, 55);
       const [xx, yy] = ts(_x, _y);
       drawReactionClock(ctx, xx - T / 2, yy - 4, globalTick);
     }
@@ -13714,7 +13668,6 @@ function loop(now) {
         jukebox: 'Jukebox',
         pinball: 'Pinball',
         server: 'Server',
-        printer3d: '3D Printer',
         telescope: 'Telescope',
         photo_booth: 'Photo Booth',
       };
@@ -14855,18 +14808,10 @@ function buildAdminObjects() {
     adminObjects.push({
       id: 'server_rack',
       label: '🖥 Server Rack',
-      tx: 2,
-      ty: ACT_ZONE_Y + 14,
+      tx: 11,
+      ty: 55,
       w: 2,
       h: 2.2,
-    });
-    adminObjects.push({
-      id: 'printer_3d',
-      label: '🖨 3D Printer',
-      tx: 7,
-      ty: ACT_ZONE_Y + 14,
-      w: 2,
-      h: 1.8,
     });
     adminObjects.push({
       id: 'telescope',
@@ -14924,18 +14869,10 @@ function buildAdminObjects() {
   adminObjects.push({
     id: 'terrarium',
     label: '🦎 Terrarium',
-    tx: 30,
-    ty: 61,
+    tx: 30.5,
+    ty: 55,
     w: 1.8,
     h: 1.4,
-  });
-  adminObjects.push({
-    id: 'newtons_cradle',
-    label: "⚖️ Newton's Cradle",
-    tx: 33,
-    ty: 61,
-    w: 1.5,
-    h: 1.5,
   });
   adminObjects.push({
     id: 'trophy_cabinet',
@@ -14988,16 +14925,16 @@ function buildAdminObjects() {
   adminObjects.push({
     id: 'tictactoe',
     label: '⊘ Tic-Tac-Toe',
-    tx: 29,
-    ty: 57,
+    tx: 25.5,
+    ty: 55,
     w: 1.5,
     h: 2,
   });
   adminObjects.push({
     id: 'connect4',
     label: '🔴 Connect 4',
-    tx: 31,
-    ty: 57,
+    tx: 28,
+    ty: 55,
     w: 1.5,
     h: 2,
   });
@@ -15012,7 +14949,7 @@ function buildAdminObjects() {
   adminObjects.push({
     id: 'reaction_clock',
     label: '⚡ Reaction Clock',
-    tx: 25,
+    tx: 20,
     ty: 55,
     w: 1.5,
     h: 1.5,
@@ -15752,7 +15689,6 @@ const CLICK_OBJ_MAP = {
   arcade: 'arcade',
   dj_console: 'dj',
   server_rack: 'server',
-  printer_3d: 'printer3d',
   foosball: 'foosball',
   basketball: 'basketball',
   telescope: 'telescope',
@@ -15775,7 +15711,6 @@ const CLICK_OBJ_MAP = {
   photo_booth: 'photo_booth',
   zen_garden: 'zen_garden',
   terrarium: 'terrarium',
-  newtons_cradle: 'newtons_cradle',
   gumball_machine: 'gumball_machine',
   slot_machine: 'slot_machine',
   water_cooler: 'water_cooler',
@@ -15809,7 +15744,6 @@ function findClickableAt(tx, ty) {
     { id: 'arcade', w: 2, h: 2 },
     { id: 'dj_console', w: 2.5, h: 1.2 },
     { id: 'server_rack', w: 2, h: 2.2 },
-    { id: 'printer_3d', w: 2, h: 1.8 },
     { id: 'foosball', w: 3, h: 1.5 },
     { id: 'basketball', w: 2, h: 2 },
     { id: 'telescope', w: 1, h: 2 },
@@ -15831,7 +15765,6 @@ function findClickableAt(tx, ty) {
     { id: 'photo_booth', w: 2, h: 2.5 },
     { id: 'zen_garden', w: 2, h: 1.5 },
     { id: 'terrarium', w: 1.8, h: 1.4 },
-    { id: 'newtons_cradle', w: 1.5, h: 1.5 },
     { id: 'gumball_machine', w: 1.5, h: 2 },
     { id: 'slot_machine', w: 1.5, h: 2 },
     { id: 'water_cooler', w: 1.2, h: 2 },
@@ -16224,8 +16157,6 @@ function initClickParticles(type, cx, cy) {
       break;
     case 'server':
       break;
-    case 'printer3d':
-      break;
     case 'foosball':
       p.push({
         x: cx,
@@ -16377,17 +16308,6 @@ function initClickParticles(type, cx, cy) {
           vy: -1 - Math.random() * 1.5,
           size: 2 + Math.random() * 2,
           col: ['#70c840', '#9ece6a', '#58a030', '#b0f060'][i % 4],
-        });
-      break;
-    case 'newtons_cradle':
-      for (let i = 0; i < 5; i++)
-        p.push({
-          x: cx + (i - 2) * 8,
-          y: cy - 4,
-          vx: (i - 2) * 0.4,
-          vy: -1.2 - Math.abs(i - 2) * 0.3,
-          size: 3,
-          col: '#b0b0c0',
         });
       break;
     case 'gumball_machine': {
@@ -16870,21 +16790,6 @@ function drawClickAnims(ctx, tick) {
         }
         break;
       }
-      case 'printer3d': {
-        // Nozzle moves
-        ctx.globalAlpha = alpha;
-        const nozzleX = a.x - 8 + Math.sin(tick * 0.5) * 16;
-        ctx.fillStyle = '#808090';
-        ctx.fillRect(nozzleX - 2, a.y - 10, 4, 6);
-        // Layer builds up
-        const layers = Math.min(Math.floor(t * 8), 6);
-        for (let li = 0; li < layers; li++) {
-          ctx.fillStyle = li % 2 === 0 ? '#9ece6a' : '#7aa2f7';
-          ctx.globalAlpha = alpha * 0.8;
-          ctx.fillRect(a.x - 6, a.y + 4 - li * 3, 12, 2);
-        }
-        break;
-      }
       case 'foosball': {
         // Rod spins
         ctx.globalAlpha = alpha;
@@ -17224,28 +17129,6 @@ function drawClickAnims(ctx, tick) {
           ctx.font = "bold 10px 'Press Start 2P',monospace";
           ctx.textAlign = 'center';
           ctx.fillText('HI! 🦎', a.x, a.y - 18 - t * 16);
-          ctx.textAlign = 'left';
-        }
-        break;
-      }
-      case 'newtons_cradle': {
-        // Balls flying outward
-        ctx.globalAlpha = alpha;
-        for (const p of a.particles) {
-          p.x += p.vx;
-          p.y += p.vy;
-          p.vy += 0.08;
-          ctx.fillStyle = p.col;
-          ctx.beginPath();
-          ctx.arc(Math.round(p.x), Math.round(p.y), p.size, 0, Math.PI * 2);
-          ctx.fill();
-        }
-        if (t > 0.15 && t < 0.55) {
-          ctx.fillStyle = '#c8c8d8';
-          ctx.font = "7px 'Press Start 2P',monospace";
-          ctx.globalAlpha = alpha * (t < 0.35 ? 1 : 1 - (t - 0.35) / 0.2);
-          ctx.textAlign = 'center';
-          ctx.fillText('clack!', a.x, a.y - 20);
           ctx.textAlign = 'left';
         }
         break;

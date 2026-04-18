@@ -20,7 +20,6 @@ const SPRITE_CONFIGS = {
   crystal_ball: { w: 40, h: 68, padX: 4, padY: 4 },
   zen_garden: { w: 76, h: 72, padX: 4, padY: 4 },
   terrarium: { w: 64, h: 64, padX: 4, padY: 4 },
-  newtons_cradle: { w: 56, h: 56, padX: 4, padY: 4 },
   gumball: { w: 56, h: 68, padX: 4, padY: 4 },
   record_player: { w: 56, h: 60, padX: 4, padY: 4 },
 };
