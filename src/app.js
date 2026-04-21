@@ -5472,11 +5472,10 @@ let printerActive = 0; // countdown timer for printer animation
 let trashLevel = 0; // 0-10: how full the trash can is
 let trashAgentId = null; // agent currently assigned to stomp trash
 
-let _maxLayoutN = 20; // FOUNDATION: office always sized for 20 agents — ACT_ZONE_Y=43 fixed, 4-room layout positions are static and stable
-function generateLayout(n) {
-  const count = Math.max(1, n);
-  _maxLayoutN = Math.max(_maxLayoutN, count);
-  const stableCount = Math.max(count, _maxLayoutN); // never shrink below peak
+const OFFICE_CAPACITY = 20; // fixed seat count — office is always sized for 20 agents, no growth
+let _maxLayoutN = OFFICE_CAPACITY; // FOUNDATION: office always sized for 20 agents — ACT_ZONE_Y=43 fixed, 4-room layout positions are static and stable
+function generateLayout(_n) {
+  const stableCount = OFFICE_CAPACITY; // hard-fixed — ignore n, never grow/shrink
   if (stableCount === layoutN) return false;
   layoutN = stableCount;
   DESK_DEFS = [];
@@ -9335,6 +9334,7 @@ class AgentState {
     this.animT = 0; // normalized [0..1]
     // logic
     this.isWorking = false;
+    this._idleSince = Date.now(); // timestamp when went idle; 0 if working
     this.slotIdx = -1;
     this.arrived = false;
     this.idleTimer = 0;
@@ -9705,6 +9705,7 @@ class AgentState {
         delete idleOccupied[this.slotIdx];
       }
       this.isWorking = working;
+      this._idleSince = working ? 0 : Date.now(); // track idle duration for eviction
       this.slotIdx = -1;
       this.arrived = false;
       this.activityAnim = null;
@@ -12188,6 +12189,7 @@ ctx.imageSmoothingEnabled = false;
 const agentsData = {};
 const agentStates = {};
 const idleOccupied = {}; // slotIdx → agentId  (persistent, exclusive slots)
+const evictedAgents = new Set(); // ids evicted visually while still present in agentsData — kept offscreen until capacity frees
 const doorAnim = { open: 0, target: 0, timer: 0 }; // entrance door swing
 let globalTick = 0;
 let lastTime = 0;
@@ -12219,7 +12221,8 @@ function drawLeftPanel(ctx, tick) {
   for (const [id, sp] of entries) {
     const ad = agentsData[id];
     if (!ad) continue;
-    const role = getRole(ad);
+    // Use the same label that's drawn above the character on canvas
+    const realName = getDisplayName(ad);
     const isWork = sp.isWorking;
     const status = ad.status || 'idle';
 
@@ -12246,7 +12249,7 @@ function drawLeftPanel(ctx, tick) {
     ctx.fillStyle = isWork ? '#ffffff' : '#e0e6ff';
     ctx.font = "bold 15px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
     ctx.textAlign = 'left';
-    ctx.fillText(role.substring(0, 11), 24, y);
+    ctx.fillText(realName.substring(0, 14), 24, y);
 
     // Tool / state badge
     if (isWork && ad.currentTool) {
@@ -12425,8 +12428,13 @@ function loop(now) {
   doorAnim.open = lerp(doorAnim.open, doorAnim.target, Math.min(1, dt * 4));
 
   // ── Sync ─────────────────────────────────────────────────────
+  // Clear eviction marks for agents the server has actually removed
+  for (const id of Array.from(evictedAgents)) {
+    if (!agentsData[id]) evictedAgents.delete(id);
+  }
   for (const id of Object.keys(agentStates)) {
-    if (!agentsData[id]) {
+    const visuallyGone = !agentsData[id] || evictedAgents.has(id);
+    if (visuallyGone) {
       const st = agentStates[id];
       // Kick off the walk-to-door animation on first removal signal.
       if (!st._departing) {
@@ -12450,7 +12458,23 @@ function loop(now) {
     }
   }
   for (const [id, a] of Object.entries(agentsData)) {
+    if (evictedAgents.has(id)) continue; // already evicted; stays offscreen until server drops it
     if (!agentStates[id]) {
+      // Fixed capacity: if office is full, evict the longest-idle non-departing agent.
+      // New agent waits outside until a seat frees (it will spawn on a later tick).
+      const live = Object.entries(agentStates).filter(([, s]) => !s._departing);
+      if (live.length >= OFFICE_CAPACITY) {
+        const idleCandidates = live
+          .filter(([, s]) => !s.isWorking)
+          .sort((x, y) => (x[1]._idleSince || 0) - (y[1]._idleSince || 0));
+        if (idleCandidates.length) {
+          const [evictId] = idleCandidates[0];
+          evictedAgents.add(evictId); // next sync tick will run startDeparture via the removal loop
+          doorAnim.target = 1;
+          doorAnim.timer = 1.8;
+        }
+        continue; // defer spawn to a later tick once slot frees
+      }
       agentStates[id] = new AgentState(id, a.slug);
       PS.burst(agentStates[id].sx, agentStates[id].sy, getPalette(a.slug, id).accent);
       sndSpawn();

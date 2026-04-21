@@ -240,6 +240,10 @@ const MAX_AGENTS = 20;
 // Demo agents (flabber, content, etc — posted via /api/demo) stay on-screen for 15 min
 // of idleness before exiting. Users like seeing their bot "hang around the office".
 const DEMO_IDLE_REMOVAL_MS = 15 * 60 * 1000;
+// Claude Code sessions don't emit jsonl events during pure reasoning between tool calls,
+// so a 20s silence doesn't mean the session ended. Keep visual "working" state alive until
+// SESSION_DEAD_MS of silence, then treat the agent as actually gone.
+const SESSION_DEAD_MS = 15 * 60 * 1000;
 
 function collectJsonlFiles(dir, results = [], depth = 0) {
   if (depth > 4) return results;
@@ -456,14 +460,35 @@ if (fs.existsSync(CLAUDE_PROJECTS_DIR)) {
 function pruneAgents() {
   const now = Date.now();
   for (const agent of Object.values(agents)) {
+    // Fillers are always idle/relaxing — skip all status transitions and session-death checks
+    if (agent.version === 'filler') continue;
     const lastMs = new Date(agent.lastActivity).getTime();
     const ageMs = now - lastMs;
 
-    if (agent.status !== 'idle' && ageMs > 20000) {
+    // While the Claude Code session is alive (jsonl updated within SESSION_DEAD_MS),
+    // keep the agent visually "working" — fall back to 'thinking' after the 20s tool gap
+    // so they stay seated at their desk instead of looking idle.
+    const live = ageMs < SESSION_DEAD_MS;
+    if (live && agent.status !== 'working' && ageMs > 20000) {
+      if (agent.status !== 'thinking') {
+        agent.status = 'thinking';
+        agent.currentTool = null;
+        agent.currentToolLabel = null;
+        broadcast({ type: 'agent_update', agent: { ...agent } });
+      }
+    } else if (!live && agent.status !== 'idle') {
+      // Session actually dead — mark idle so client walks them out.
       agent.status = 'idle';
       agent.currentTool = null;
       agent.currentToolLabel = null;
       broadcast({ type: 'agent_update', agent: { ...agent } });
+    }
+
+    // Non-demo/non-filler agents: remove after session is dead so they leave through the door.
+    if (agent.version !== 'demo' && agent.version !== 'filler' && !live) {
+      delete agents[agent.id];
+      broadcast({ type: 'agent_remove', id: agent.id });
+      continue;
     }
 
     // Demo agents (manually posted bots) exit after 15 min of inactivity.
@@ -474,7 +499,9 @@ function pruneAgents() {
   }
 
   // Non-demo agents (Claude Code via .jsonl): keep only MAX_AGENTS most recent
-  const nonDemo = Object.values(agents).filter((a) => a.version !== 'demo');
+  const nonDemo = Object.values(agents).filter(
+    (a) => a.version !== 'demo' && a.version !== 'filler'
+  );
   nonDemo.sort((a, b) => new Date(b.lastActivity) - new Date(a.lastActivity));
   if (nonDemo.length > MAX_AGENTS) {
     for (const stale of nonDemo.slice(MAX_AGENTS)) {
@@ -485,6 +512,71 @@ function pruneAgents() {
 }
 
 setInterval(pruneAgents, 5000);
+
+// ── Filler agents ───────────────────────────────────────────────
+// Keep the office visually populated: top up to TARGET_OFFICE_SIZE with
+// synthetic agents when there are fewer real Claude sessions. As real agents
+// arrive, the oldest filler is removed so real ones take their seats.
+const TARGET_OFFICE_SIZE = 10;
+const FILLER_POOL = [
+  { slug: 'developer', agentType: 'developer' },
+  { slug: 'qa-engineer', agentType: 'qa-engineer' },
+  { slug: 'debugger', agentType: 'debugger' },
+  { slug: 'architect', agentType: 'architect' },
+  { slug: 'reviewer', agentType: 'reviewer' },
+  { slug: 'devops-automator', agentType: 'devops-automator' },
+  { slug: 'security-engineer', agentType: 'security-engineer' },
+  { slug: 'performance-engineer', agentType: 'performance-engineer' },
+  { slug: 'technical-writer', agentType: 'technical-writer' },
+  { slug: 'ux-designer', agentType: 'ux-designer' },
+];
+function fillerId(i) {
+  return `filler-${String(i + 1).padStart(2, '0')}`;
+}
+function ensureFillerPopulation() {
+  const nowIso = new Date().toISOString();
+  const realCount = Object.values(agents).filter((a) => a.version !== 'filler').length;
+  const needed = Math.max(0, TARGET_OFFICE_SIZE - realCount);
+  // Add fillers up to `needed`
+  for (let i = 0; i < needed; i++) {
+    const id = fillerId(i);
+    if (!agents[id]) {
+      const tpl = FILLER_POOL[i % FILLER_POOL.length];
+      agents[id] = {
+        id,
+        slug: tpl.slug,
+        cwd: 'C:\\AI',
+        version: 'filler',
+        status: 'idle',
+        currentTool: null,
+        currentToolLabel: null,
+        lastActivity: nowIso,
+        messageCount: 0,
+        toolHistory: [],
+        startedAt: nowIso,
+        isSubagent: false,
+        agentType: tpl.agentType,
+      };
+      broadcast({ type: 'agent_update', agent: { ...agents[id] } });
+    } else {
+      agents[id].lastActivity = nowIso; // keep alive so pruneAgents doesn't remove
+    }
+  }
+  // Remove fillers beyond `needed` so real agents reclaim their seats
+  const fillerIds = Object.keys(agents).filter((id) => agents[id].version === 'filler');
+  const extra = fillerIds.length - needed;
+  if (extra > 0) {
+    fillerIds
+      .sort() // stable order → remove highest-indexed first
+      .slice(-extra)
+      .forEach((id) => {
+        delete agents[id];
+        broadcast({ type: 'agent_remove', id });
+      });
+  }
+}
+setInterval(ensureFillerPopulation, 3000);
+ensureFillerPopulation();
 
 server.listen(PORT, '0.0.0.0', async () => {
   log.info(`Agent Dashboard started: http://localhost:${PORT}`);

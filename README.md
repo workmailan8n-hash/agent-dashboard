@@ -1,4 +1,4 @@
-# Agent Dashboard — Pixel Art Office Simulator
+# Agent Office — Pixel Art Office Simulator
 
 > Real-time visualization of Claude Code AI agents working in a pixel art office. Each agent gets a desk, walks around, takes breaks, plays games, and interacts with 40+ objects across multiple office zones.
 
@@ -24,7 +24,7 @@
 
 ## Overview
 
-Agent Dashboard monitors Claude Code sessions by watching `.jsonl` log files in `~/.claude/projects/`. Each active session appears as a pixel art character in an animated office — sitting at desks when working, wandering around the office during idle time, and interacting with 40+ objects in the environment.
+Agent Office monitors Claude Code sessions by watching `.jsonl` log files in `~/.claude/projects/`. Each active session appears as a pixel art character in an animated office — sitting at desks when working, wandering around the office during idle time, and interacting with 40+ objects in the environment.
 
 The frontend is built as **23 ES modules** bundled by Vite, with **12 CSS files** using design tokens. The backend is a lightweight Node.js server (`server.js` as a thin router) with handler modules split across `src/server/handlers/`.
 
@@ -344,7 +344,7 @@ On startup, the server attempts to open an SSH tunnel via [serveo.net](https://s
 ssh -R 80:localhost:3737 serveo.net
 ```
 
-If successful, the public URL is printed to the console and broadcast to all connected clients. The URL appears in the top-right corner of the dashboard. Requires `ssh` on the system PATH.
+If successful, the public URL is printed to the console and broadcast to all connected clients. The URL appears in the top-right corner of the office. Requires `ssh` on the system PATH.
 
 ---
 
