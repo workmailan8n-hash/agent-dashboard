@@ -1,8 +1,10 @@
 import { test, expect } from '@playwright/test';
 
+const BASE_URL = process.env.AUDIT_URL || 'http://localhost:3737';
+
 test.describe('Agent Dashboard Visual Audit', () => {
   test.beforeEach(async ({ page }) => {
-    await page.goto('http://localhost:3737');
+    await page.goto(BASE_URL);
     await page.waitForTimeout(3000); // let agents load + animations start
   });
 
@@ -88,7 +90,7 @@ test.describe('Agent Dashboard Visual Audit', () => {
   test('no JS errors in console', async ({ page }) => {
     const errors: string[] = [];
     page.on('pageerror', (err) => errors.push(err.message));
-    await page.goto('http://localhost:3737');
+    await page.goto(BASE_URL);
     await page.waitForTimeout(5000);
     // Filter out non-critical errors
     const critical = errors.filter((e) => !e.includes('ResizeObserver') && !e.includes('fetch'));
@@ -98,7 +100,8 @@ test.describe('Agent Dashboard Visual Audit', () => {
   test('WebSocket connects', async ({ page }) => {
     const wsConnected = await page.evaluate(() => {
       return new Promise((resolve) => {
-        const ws = new WebSocket(`ws://${location.host}`);
+        const proto = location.protocol === 'https:' ? 'wss:' : 'ws:';
+        const ws = new WebSocket(`${proto}//${location.host}`);
         ws.onopen = () => {
           ws.close();
           resolve(true);
