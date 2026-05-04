@@ -4,7 +4,8 @@
   "description": "",
   "main": "server.js",
   "scripts": {
-    "dev": "concurrently \"node server.js\" \"npx vite\"",
+    "dev": "concurrently -n srv,vite,sync -c green,magenta,cyan \"node server.js\" \"npx vite\" \"node sync-to-cloud.js\"",
+    "dev:nosync": "concurrently -n srv,vite -c green,magenta \"node server.js\" \"npx vite\"",
     "build": "npx vite build",
     "start": "node server.js",
     "preview": "npx vite preview",
