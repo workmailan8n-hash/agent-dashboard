@@ -148,6 +148,11 @@ function parseNewLines(filePath) {
     }
 
     const { type, message, sessionId: sid, slug, cwd, timestamp, version } = entry;
+    // Skip CC/Agent SDK meta records (ai-title, queue-operation, attachment, progress,
+    // last-prompt, teleported-from, …). They have no `timestamp` and don't represent
+    // session activity — Agent SDK clients (e.g. Nox/my-assistant) write hundreds of
+    // ai-title-only .jsonl files which would otherwise show up as ghost agents.
+    if (type !== 'assistant' && type !== 'user' && type !== 'summary') continue;
     // Subagents: always use their own ID, not the parent session ID
     const id = isSubagent ? subagentId : sid || fileBaseName;
 
