@@ -6074,26 +6074,26 @@ function generateLayout(_n) {
 
   // ── 10. DJ Console (recreation, cols 20-22) ───────────────────
   IDLE_SPOTS.push({
-    tx: 21,
-    ty: ACT_ZONE_Y + 10,
+    tx: 14,
+    ty: 47,
     anim: 'djing',
     type: 'dj',
     w: 5,
     _objId: 'dj_console',
-    _defObjTx: 20,
-    _defObjTy: ACT_ZONE_Y + 9,
+    _defObjTx: 13,
+    _defObjTy: 46,
     _offsetX: 1,
     _offsetY: 1,
   });
   IDLE_SPOTS.push({
-    tx: 26,
-    ty: ACT_ZONE_Y + 10,
+    tx: 11,
+    ty: 47,
     anim: 'air_guitar',
     type: 'jukebox',
     w: 4,
     _objId: 'jukebox',
-    _defObjTx: 25,
-    _defObjTy: ACT_ZONE_Y + 9,
+    _defObjTx: 10,
+    _defObjTy: 46,
     _offsetX: 1,
     _offsetY: 1,
   });
@@ -6112,16 +6112,16 @@ function generateLayout(_n) {
 
   // ══ Zone 2: MAKERS LAB (ACT_ZONE+14, left side) ═══════════════
 
-  // ── 11. Server Rack (lounge top wall, cols 11-12) ─────────────
+  // ── 11. Server Rack (moved to Gym right wall: cols 31-33, rows 45-47) ──
   IDLE_SPOTS.push({
-    tx: 12,
-    ty: 57,
+    tx: 32,
+    ty: 47,
     anim: 'fixing_server',
     type: 'server',
     w: 4,
     _objId: 'server_rack',
-    _defObjTx: 11,
-    _defObjTy: 55,
+    _defObjTx: 31,
+    _defObjTy: 45,
     _offsetX: 1,
     _offsetY: 2,
   });
@@ -6272,14 +6272,14 @@ function generateLayout(_n) {
     _offsetY: 2,
   });
   IDLE_SPOTS.push({
-    tx: 32.25,
-    ty: 59,
+    tx: 28.75,
+    ty: 57,
     anim: 'sitting_couch',
     type: 'connect4',
     w: 1.5,
     _objId: 'connect4',
-    _defObjTx: 31.5,
-    _defObjTy: 57,
+    _defObjTx: 28,
+    _defObjTy: 55,
     _offsetX: 0.75,
     _offsetY: 2,
   });
@@ -6435,6 +6435,16 @@ function buildObstacleGrid() {
     markRect(gmTx, gmTy, 5, 3);
     const [_rmObTx, _rmObTy] = getAdminPos('rowing_machine', gmTx + 4, ACT_ZONE_Y + 4.3);
     markRect(_rmObTx, _rmObTy, 2, 1);
+    // Punching bag (1x2 obstacle)
+    const [_pbObTx, _pbObTy] = getAdminPos('punching_bag', 20, 50);
+    markRect(_pbObTx, _pbObTy, 1, 2);
+    // yoga_mat is intentionally NOT marked (flat, walkable)
+  }
+
+  // ── Coffee counter (Cafe) ─────
+  if (ACT_ZONE_Y > 0) {
+    const [_ccObTx, _ccObTy] = getAdminPos('coffee_counter', 19, 56);
+    markRect(_ccObTx, _ccObTy, 3, 1);
   }
 
   // ── Conference table ─────
@@ -6564,6 +6574,8 @@ function buildObstacleGrid() {
     const [ktTx, ktTy] = getAdminPos('kitchen_table', kitIntXobs + 2, KITCHEN_START_ROW + 1);
     markRect(ktTx, ktTy, 4, 3);
   }
+
+  if (typeof window !== 'undefined') window.obstacleGrid = obstacleGrid;
 }
 
 // Returns array of waypoints [{tx,ty}] or null if direct path is clear
@@ -7274,13 +7286,13 @@ function buildBackground() {
         // Subtle base highlight: top edge
         fillR(ctx, x, y, T, 1, 'rgba(255,255,255,0.08)');
       } else if (inGymRoom) {
-        // ── GYM — Rubber gym tatami ──
+        // ── GYM — Rubber gym tatami (lightened so agents/walls contrast) ──
         const checker = (row + col) % 2;
-        fillR(ctx, x, y, T, T, checker ? '#32353e' : '#2a2d36');
+        fillR(ctx, x, y, T, T, checker ? '#42464f' : '#383c45');
         // Dot pattern every 3px, skipping edges
         for (let dy = 2; dy < T - 1; dy += 3) {
           for (let dx = 2; dx < T - 1; dx += 3) {
-            fillR(ctx, x + dx, y + dy, 1, 1, '#404450');
+            fillR(ctx, x + dx, y + dy, 1, 1, '#50545f');
           }
         }
         // Bottom + right groove
@@ -7300,15 +7312,19 @@ function buildBackground() {
         // Top edge shadow
         fillR(ctx, x, y, T, 1, 'rgba(0,0,0,0.3)');
       } else if (inCafeRoom) {
-        // ── CAFE — Scandinavian light wood ──
+        // ── CAFE — Scandinavian light wood (toned down 8% so wall shadow reads) ──
         const pi = (((col / 4) | 0) + row) % 4;
-        const plankC = ['#e8d8b8', '#e2d0a8', '#ddcba0', '#d8c59a'][pi];
+        const plankC = ['#d8c8a4', '#d2c094', '#cdb890', '#c8b286'][pi];
         fillR(ctx, x, y, T, T, plankC);
         // Bottom groove
         fillR(ctx, x, y + T - 1, T, 1, 'rgba(0,0,0,0.08)');
         // Grain lines
         if ((col * 11 + row * 7) % 19 === 0) {
           fillR(ctx, x + ((col * 5) % (T - 1)), y, 1, T, 'rgba(140,100,60,0.18)');
+        }
+        // Ambient shadow at row immediately below top wall (smooths wall→floor transition)
+        if (row === ROOMS_MID_ROW + 1) {
+          fillR(ctx, x, y, T, 4, 'rgba(0,0,0,0.12)');
         }
       } else {
         // Work-zone — Bleached Sisal rug (lighter jute, designer pick)
@@ -7891,27 +7907,38 @@ function buildBackground() {
   }
 
   // ═══ ROOM WALLS WITH DOORS ═══════════════════════════════════
-  // Helper: draw a horizontal wall segment with optional door
+  // Volumetric walls = cap (top, lighter) + face (body) + projected shadow on
+  // next tile. Light source: top-left. H-walls drop shadow down, V-walls right.
+  const WALL_CAP = '#4a4770';
+  const WALL_FACE = '#252344';
+  const WALL_SHADOW = '#0d0c20';
+  const WALL_SHADOW_ALPHA = 0.55;
+  const WALL_SHADOW_DEPTH = 12;
+
   function drawHWall(y, x1, x2, doorStart, doorEnd) {
     for (let c = x1; c <= x2; c++) {
       const wx = OX + c * T,
         wy = OY + y * T;
       const inDoor = doorStart !== undefined && c >= doorStart && c <= doorEnd;
       if (inDoor) {
-        // Door opening — lighter floor
         fillR(ctx, wx, wy, T, T, '#d0caba');
-        // Door frame edges
         if (c === doorStart) fillR(ctx, wx - 2, wy, 4, T, '#6a5090');
         if (c === doorEnd) fillR(ctx, wx + T - 2, wy, 4, T, '#6a5090');
       } else {
-        fillR(ctx, wx, wy, T, T, '#252344');
-        fillR(ctx, wx, wy, T, 4, '#3a3860'); // top highlight
-        fillR(ctx, wx, wy + T - 2, T, 2, '#1e1c38'); // bottom shadow
+        fillR(ctx, wx, wy, T, T, WALL_FACE);
+        fillR(ctx, wx, wy, T, 6, WALL_CAP); // cap (light top surface)
       }
     }
+    ctx.save();
+    ctx.globalAlpha = WALL_SHADOW_ALPHA;
+    for (let c = x1; c <= x2; c++) {
+      const inDoor = doorStart !== undefined && c >= doorStart && c <= doorEnd;
+      if (inDoor) continue;
+      fillR(ctx, OX + c * T, OY + (y + 1) * T, T, WALL_SHADOW_DEPTH, WALL_SHADOW);
+    }
+    ctx.restore();
   }
 
-  // Helper: draw a vertical wall segment with optional door
   function drawVWall(x, y1, y2, doorStart, doorEnd) {
     for (let r = y1; r <= y2; r++) {
       const wx = OX + x * T,
@@ -7922,11 +7949,19 @@ function buildBackground() {
         if (r === doorStart) fillR(ctx, wx, wy - 2, T, 4, '#6a5090');
         if (r === doorEnd) fillR(ctx, wx, wy + T - 2, T, 4, '#6a5090');
       } else {
-        fillR(ctx, wx, wy, T, T, '#252344');
-        fillR(ctx, wx, wy, 4, T, '#1e1c38'); // left shadow
-        fillR(ctx, wx + T - 4, wy, 4, T, '#3a3860'); // right highlight
+        fillR(ctx, wx, wy, T, T, WALL_FACE);
+        // Light source: top-left. Vertical walls catch light on left edge.
+        fillR(ctx, wx, wy, 4, T, WALL_CAP);
       }
     }
+    ctx.save();
+    ctx.globalAlpha = WALL_SHADOW_ALPHA;
+    for (let r = y1; r <= y2; r++) {
+      const inDoor = doorStart !== undefined && r >= doorStart && r <= doorEnd;
+      if (inDoor) continue;
+      fillR(ctx, OX + (x + 1) * T, OY + r * T, WALL_SHADOW_DEPTH, T, WALL_SHADOW);
+    }
+    ctx.restore();
   }
 
   // ── Activity zone wall at ACT_ZONE_Y (door in Gym, cols 25-27) ──
@@ -8681,6 +8716,69 @@ function buildBackground() {
     ctx.ellipse(rwx + T * 0.8, rwy + T * 0.75, T * 0.7, 3, 0, 0, Math.PI * 2);
     ctx.fill();
 
+    // ── Punching bag (Gym focal point, hangs from "ceiling") ──
+    const [_pbTx, _pbTy] = getAdminPos('punching_bag', 20, 50);
+    const [pchx, pchy] = ts(_pbTx, _pbTy);
+    // gentle sway based on tick
+    const sway = Math.sin(globalTick * 0.05) * 2;
+    // Chain to ceiling (top 8px)
+    fillR(ctx, pchx + T / 2 - 1 + sway / 2, pchy - 6, 2, 10, '#404050');
+    // Top cap
+    fillR(ctx, pchx + T / 2 - 5 + sway, pchy + 4, 10, 4, '#5a4030');
+    // Body (red leather)
+    fillR(ctx, pchx + T / 2 - 6 + sway, pchy + 8, 12, T * 1.4, '#8a2424');
+    fillR(ctx, pchx + T / 2 - 6 + sway, pchy + 8, 4, T * 1.4, '#a83838'); // left highlight
+    fillR(ctx, pchx + T / 2 + 4 + sway, pchy + 8, 2, T * 1.4, '#5a1818'); // right shadow
+    // Stitching seam
+    fillR(ctx, pchx + T / 2 - 1 + sway, pchy + 8, 2, T * 1.4, '#5a1818');
+    // Bottom cap
+    fillR(ctx, pchx + T / 2 - 5 + sway, pchy + 8 + T * 1.4, 10, 3, '#5a4030');
+    // Floor shadow
+    ctx.fillStyle = '#00000040';
+    ctx.beginPath();
+    ctx.ellipse(pchx + T / 2, pchy + 8 + T * 1.4 + 6, 10, 3, 0, 0, Math.PI * 2);
+    ctx.fill();
+
+    // ── Yoga mat (flat, walkable — agents lie/stretch on it) ──
+    const [_ymTx, _ymTy] = getAdminPos('yoga_mat', 26, 50);
+    const [ynx, yny] = ts(_ymTx, _ymTy);
+    // Mat body — gradient teal
+    fillR(ctx, ynx + 4, yny + 8, T * 2 - 8, T * 0.7, '#5aa090');
+    fillR(ctx, ynx + 4, yny + 8, T * 2 - 8, 3, '#7ac0b0'); // top highlight
+    fillR(ctx, ynx + 4, yny + 8 + T * 0.7 - 3, T * 2 - 8, 3, '#3a8070'); // bottom shadow
+    // Lines (mat texture)
+    ctx.fillStyle = '#3a8070';
+    for (let li = 0; li < 4; li++) {
+      ctx.fillRect(ynx + 8 + li * 14, yny + 11, 1, T * 0.65);
+    }
+    // Rolled end (right side)
+    fillR(ctx, ynx + T * 2 - 8, yny + 6, 6, T * 0.75, '#4a9080');
+    fillR(ctx, ynx + T * 2 - 7, yny + 6, 4, 2, '#5aa090');
+
+    // ── Mirror wall (decoration on activity wall, Gym side) ──
+    // Activity wall row ACT_ZONE_Y has gym door at cols 27..29 — split mirror into
+    // two segments so the door stays visible.
+    if (ACT_ZONE_Y > 0) {
+      const mwY = OY + ACT_ZONE_Y * T;
+      const segments = [
+        { x1: 19, x2: 26 }, // left of door (cols 19..26)
+        { x1: 30, x2: 33 }, // right of door (cols 30..33)
+      ];
+      for (const seg of segments) {
+        const segX = OX + seg.x1 * T;
+        const segW = (seg.x2 - seg.x1 + 1) * T;
+        fillR(ctx, segX, mwY + 6, segW, T - 12, '#383848');
+        fillR(ctx, segX + 2, mwY + 8, segW - 4, T - 16, '#9ac4d8');
+        ctx.save();
+        ctx.fillStyle = '#cce4f0';
+        ctx.globalAlpha = 0.7;
+        ctx.fillRect(segX + 2, mwY + 8, Math.min(T * 1.2, segW - 4), T - 16);
+        ctx.restore();
+        fillR(ctx, segX, mwY + 6, segW, 2, '#5a5a72');
+        fillR(ctx, segX, mwY + T - 8, segW, 2, '#1e1e30');
+      }
+    }
+
     // ── GAMING/TV ZONE (center) ──────────────────────────────────
     const [_tvATx, _tvATy] = getAdminPos('tv', 10, ACT_ZONE_Y + 0.3);
     const [tvx, tvy] = ts(_tvATx, _tvATy);
@@ -9339,6 +9437,7 @@ class AgentState {
     this.arrived = false;
     this.idleTimer = 0;
     this.walkTimer = 0; // how long trying to reach idle slot
+    this._pathRecomputeTimer = 0; // sec since last A* repath while walking
     this.isCleaning = false; // true while assigned to clean cat mess
     this._cleanTimer = 0;
     this.thought = '';
@@ -9840,10 +9939,20 @@ class AgentState {
     if (!this.arrived) {
       if (this.state !== 'walking') this.setAnim('walking');
       const walkSpeed = this.burnout >= 3 ? 2.5 : 3.5;
+      // Periodic A* repath: separation push can knock the agent off its
+      // original waypoint chain, leaving a stale path that drags them back
+      // through the same choke-point. Recompute every 0.7s while walking.
+      this._pathRecomputeTimer += dt;
+      if (this._pathRecomputeTimer > 0.7) {
+        this._pathRecomputeTimer = 0;
+        const fresh = astar(this.tx, this.ty, this.targetTx, this.targetTy);
+        if (fresh && fresh.length > 0) this.waypoints = fresh;
+      }
       if (this.moveToward(dt, walkSpeed)) {
         this.arrived = true;
         this.idleTimer = 0;
         this.walkTimer = 0;
+        this._pathRecomputeTimer = 0;
         // Sims arrival celebration
         if (simsMode && this._simsArrivalPending) {
           this._simsArrivalPending = false;
@@ -12188,7 +12297,12 @@ ctx.imageSmoothingEnabled = false;
 
 const agentsData = {};
 const agentStates = {};
+if (typeof window !== 'undefined') {
+  window.agentStates = agentStates;
+  window.idleOccupied = null; // set below
+}
 const idleOccupied = {}; // slotIdx → agentId  (persistent, exclusive slots)
+if (typeof window !== 'undefined') window.idleOccupied = idleOccupied;
 const evictedAgents = new Set(); // ids evicted visually while still present in agentsData — kept offscreen until capacity frees
 const doorAnim = { open: 0, target: 0, timer: 0 }; // entrance door swing
 let globalTick = 0;
@@ -12561,7 +12675,17 @@ function loop(now) {
           // Разрываем симметрию: только yielder (по id) реально сдвигается.
           // Это окончательно убивает back-and-forth — нет больше "оба толкают
           // друг друга и waypoint возвращает их обратно".
-          if (String(a.id) < String(b.id)) {
+          // НО: если yielder будет вытолкнут в стену (obstacleGrid)
+          // — пихаем второго, иначе в дверях возникает орбита.
+          let yieldA = String(a.id) < String(b.id);
+          if (obstacleGrid) {
+            const targetSp = yieldA ? a : b;
+            const sign = yieldA ? 1 : -1;
+            const cx = Math.round(targetSp.tx + nx * sign);
+            const cy = Math.round(targetSp.ty + ny * sign);
+            if (obstacleGrid[cy]?.[cx]) yieldA = !yieldA; // flip yielder
+          }
+          if (yieldA) {
             a.tx += nx;
             a.ty += ny;
           } else {
@@ -13072,6 +13196,38 @@ function loop(now) {
     const [_gbTx, _gbTy] = getAdminPos('gumball_machine', 22.5, 55);
     const [gbx, gby] = ts(_gbTx, _gbTy);
     drawObjectCached(ctx, 'gumball', gbx - T / 2, gby - 4, globalTick, drawGumballMachine);
+  }
+  // Coffee counter (Cafe — left wall anchor, "kitchen-adjacent" bar)
+  {
+    const [_ccTx, _ccTy] = getAdminPos('coffee_counter', 19, 56);
+    const [ccx, ccy] = ts(_ccTx, _ccTy);
+    // Counter body
+    ctx.save();
+    ctx.shadowColor = '#00000060';
+    ctx.shadowBlur = 4;
+    fillR(ctx, ccx, ccy + 8, T * 3, T * 0.6, '#7a5a3a'); // wood body
+    ctx.restore();
+    fillR(ctx, ccx, ccy + 8, T * 3, 4, '#9c7858'); // top edge highlight
+    fillR(ctx, ccx, ccy + 8 + T * 0.6 - 2, T * 3, 2, '#4a3020'); // bottom shadow
+    // Counter top (marble)
+    fillR(ctx, ccx, ccy + 4, T * 3, 6, '#d4cab8');
+    fillR(ctx, ccx, ccy + 4, T * 3, 1, '#e8e0d0');
+    // Espresso machine (center)
+    const emx = ccx + T * 1.2,
+      emy = ccy + 4;
+    fillR(ctx, emx, emy - 14, 16, 14, '#2a2a3a');
+    fillR(ctx, emx + 1, emy - 13, 14, 6, '#1a1a2e');
+    fillR(ctx, emx + 2, emy - 11, 4, 2, '#7aa2f7'); // display
+    fillR(ctx, emx + 8, emy - 11, 4, 2, '#f7e066'); // button
+    // Steam wand
+    fillR(ctx, emx + 14, emy - 8, 1, 6, '#a0a0b0');
+    // Mug on counter
+    fillR(ctx, ccx + 6, ccy + 1, 5, 4, '#e8e0d0');
+    fillR(ctx, ccx + 7, ccy + 2, 3, 2, '#4a2a1a'); // coffee
+    // Cake stand (right)
+    fillR(ctx, ccx + T * 2.5, ccy + 2, 8, 2, '#d4cab8');
+    fillR(ctx, ccx + T * 2.5 + 1, ccy - 4, 6, 6, '#f4d8a8');
+    fillR(ctx, ccx + T * 2.5 + 1, ccy - 1, 6, 1, '#a83838'); // jam stripe
   }
   {
     const [_smTx, _smTy] = getAdminPos('slot_machine', 1, 50);

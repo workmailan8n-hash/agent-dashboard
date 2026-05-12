@@ -33,7 +33,7 @@ export const BUILTIN_POSITIONS = {
   // WINDOW_TX = [1, 33]. Order L→R on row 0:
   //   win(1), darts(6-8), corkboard(12-14.5), [nameplate 12-22],
   //   whiteboard(27-30), clock(30.5-32), win(33).
-  neon_sign: { tx: 28, ty: 44.5 },
+  // (neon_sign canonical position lives in Gaming room section below)
   // Casino tables: placed in Lounge room (cols 1..17, rows ROOMS_MID_ROW+1..+10)
   // For N=20 baseline: ACT_ZONE_Y=43, ROOMS_MID_ROW=54 → rows 62-63
   // Col shifts keep 1-tile walkable gaps between poker↔roulette and roulette↔blackjack.
@@ -82,12 +82,15 @@ export const BUILTIN_POSITIONS = {
   couch_19: { tx: 18, ty: 25 },
 
   // ═══ GAMING ROOM (top-left: cols 1-17, rows 44-53) ═══
+  // Top wall (row 44): arcade machines cluster left
   arcade: { tx: 2, ty: 44 },
   pinball: { tx: 5, ty: 44 },
   slot_machine: { tx: 8, ty: 44 },
-  jukebox: { tx: 10, ty: 44 },
-  dj_console: { tx: 13, ty: 44 },
-  record_player: { tx: 13, ty: 46 },
+  // Row 46: audio cluster right (was crammed into row 44 with arcades)
+  jukebox: { tx: 10, ty: 46 },
+  dj_console: { tx: 13, ty: 46 },
+  record_player: { tx: 15.5, ty: 46 },
+  // Row 47: sports
   foosball: { tx: 2, ty: 47 },
   pingpong: { tx: 6, ty: 47 },
   tv: { tx: 12, ty: 48 },
@@ -99,16 +102,20 @@ export const BUILTIN_POSITIONS = {
   gym: { tx: 20, ty: 45 },
   rowing_machine: { tx: 26, ty: 45 },
   basketball: { tx: 29, ty: 48 },
+  // server_rack moved here from Lounge (IT equipment fits gym/tech zone, not casino)
+  server_rack: { tx: 31, ty: 45 },
+  // New gym additions (focal points filling empty bottom-left of Gym)
+  punching_bag: { tx: 20, ty: 50 },
+  yoga_mat: { tx: 26, ty: 50 },
 
   // ═══ CONFERENCE TABLE (work zone, below couches, above bottom rooms) ═══
   conf_table: { tx: 5, ty: 35 },
 
   // ═══ LOUNGE ROOM (bot-left: cols 1-17, rows 55-64) ═══
-  // All wall-hugging on top wall (row 55); casino tables on bottom wall (row 62).
+  // Casino lounge: ambient/decor at top wall, casino tables at bottom wall.
+  // server_rack moved to Gym; zen_garden moved to Cafe (theme coherence).
   trophy_cabinet: { tx: 2, ty: 55 },
   crystal_ball: { tx: 5, ty: 55 },
-  server_rack: { tx: 11, ty: 55 },
-  zen_garden: { tx: 14, ty: 55 },
 
   // ═══ CAFE ROOM (bot-right: cols 19-33, rows 55-64) ═══
   // Top wall (row 55): reaction_clock, gumball, tictactoe, terrarium.
@@ -118,13 +125,17 @@ export const BUILTIN_POSITIONS = {
   photo_booth: { tx: 31, ty: 61.5 },
 
   // ═══ STAGE 2 MINIGAME OBJECTS ═══
-  // Cafe room top wall (row 55)
+  // Cafe room top wall (row 55): board games clustered together
   reaction_clock: { tx: 20, ty: 55 },
   gumball_machine: { tx: 22.5, ty: 55 },
   tictactoe: { tx: 25.5, ty: 55 },
-  connect4: { tx: 31.5, ty: 57 },
+  connect4: { tx: 28, ty: 55 }, // moved from (31.5, 57) — was isolated on right wall
   terrarium: { tx: 30.5, ty: 55 },
+  // Cafe ambient (moved from Lounge — zen on oak floor reads better than on casino felt)
+  zen_garden: { tx: 27.5, ty: 60 },
   typing_laptop: { tx: 22, ty: 62 },
+  // Coffee counter — anchors Cafe as a "kitchen-adjacent" lounge
+  coffee_counter: { tx: 19, ty: 56 },
 };
 
 // Get position for an object — returns saved admin position or default
@@ -135,7 +146,7 @@ export function getAdminPos(id, defTx, defTy) {
 
 // Schema version — bump when BUILTIN_POSITIONS layout changes so that stale
 // saved admin overrides in localStorage are wiped automatically.
-export const POS_SCHEMA = '17';
+export const POS_SCHEMA = '18';
 
 // Apply custom positions to actual game objects
 export function applyCustomPositions() {

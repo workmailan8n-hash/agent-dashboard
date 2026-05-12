@@ -796,28 +796,45 @@ function buildBackground() {
   }
 
   // ═══ ROOM WALLS WITH DOORS ═══════════════════════════════════
-  // Helper: draw a horizontal wall segment with optional door
+  // Volumetric walls = cap (top surface, lighter) + face (body) + projected shadow
+  // onto the next tile. Light source: top-left. Horizontal walls cast shadow down,
+  // vertical walls cast shadow right.
+  const WALL_CAP = '#4a4770';
+  const WALL_FACE = '#252344';
+  const WALL_SHADOW = '#0d0c20';
+  const WALL_SHADOW_ALPHA = 0.55;
+  const SHADOW_DEPTH = 12; // px projected onto next tile
+
   function drawHWall(y, x1, x2, doorStart, doorEnd) {
+    // Pass 1: face + cap
     for (let c = x1; c <= x2; c++) {
       const wx = OX + c * T,
         wy = OY + y * T;
       const inDoor = doorStart !== undefined && c >= doorStart && c <= doorEnd;
       if (inDoor) {
-        // Door opening — lighter floor
         fillR(ctx, wx, wy, T, T, '#d0caba');
-        // Door frame edges
         if (c === doorStart) fillR(ctx, wx - 2, wy, 4, T, '#6a5090');
         if (c === doorEnd) fillR(ctx, wx + T - 2, wy, 4, T, '#6a5090');
       } else {
-        fillR(ctx, wx, wy, T, T, '#252344');
-        fillR(ctx, wx, wy, T, 4, '#3a3860'); // top highlight
-        fillR(ctx, wx, wy + T - 2, T, 2, '#1e1c38'); // bottom shadow
+        fillR(ctx, wx, wy, T, T, WALL_FACE);
+        fillR(ctx, wx, wy, T, 6, WALL_CAP); // top cap (light surface)
       }
     }
+    // Pass 2: project shadow onto row y+1
+    ctx.save();
+    ctx.globalAlpha = WALL_SHADOW_ALPHA;
+    for (let c = x1; c <= x2; c++) {
+      const inDoor = doorStart !== undefined && c >= doorStart && c <= doorEnd;
+      if (inDoor) continue;
+      const sx = OX + c * T,
+        sy = OY + (y + 1) * T;
+      fillR(ctx, sx, sy, T, SHADOW_DEPTH, WALL_SHADOW);
+    }
+    ctx.restore();
   }
 
-  // Helper: draw a vertical wall segment with optional door
   function drawVWall(x, y1, y2, doorStart, doorEnd) {
+    // Pass 1: face + cap (cap on top edge — gives a "ledge" feel even on vertical)
     for (let r = y1; r <= y2; r++) {
       const wx = OX + x * T,
         wy = OY + r * T;
@@ -827,11 +844,21 @@ function buildBackground() {
         if (r === doorStart) fillR(ctx, wx, wy - 2, T, 4, '#6a5090');
         if (r === doorEnd) fillR(ctx, wx, wy + T - 2, T, 4, '#6a5090');
       } else {
-        fillR(ctx, wx, wy, T, T, '#252344');
-        fillR(ctx, wx, wy, 4, T, '#1e1c38'); // left shadow
-        fillR(ctx, wx + T - 4, wy, 4, T, '#3a3860'); // right highlight
+        fillR(ctx, wx, wy, T, T, WALL_FACE);
+        fillR(ctx, wx, wy, T, 4, WALL_CAP); // top cap
       }
     }
+    // Pass 2: project shadow onto col x+1
+    ctx.save();
+    ctx.globalAlpha = WALL_SHADOW_ALPHA;
+    for (let r = y1; r <= y2; r++) {
+      const inDoor = doorStart !== undefined && r >= doorStart && r <= doorEnd;
+      if (inDoor) continue;
+      const sx = OX + (x + 1) * T,
+        sy = OY + r * T;
+      fillR(ctx, sx, sy, SHADOW_DEPTH, T, WALL_SHADOW);
+    }
+    ctx.restore();
   }
 
   // ── Activity zone wall (horizontal, row 35, wide door) ──

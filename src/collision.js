@@ -70,6 +70,11 @@ export const OBJECT_SIZES = {
   connect4: { w: 1.5, h: 2 },
   typing_laptop: { w: 1, h: 1 },
   reaction_clock: { w: 1.5, h: 1.5 },
+  // Gym additions
+  punching_bag: { w: 1, h: 2 },
+  yoga_mat: { w: 2, h: 1 }, // flat: not added to obstacleGrid (walkable)
+  // Cafe addition
+  coffee_counter: { w: 3, h: 1 },
 };
 
 // Strip trailing _N index to get base type.
