@@ -24,6 +24,11 @@
     display: block;
   }
 
+  .canvas-stack {
+    max-width: none;
+    width: auto;
+  }
+
   #settings-panel,
   #leaderboard-panel {
     width: 280px;
@@ -102,6 +107,11 @@
     max-width: none;
     border: none;
     display: block;
+  }
+
+  .canvas-stack {
+    max-width: none;
+    width: auto;
   }
 
   /* ── Grid / mood ── */

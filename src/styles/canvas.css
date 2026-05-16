@@ -1,8 +1,213 @@
 canvas#office {
   max-width: 1200px;
   width: 100%;
-  image-rendering: pixelated;
+  /* image-rendering removed: text in overlays is HTML; sprites can soften slightly */
+  image-rendering: auto;
   border: 2px solid var(--color-border-alt);
   display: block;
   box-shadow: 0 0 40px #7aa2f710;
+}
+
+/* Stack wrapper — positions overlay panels in the same flow as canvas */
+.canvas-stack {
+  position: relative;
+  display: inline-block;
+  width: 100%;
+  max-width: 1200px;
+  line-height: 0;
+}
+
+/* Side-panel overlay (HTML text > canvas-rasterized text for legibility) */
+.canvas-overlay-panel {
+  position: absolute;
+  top: 2px; /* canvas border */
+  bottom: 2px;
+  font-family: 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace;
+  background: #0d0d1a;
+  border-right: 3px solid #1a1c2e;
+  color: #f5f7ff;
+  overflow: hidden;
+  line-height: 1.15;
+  pointer-events: none;
+  box-sizing: border-box;
+}
+
+.canvas-overlay-panel.left {
+  left: 2px;
+  width: calc(var(--canvas-ox, 180) / var(--canvas-cw, 1400) * 100%);
+  padding: 14px 10px 32px;
+}
+
+.canvas-overlay-panel.right {
+  right: 2px;
+  width: calc(var(--canvas-oxr, 160) / var(--canvas-cw, 1400) * 100%);
+  padding: 14px 12px 20px;
+  border-right: none;
+  border-left: 3px solid #1a1c2e;
+}
+
+.rpo-title {
+  color: #bb9af7;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2a2c4e;
+  margin-bottom: 12px;
+}
+
+.rpo-row {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  margin-bottom: 10px;
+}
+
+.rpo-label {
+  color: #8892b0;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.6px;
+}
+
+.rpo-val {
+  font-size: 15px;
+  font-weight: 700;
+  color: #c8d3f5;
+}
+
+.rpo-uptime {
+  color: #7aa2f7;
+}
+.rpo-online {
+  color: #9ece6a;
+}
+.rpo-working {
+  color: #e0af68;
+}
+.rpo-idle {
+  color: #565f89;
+}
+
+.rpo-divider {
+  height: 1px;
+  background: #2a2c4e;
+  margin: 8px 0 10px;
+}
+
+.rpo-activity-label {
+  margin-bottom: 6px;
+}
+
+.rpo-bar-track {
+  height: 8px;
+  background: #1a2040;
+  border-radius: 2px;
+  overflow: hidden;
+  position: relative;
+}
+
+.rpo-bar {
+  height: 100%;
+  background: linear-gradient(90deg, #9ece6a, #b4e077);
+  transition: width 0.5s ease;
+}
+
+.lpo-title {
+  color: #7aa2f7;
+  font-weight: 700;
+  font-size: 13px;
+  text-align: center;
+  letter-spacing: 0.5px;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #2a2c4e;
+  margin-bottom: 10px;
+}
+
+.lpo-list {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.lpo-item {
+  display: grid;
+  grid-template-columns: 14px 1fr;
+  gap: 6px;
+  align-items: start;
+  padding: 4px 6px;
+  border-radius: 4px;
+  background: transparent;
+}
+
+.lpo-item.working {
+  background: rgba(122, 162, 247, 0.1);
+}
+
+.lpo-dot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  margin-top: 4px;
+  background: #3d4466;
+  box-shadow: none;
+}
+
+.lpo-item.working .lpo-dot {
+  background: #9ece6a;
+  box-shadow: 0 0 0 3px rgba(158, 206, 106, 0.25);
+}
+
+.lpo-item.thinking .lpo-dot {
+  background: #e0af68;
+  box-shadow: 0 0 0 3px rgba(224, 175, 104, 0.25);
+}
+
+.lpo-text {
+  min-width: 0;
+}
+
+.lpo-name {
+  font-size: 13px;
+  font-weight: 700;
+  color: #f5f7ff;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lpo-item.working .lpo-name {
+  color: #ffffff;
+}
+
+.lpo-sub {
+  font-size: 11px;
+  font-weight: 600;
+  color: #cfd6f0;
+  margin-top: 1px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.lpo-item.working .lpo-sub {
+  color: #e2c8ff;
+}
+
+.lpo-footer {
+  position: absolute;
+  bottom: 8px;
+  left: 0;
+  right: 0;
+  text-align: center;
+  color: #c0c8e8;
+  font-weight: 700;
+  font-size: 11px;
+  padding-top: 6px;
+  border-top: 1px solid #2a2c4e;
+  margin: 0 8px;
 }

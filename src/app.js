@@ -12309,6 +12309,154 @@ let globalTick = 0;
 let lastTime = 0;
 const startTime = Date.now();
 
+// ── HTML overlay for left panel (crisp text, sits on top of canvas) ──
+let _lpoLastSig = '';
+let _lpoLastCW = 0;
+function updateLeftPanelOverlay() {
+  const stack = document.getElementById('canvas-stack');
+  const list = document.getElementById('lpo-list');
+  const footer = document.getElementById('lpo-footer');
+  if (!list || !footer || !stack) return;
+
+  if (CW !== _lpoLastCW) {
+    stack.style.setProperty('--canvas-cw', String(CW));
+    stack.style.setProperty('--canvas-ox', String(OX));
+    _lpoLastCW = CW;
+  }
+
+  const entries = Object.entries(agentStates);
+  // Compute signature so we don't thrash the DOM each frame
+  const parts = [];
+  for (const [id, sp] of entries) {
+    const ad = agentsData[id];
+    if (!ad) continue;
+    parts.push(
+      id +
+        '|' +
+        (sp.isWorking ? '1' : '0') +
+        '|' +
+        (ad.status || '') +
+        '|' +
+        (ad.currentTool || '') +
+        '|' +
+        (sp.activityAnim || '') +
+        '|' +
+        getDisplayName(ad)
+    );
+  }
+  const sig = parts.join('§');
+  if (sig === _lpoLastSig) return;
+  _lpoLastSig = sig;
+
+  let working = 0;
+  const frag = document.createDocumentFragment();
+  for (const [id, sp] of entries) {
+    const ad = agentsData[id];
+    if (!ad) continue;
+    const isWork = sp.isWorking;
+    const status = ad.status || 'idle';
+    if (isWork) working++;
+
+    const li = document.createElement('li');
+    li.className = 'lpo-item' + (isWork ? ' working' : status === 'thinking' ? ' thinking' : '');
+
+    const dot = document.createElement('span');
+    dot.className = 'lpo-dot';
+
+    const text = document.createElement('div');
+    text.className = 'lpo-text';
+    const name = document.createElement('div');
+    name.className = 'lpo-name';
+    name.textContent = getDisplayName(ad);
+    text.appendChild(name);
+
+    let subTxt = '';
+    if (isWork && ad.currentTool) subTxt = ad.currentTool;
+    else if (!isWork && sp.activityAnim) subTxt = sp.activityAnim.replace(/_/g, ' ');
+    if (subTxt) {
+      const sub = document.createElement('div');
+      sub.className = 'lpo-sub';
+      sub.textContent = subTxt;
+      text.appendChild(sub);
+    }
+
+    li.appendChild(dot);
+    li.appendChild(text);
+    frag.appendChild(li);
+  }
+  list.replaceChildren(frag);
+  footer.textContent = `${working}/${entries.length} working`;
+}
+
+const _CAT_MOODS = {
+  sleeping: '😴 asleep',
+  eating: '🍽 eating',
+  playing: '🎾 playing',
+  grooming: '🧼 grooming',
+  stretching: '🙆 stretch',
+  hunting: '🎯 hunting',
+  knocking: '😈 knocking',
+  zoomies: '💨 zoomies!',
+  purring: '💕 purring',
+  window_watching: '🪟 watching',
+  hiding: '🙈 hiding',
+  scared: '😱 scared!',
+  pooping: '💩 pooping',
+};
+const _GOOSE_MOODS = {
+  waddling: '🦆 waddling',
+  honking: '📢 HONK!',
+  stealing: '🏃 stealing!',
+  chasing_agent: '😤 chasing',
+  swimming: '🏊 swimming',
+  flapping: '🪽 flapping',
+  pecking: '🐦 pecking',
+  hiding_bush: '🌿 hiding',
+  bothering_cat: '😈 annoying',
+  napping: '😴 napping',
+};
+
+function updateRightPanelOverlay() {
+  const stack = document.getElementById('canvas-stack');
+  if (!stack) return;
+  stack.style.setProperty('--canvas-oxr', String(OX_RIGHT));
+
+  const elUp = document.getElementById('rpo-uptime');
+  const elOn = document.getElementById('rpo-online');
+  const elWk = document.getElementById('rpo-working');
+  const elId = document.getElementById('rpo-idle');
+  const elCat = document.getElementById('rpo-cat');
+  const elGoose = document.getElementById('rpo-goose');
+  const elBar = document.getElementById('rpo-bar');
+  if (!elUp) return;
+
+  const elapsed = Math.floor((Date.now() - startTime) / 1000);
+  const hh = String(Math.floor(elapsed / 3600)).padStart(2, '0');
+  const mm = String(Math.floor((elapsed % 3600) / 60)).padStart(2, '0');
+  const ss = String(elapsed % 60).padStart(2, '0');
+  elUp.textContent = `${hh}:${mm}:${ss}`;
+
+  const agents = Object.values(agentStates);
+  const working = agents.filter((s) => s.isWorking).length;
+  const idle = agents.length - working;
+  elOn.textContent = String(agents.length);
+  elWk.textContent = String(working);
+  elId.textContent = String(idle);
+
+  if (typeof cat !== 'undefined' && cat) {
+    elCat.textContent = cat.messExists ? '💩 mess!' : _CAT_MOODS[cat.state] || '🐱 roaming';
+    elCat.style.color = cat.messExists ? '#f7768e' : '#c8d3f5';
+  }
+  if (typeof goose !== 'undefined' && goose) {
+    elGoose.textContent = _GOOSE_MOODS[goose.state] || '🦆 waddling';
+    elGoose.style.color =
+      goose.state === 'honking' || goose.state === 'stealing' ? '#f7768e' : '#c8d3f5';
+  }
+
+  const frac = agents.length ? (working / agents.length) * 100 : 0;
+  elBar.style.width = frac.toFixed(0) + '%';
+}
+
 // ── Side panel helpers ────────────────────────────────────────────
 function drawLeftPanel(ctx, tick) {
   const W = OX - 6,
@@ -12360,19 +12508,19 @@ function drawLeftPanel(ctx, tick) {
     }
 
     // Role name
-    ctx.fillStyle = isWork ? '#ffffff' : '#e0e6ff';
+    ctx.fillStyle = isWork ? '#ffffff' : '#f5f7ff';
     ctx.font = "bold 15px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
     ctx.textAlign = 'left';
     ctx.fillText(realName.substring(0, 14), 24, y);
 
     // Tool / state badge
     if (isWork && ad.currentTool) {
-      ctx.fillStyle = '#d7bbff';
-      ctx.font = "12px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
+      ctx.fillStyle = '#e2c8ff';
+      ctx.font = "bold 12px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
       ctx.fillText(ad.currentTool.substring(0, 11), 24, y + 14);
     } else if (!isWork && sp.activityAnim) {
-      ctx.fillStyle = '#a0a8c8';
-      ctx.font = "12px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
+      ctx.fillStyle = '#cfd6f0';
+      ctx.font = "bold 12px 'JetBrains Mono', 'Cascadia Mono', Consolas, monospace";
       ctx.fillText(sp.activityAnim.replace(/_/g, ' ').substring(0, 13), 24, y + 14);
     }
 
@@ -13166,6 +13314,10 @@ function loop(now) {
   drawEntranceDoor(ctx);
   drawLeftPanel(ctx, globalTick);
   drawRightPanel(ctx, globalTick);
+  if ((globalTick & 7) === 0) {
+    updateLeftPanelOverlay();
+    updateRightPanelOverlay();
+  }
   drawDynamicEffects(ctx, globalTick);
   drawAquariumFish(ctx, globalTick); // before agents so fish stay behind
   // Lava lamp (animated blobs in right zone)

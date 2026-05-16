@@ -58,7 +58,27 @@
 
 <div class="canvas-toolbar" id="canvas-toolbar"></div>
 <div class="canvas-wrapper">
-  <canvas id="office" width="1400" height="600"></canvas>
+  <div class="canvas-stack" id="canvas-stack" style="--canvas-cw:1400;--canvas-ox:180">
+    <canvas id="office" width="1400" height="600"></canvas>
+    <div id="left-panel-overlay" class="canvas-overlay-panel left" aria-label="Agents panel">
+      <div class="lpo-title">◈ AGENTS</div>
+      <ul class="lpo-list" id="lpo-list"></ul>
+      <div class="lpo-footer" id="lpo-footer">0/0 working</div>
+    </div>
+    <div id="right-panel-overlay" class="canvas-overlay-panel right" aria-label="Stats panel">
+      <div class="rpo-title">◈ STATS</div>
+      <div class="rpo-row"><span class="rpo-label">UPTIME</span><span class="rpo-val rpo-uptime" id="rpo-uptime">00:00:00</span></div>
+      <div class="rpo-row"><span class="rpo-label">ONLINE</span><span class="rpo-val rpo-online" id="rpo-online">0</span></div>
+      <div class="rpo-row"><span class="rpo-label">WORKING</span><span class="rpo-val rpo-working" id="rpo-working">0</span></div>
+      <div class="rpo-row"><span class="rpo-label">IDLE</span><span class="rpo-val rpo-idle" id="rpo-idle">0</span></div>
+      <div class="rpo-divider"></div>
+      <div class="rpo-row"><span class="rpo-label">CAT</span><span class="rpo-val" id="rpo-cat">—</span></div>
+      <div class="rpo-row"><span class="rpo-label">GOOSE</span><span class="rpo-val" id="rpo-goose">—</span></div>
+      <div class="rpo-divider"></div>
+      <div class="rpo-label rpo-activity-label">ACTIVITY</div>
+      <div class="rpo-bar-track"><div class="rpo-bar" id="rpo-bar" style="width:0%"></div></div>
+    </div>
+  </div>
 </div>
 
 <div id="grid">
