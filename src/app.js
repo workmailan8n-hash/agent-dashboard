@@ -4501,8 +4501,8 @@ function drawDartAnimation(ctx, tick) {
   const [_dBx, _dBy] = getAdminPos('darts', rX + 1.5, 0);
   const boardX = OX + (_dBx + 1) * T;
   const boardY = OY + (_dBy + 0.5) * T;
-  // Agent throw position
-  const throwX = OX + dartPlayer.sx ? dartPlayer.sx - OX : (rX + 1.5) * T;
+  // Agent throw position (sx/sy already in canvas pixel coords incl. OX/OY)
+  const throwX = dartPlayer.sx || OX + (rX + 1.5) * T;
   const throwY = dartPlayer.sy ? dartPlayer.sy - 16 : OY + 7 * T;
 
   for (const d of dartAnims) {
