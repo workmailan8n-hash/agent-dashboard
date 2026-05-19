@@ -9,29 +9,71 @@
     max-width: 100%;
     gap: 8px;
     flex-wrap: wrap;
+    row-gap: 6px;
   }
 
-  /* Scroll canvas horizontally instead of scaling (preserves pixel art) */
+  .hz {
+    padding: 0 8px;
+  }
+
+  .hz-info {
+    margin-left: auto;
+  }
+
+  /* Scale canvas to viewport (pixel-art preserved via crisp rendering) */
   .canvas-wrapper {
     width: 100%;
     max-width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-  }
-
-  canvas#office {
-    max-width: none;
-    display: block;
+    overflow: visible;
   }
 
   .canvas-stack {
-    max-width: none;
-    width: auto;
+    width: 100%;
+    max-width: 100%;
+    display: block;
+  }
+
+  canvas#office {
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
+  }
+
+  .canvas-toolbar {
+    max-width: 100%;
+    flex-wrap: wrap;
+  }
+
+  /* Overlay panels — shrink fonts so they remain legible at reduced canvas width */
+  .rpo-title,
+  .lpo-title {
+    font-size: 10px;
+    padding-bottom: 5px;
+    margin-bottom: 7px;
+  }
+  .rpo-label,
+  .lpo-sub {
+    font-size: 8px;
+  }
+  .rpo-val,
+  .lpo-name {
+    font-size: 10px;
+  }
+  .lpo-footer {
+    font-size: 8px;
+  }
+  .canvas-overlay-panel.left {
+    padding: 8px 5px 22px;
+  }
+  .canvas-overlay-panel.right {
+    padding: 8px 6px 12px;
   }
 
   #settings-panel,
   #leaderboard-panel {
-    width: 280px;
+    width: 320px;
   }
 }
 
@@ -39,30 +81,56 @@
 @media (max-width: 640px) {
   body {
     padding: 6px;
-    gap: 6px;
+    gap: 8px;
     align-items: stretch;
   }
 
-  /* ── Header ── */
+  /* ── Header — readable + tap-friendly ── */
   header {
     flex-wrap: wrap;
     gap: 6px;
     padding-bottom: 8px;
     max-width: 100%;
+    justify-content: space-between;
+  }
+
+  .hz {
+    height: auto;
+    padding: 4px 8px;
+    border-left: none;
+  }
+  .hz-logo {
+    flex: 1 1 100%;
+    padding-left: 2px;
+  }
+  .hz-utils {
+    order: 2;
+    flex: 0 0 auto;
+  }
+  .hz-info {
+    order: 3;
+    margin-left: auto;
+    flex-wrap: wrap;
+    gap: 6px;
   }
 
   .logo {
-    font-size: 7px;
-    flex: 1 1 auto;
+    font-size: 11px;
+    letter-spacing: 0.5px;
   }
 
   #agent-count {
-    font-size: 5px;
+    font-size: 10px;
     white-space: nowrap;
   }
 
+  .tunnel-status {
+    font-size: 9px;
+    padding: 3px 6px;
+  }
+
   #public-url {
-    font-size: 5px;
+    font-size: 9px;
     flex: 1 1 100%;
     order: 10;
     overflow: hidden;
@@ -72,46 +140,56 @@
     max-width: 100%;
   }
 
-  /* Keep tabs visible but compact */
-  .view-tabs {
-    flex: 1 1 auto;
-    gap: 4px;
-  }
-
-  .tab-btn {
-    min-height: 36px;
-    padding: 4px 8px;
-    font-size: 5px;
-  }
-
   #btn-leaderboard,
   #btn-screenshot,
   #btn-settings,
   #btn-demo {
-    min-height: 36px;
-    min-width: 36px;
-    padding: 4px 8px;
-    font-size: 5px;
+    min-height: 38px;
+    min-width: 44px;
+    padding: 6px 10px;
+    font-size: 10px;
+    border-radius: 4px;
   }
 
-  /* ── Canvas ── */
+  /* ── Canvas — scale to viewport (no horizontal scroll) ── */
   .canvas-wrapper {
     width: 100%;
-    overflow-x: auto;
-    -webkit-overflow-scrolling: touch;
-    border: 2px solid var(--color-border);
-    scroll-snap-type: x mandatory;
+    overflow: visible;
+    border: none;
   }
 
   canvas#office {
-    max-width: none;
-    border: none;
+    width: 100%;
+    max-width: 100%;
+    height: auto;
+    border: 1px solid var(--color-border);
     display: block;
+    image-rendering: pixelated;
+    image-rendering: crisp-edges;
   }
 
   .canvas-stack {
-    max-width: none;
-    width: auto;
+    max-width: 100%;
+    width: 100%;
+    display: block;
+  }
+
+  /* Overlay side panels — unreadable at phone widths (~45px wide). Hide them.
+     The reserved space inside the canvas renders as office wall — acceptable. */
+  .canvas-overlay-panel.left,
+  .canvas-overlay-panel.right {
+    display: none;
+  }
+
+  .canvas-toolbar {
+    gap: 4px;
+    flex-wrap: wrap;
+    padding: 4px 0;
+  }
+  .canvas-toolbar button {
+    min-height: 36px;
+    padding: 6px 10px;
+    font-size: 10px;
   }
 
   /* ── Grid / mood ── */
@@ -120,7 +198,20 @@
     width: 100%;
   }
 
-  /* ── Panels — full-width centered on mobile ── */
+  #mood-meter {
+    padding: 8px 10px;
+  }
+  .mm-label {
+    font-size: 10px;
+  }
+  .mm-level {
+    font-size: 12px;
+  }
+  .mm-emoji {
+    font-size: 14px;
+  }
+
+  /* ── Panels — full-width bottom sheet ── */
   #settings-panel,
   #leaderboard-panel {
     position: fixed;
@@ -146,23 +237,28 @@
     max-height: 50vh;
   }
 
+  .lb-tab {
+    min-height: 36px;
+    padding: 4px 8px;
+  }
+
   /* ── Loading ── */
   .loading-bar-outer {
     width: calc(100vw - 48px);
     max-width: 320px;
   }
-
   .loading-logo {
-    font-size: 10px;
+    font-size: 11px;
   }
   .loading-text {
-    font-size: 7px;
+    font-size: 9px;
   }
 
   /* ── Connection indicator ── */
   .conn {
     bottom: 6px;
     right: 8px;
+    font-size: 9px;
   }
 }
 
@@ -170,43 +266,40 @@
 @media (max-width: 420px) {
   body {
     padding: 4px;
-    gap: 4px;
+    gap: 6px;
   }
 
   .logo {
-    font-size: 6px;
+    font-size: 10px;
   }
 
-  .tab-btn {
-    font-size: 4px;
-    padding: 4px 6px;
+  #agent-count,
+  .tunnel-status {
+    font-size: 9px;
   }
 
   #btn-leaderboard,
   #btn-screenshot,
   #btn-settings,
   #btn-demo {
-    font-size: 4px;
-    padding: 3px 6px;
+    font-size: 9px;
+    padding: 5px 8px;
+    min-width: 40px;
+  }
+
+  .canvas-toolbar button {
+    font-size: 9px;
+    padding: 5px 8px;
   }
 
   .loading-logo {
-    font-size: 8px;
-  }
-
-  .task-section-title {
-    font-size: 5px;
-  }
-
-  .task-item {
-    font-size: 5px;
-    padding: 7px 8px;
+    font-size: 9px;
   }
 
   .mm-label {
-    font-size: 5px;
+    font-size: 9px;
   }
   .mm-level {
-    font-size: 8px;
+    font-size: 11px;
   }
 }
